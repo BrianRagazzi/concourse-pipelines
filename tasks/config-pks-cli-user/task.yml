@@ -10,7 +10,7 @@ inputs:
   - name: pipelines-repo
 
 run:
-  path: pipelines-repo/tasks/configure-pks-cli-user/task.sh
+  path: pipelines-repo/tasks/config-pks-cli-user/task.sh
 
 params:
   OPS_MGR_HOST:
