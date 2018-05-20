@@ -541,7 +541,7 @@ jobs:
       # passed: [apply-changes]
 
   - task: configure-pks-cli-user
-    file: pipelines-repo/tasks/configure-pks-cli-user/task.yml
+    file: pipelines-repo/tasks/config-pks-cli-user/task.yml
     params:
       OPS_MGR_HOST: ((ops_mgr_host))
       OPS_MGR_USR: ((ops_mgr_usr))
