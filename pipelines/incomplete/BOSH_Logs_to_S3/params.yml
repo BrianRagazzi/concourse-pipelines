@@ -1,0 +1,12 @@
+github_token: CHANGEME # [R] Your github token
+github_repo: https://github.com/BrianRagazzi/concourse-pipelines # [R] Pipelines github repo
+github_branch: master
+github_username: CHANGEME # [R] Your github username
+s3_endpoint: CHANGEME #https://minio.domain.local:9000
+s3_bucket: CHANGEME #logs
+s3_folder: CHANGEME #pcf
+s3_access_key_id: CHANGEME
+s3_secret_access_key: CHANGE
+ops_mgr_host: CHANGEME #opsmgr.pcf.domain.local FQDN to access Ops Manager without protocol (will use https), ex: opsmgr.example.com
+ops_mgr_usr: CHANGEME #Username for Ops Manager admin account
+ops_mgr_pwd: CHANGEME #Passwod for that account

@@ -1,0 +1,38 @@
+---
+resources:
+
+- name: pipelines-repo
+  type: git
+  source:
+    uri: ((github_repo))
+    branch: ((github_branch))
+    username: ((github_username))
+    password: ((github_token))
+
+- name: logs-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: bundle-(.*).tgz
+    disable_ssl: false
+    skip_ssl_verification: true
+
+jobs:
+- name: dump-bosh-logs
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      trigger: false
+  - task: dump_logs
+    file: pipelines-repo/tasks/dump-bosh-logs/task.yml
+    params:
+      OPS_MGR_HOST: {{ops_mgr_host}}
+      OPS_MGR_USR: {{ops_mgr_usr}}
+      OPS_MGR_PWD: {{ops_mgr_pwd}}
+      DIRECTOR_IP: {{director_ip}}
+  - put: logs-s3
+    params:
+      file: ./out/*.tgz

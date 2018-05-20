@@ -1,0 +1,122 @@
+resource_types:
+
+resources:
+
+jobs:
+- name: add-admin-user
+  plan:
+  - do:
+    - task: add-user
+      config:
+        platform: linux
+        image_resource:
+          type: s3
+          source:
+            access_key_id: {{s3_access_key_id}}
+            bucket: {{s3_bucket}}
+            endpoint: {{s3_endpoint}}
+            regexp: pcfnorm-rootfs/pcfnorm-rootfs-(.*).tgz
+            secret_access_key: {{s3_secret_access_key}}
+            skip_ssl_verification: true
+          params:
+            unpack: true
+        params:
+          OPSMAN_PASSWORD: {{opsman_password}}
+          OPSMAN_USERNAME: {{opsman_username}}
+          OPSMAN_DOMAIN_OR_IP_ADDRESS: {{opsman_domain_or_ip_address}}
+          USERNAME: {{username}}
+          PASSWORD: {{password}}
+          EMAIL: {{email}}
+          S3_ACCESS_KEY_ID: {{s3_access_key_id}}
+          S3_BUCKET: {{s3_bucket}}
+          S3_ENDPOINT: {{s3_endpoint}}
+          S3_SECRET_ACCESS_KEY: {{s3_secret_access_key}}
+        run:
+            
+              path: bash
+              args:
+              - -c
+              - |
+                cat > task.sh <<'EO_SH'
+                #!/bin/bash
+                
+                set -eu
+                
+                CF_GUID=$(
+                  om-linux \
+                    --target https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+                    --username "$OPSMAN_USERNAME" \
+                    --password "$OPSMAN_PASSWORD" \
+                    --skip-ssl-validation \
+                    curl --silent --path "/api/v0/deployed/products" | \
+                    jq -r '.[] | .installation_name' | grep cf- | tail -1
+                )
+                export CF_GUID=$CF_GUID
+                echo $CF_GUID
+
+                SYS_DOMAIN=$(
+                  om-linux \
+                    --target https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+                    --username "$OPSMAN_USERNAME" \
+                    --password "$OPSMAN_PASSWORD" \
+                    --skip-ssl-validation \
+                    curl --silent --path "/api/v0/staged/products/${CF_GUID}/properties" | \
+                    jq --raw-output '.[] | .[".cloud_controller.system_domain"].value'
+                )
+                echo api.$SYS_DOMAIN
+
+                ADMIN_PW=$(
+                  om-linux \
+                    --target https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+                    --username "$OPSMAN_USERNAME" \
+                    --password "$OPSMAN_PASSWORD" \
+                    --skip-ssl-validation \
+                    curl --silent --path "/api/v0/deployed/products/${CF_GUID}/credentials/.uaa.admin_credentials" | \
+                    jq -r '.[] | .value.password'
+                )
+
+                ADMIN_CLIENT_PW=$(
+                  om-linux \
+                    --target https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+                    --username "$OPSMAN_USERNAME" \
+                    --password "$OPSMAN_PASSWORD" \
+                    --skip-ssl-validation \
+                    curl --silent --path "/api/v0/deployed/products/${CF_GUID}/credentials/.uaa.admin_client_credentials" | \
+                    jq -r '.[] | .value.password'
+                )
+
+                cf login -a https://api.$SYS_DOMAIN -u admin -p $ADMIN_PW --skip-ssl-validation -o system -s system
+
+                cf create-user $USERNAME $PASSWORD
+                cf set-org-role $USERNAME system OrgManager
+                cf set-org-role $USERNAME system BillingManager
+                cf set-org-role $USERNAME system OrgAuditor
+
+                cf logout
+
+                uaac target uaa.$SYS_DOMAIN --skip-ssl-validation
+                uaac token client get admin -s $ADMIN_CLIENT_PW
+
+                uaac contexts
+                CHK=$(
+                  uaac user get $USERNAME | grep $USERNAME
+                )
+                if [ -z "$CHK" ]; then
+                  uaac user add $USERNAME -p $PASSWORD --emails $EMAIL
+                fi  
+                uaac member add cloud_controller.admin $USERNAME
+                uaac member add uaa.admin $USERNAME
+                uaac member add scim.read $USERNAME
+                uaac member add scim.write $USERNAME
+
+                uaac token delete
+                
+                
+                EO_SH
+
+                chmod +x task.sh
+                ./task.sh
+    params:
+      OPSMAN_DOMAIN_OR_IP_ADDRESS: {{opsman_domain_or_ip_address}}
+      OPSMAN_PASSWORD: {{opsman_password}}
+      OPSMAN_USERNAME: {{opsman_username}}            

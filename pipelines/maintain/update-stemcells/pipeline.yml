@@ -1,0 +1,61 @@
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tag: latest-final
+
+resources:
+- name: pipelines-repo
+  type: git
+  source:
+    uri: {{github_repo}}
+    branch: {{github_branch}}
+    username: {{github_username}}
+    password: {{github_token}}
+
+- name: schedule
+  type: time
+  source:
+    interval: 30m
+    start: "2:00 AM"
+    stop: "3:59 AM"
+    location: America/Chicago
+    days: [Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday]
+
+jobs:
+- name: regulator
+  plan:
+  - get: pipelines-repo
+  - get: schedule
+    trigger: true
+
+- name: upgrade-stemcells
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      trigger: true
+      passed: [regulator]
+
+  - task: upgrade-stemcells
+    file: pipelines-repo/tasks/stemcell-updater/task.yml
+    params:
+      DEBUG: {{debug}}
+      OPS_MGR_HOST: {{ops_mgr_host}}
+      OPS_MGR_USR: {{ops_mgr_usr}}
+      OPS_MGR_PWD: {{ops_mgr_pwd}}
+      IAAS_TYPE: {{iaas_type}}
+
+- name: apply-changes
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [upgrade-stemcells]
+      trigger: true
+
+  - task: apply-changes
+    file: pipelines-repo/tasks/apply-changes/task.yml
+    params:
+      OPS_MGR_HOST: {{ops_mgr_host}}
+      OPS_MGR_USR: {{ops_mgr_usr}}
+      OPS_MGR_PWD: {{ops_mgr_pwd}}

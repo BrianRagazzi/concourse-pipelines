@@ -1,0 +1,127 @@
+resource_types: []
+
+resources:
+- name: yelb-ui
+  type: docker-image
+  source:
+    repository: mreferre/yelb-ui
+    tag: 0.3
+    username: {{dockerhub_username}}
+    password: {{dockerhub_password}}
+
+- name: yelb-ui-harbor
+  type: docker-image
+  source:
+    repository: ((harbor_endpoint))/((harbor_project))/yelb-ui
+    tag: 0.3
+    username: {{harbor_username}}
+    password: {{harbor_password}}
+    insecure_registries:
+    - ((harbor_endpoint))
+
+- name: yelb-appserver
+  type: docker-image
+  source:
+    repository: mreferre/yelb-appserver
+    tag: 0.3
+    username: {{dockerhub_username}}
+    password: {{dockerhub_password}}
+
+- name: yelb-appserver-harbor
+  type: docker-image
+  source:
+    repository: ((harbor_endpoint))/((harbor_project))/yelb-appserver
+    tag: 0.3
+    username: {{harbor_username}}
+    password: {{harbor_password}}
+    insecure_registries:
+    - ((harbor_endpoint))
+
+- name: yelb-db
+  type: docker-image
+  source:
+    repository: mreferre/yelb-db
+    tag: 0.3
+    username: {{dockerhub_username}}
+    password: {{dockerhub_password}}
+
+- name: yelb-db-harbor
+  type: docker-image
+  source:
+    repository: ((harbor_endpoint))/((harbor_project))/yelb-db
+    tag: 0.3
+    username: {{harbor_username}}
+    password: {{harbor_password}}
+    insecure_registries:
+    - ((harbor_endpoint))
+
+- name: redis
+  type: docker-image
+  source:
+    repository: redis
+    tag: 4.0.2
+    username: {{dockerhub_username}}
+    password: {{dockerhub_password}}
+
+- name: redis-harbor
+  type: docker-image
+  source:
+    repository: ((harbor_endpoint))/((harbor_project))/redis
+    tag: 4.0.2
+    username: {{harbor_username}}
+    password: {{harbor_password}}
+    insecure_registries:
+    - ((harbor_endpoint))
+
+jobs:
+- name: yelb-ui
+  plan:
+  - get: yelb-ui
+    trigger: true
+    params:
+      save: true
+      rootfs: false
+  - put: yelb-ui-harbor
+    params:
+      #import_file: czero-cflinuxfs2/image
+      load: yelb-ui
+      tag: yelb-ui/tag
+
+- name: yelb-appserver
+  plan:
+  - get: yelb-appserver
+    trigger: true
+    params:
+      save: true
+      rootfs: false
+  - put: yelb-appserver-harbor
+    params:
+      #import_file: czero-cflinuxfs2/image
+      load: yelb-appserver
+      tag: yelb-appserver/tag
+
+- name: yelb-db
+  plan:
+  - get: yelb-db
+    trigger: true
+    params:
+      save: true
+      rootfs: false
+  - put: yelb-db-harbor
+    params:
+      #import_file: czero-cflinuxfs2/image
+      load: yelb-db
+      tag: yelb-db/tag
+
+- name: redis
+  plan:
+  - get: redis
+    trigger: true
+    params:
+      save: true
+      rootfs: false
+  - put: redis-harbor
+    params:
+      #import_file: czero-cflinuxfs2/image
+      load: redis
+      tag: redis/tag

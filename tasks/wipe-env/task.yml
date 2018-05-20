@@ -1,0 +1,27 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: pcfnorm/rootfs
+inputs:
+  - name: pipelines-repo
+params:
+  OPS_MGR_HOST:
+  OPS_MGR_USR:
+  OPS_MGR_PWD:
+  OPSMAN_IP:
+  GOVC_INSECURE:
+  GOVC_CA_CERT:
+  GOVC_URL:
+  GOVC_USERNAME:
+  GOVC_PASSWORD:
+  GOVC_DATACENTER:
+  GOVC_DATASTORE:
+  GOVC_NETWORK:
+  GOVC_RESOURCE_POOL:
+  GOVC_HOST:
+
+run:
+  path: pipelines-repo/tasks/wipe-env/task.sh

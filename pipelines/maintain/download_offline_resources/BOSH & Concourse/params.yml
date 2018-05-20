@@ -1,0 +1,11 @@
+#pivnet_token:
+#opsman_major_minor_version:
+#ert_major_minor_version:
+s3_access_key_id: CHANGEME
+s3_secret_access_key: CHANGEME
+s3_endpoint: http://bootstrapminio.domain.local:9000
+s3_bucket: binaries
+dockerhub_username: CHANGEME
+dockerhub_password: CHANGEME
+bosh_cli_uri: https://s3.amazonaws.com/bosh-cli-artifacts/bosh-cli-3.0.1-linux-amd64
+stemcell_version_family: 3468.latest  # 3541.* breaks concourse 3.9 and runc 1.11.1

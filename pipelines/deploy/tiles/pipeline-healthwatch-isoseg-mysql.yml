@@ -1,0 +1,554 @@
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tag: latest-final
+
+resources:
+
+- name: pivnet-cli
+  type: github-release
+  source:
+    user: pivotal-cf
+    repository: pivnet-cli
+    access_token: ((github_token)) ## Optional: Removing this will cause you to hit the rate limit
+
+- name: pipelines-repo
+  type: git
+  source:
+    uri: ((github_repo))
+    branch: ((github_branch))
+    username: ((github_username))
+    password: ((github_token))
+
+- name: pivnet-healthwatch
+  type: pivnet
+  source:
+    api_token: ((pivnet_token))
+    product_slug: p-healthwatch
+    product_version: ((healthwatch_major_minor_version))
+
+- name: pivnet-isoseg
+  type: pivnet
+  source:
+    api_token: ((pivnet_token))
+    product_slug: p-isolation-segment
+    product_version: ((isoseg_major_minor_version))
+
+- name: pivnet-mysql
+  type: pivnet
+  source:
+    api_token: ((pivnet_token))
+    product_slug: p-mysql
+    product_version: ((mysql_major_minor_version))
+
+- name: replicator
+  type: github-release
+  source:
+    user: pivotal-cf
+    repository: replicator
+    access_token: ((github_token)) ## Optional: Removing this will cause you to hit the rate limit
+
+# groups:
+# - name: healthwatch
+#   jobs:
+#   - upload-healthwatch
+#   - stage-healthwatch
+#   - config-healthwatch
+#   - disable-healthwatch-errands
+# - name: isoseg
+#   jobs:
+#   - upload-isoseg
+#   - stage-isoseg
+#   - config-isoseg
+#   - disable-isoseg-errands
+# - name: mysql
+#   jobs:
+#   - upload-mysql
+#   - stage-mysql
+#   - config-mysql
+#   - disable-mysql-errands
+# - name: complete
+#   jobs:
+#   - apply-changes
+
+jobs:
+- name: upload-healthwatch
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-healthwatch
+      params:
+        globs:
+        - "*.pivotal"
+      trigger: true
+    - get: pivnet-cli
+      params:
+        globs:
+        - "*linux-amd64*"
+
+  - task: upload-tile
+    file: pipelines-repo/tasks/upload-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+
+  - task: upload-stemcell
+    file: pipelines-repo/tasks/stemcell-uploader/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+      IAAS_TYPE: ((iaas_type))
+
+- name: stage-healthwatch
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [upload-healthwatch]
+    - get: pivnet-product
+      resource: pivnet-healthwatch
+      params:
+        globs:
+        - "*.pivotal"
+      passed: [upload-healthwatch]
+      trigger: true
+
+  - task: stage-tile
+    file: pipelines-repo/tasks/stage-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_IDENTIFIER: p-healthwatch
+
+- name: config-healthwatch
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [stage-healthwatch]
+    - get: pivnet-product
+      resource: pivnet-healthwatch
+      params:
+        globs: []
+      passed: [stage-healthwatch]
+      trigger: true
+
+  - task: config-tile
+    file: pipelines-repo/tasks/config-p-healthwatch/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      NETWORK_NAME: ((network_name))
+      SERVICE_NETWORK_NAME: ((service_network_name))
+      OTHER_AZS: ((other_azs))
+      SINGLETON_JOBS_AZ: ((singleton_jobs_az))
+      PRODUCT_NAME: p-healthwatch
+      HEALTHWATCH_FORWARDER_BOSHHEALTH_INSTANCE_COUNT: ((healthwatch_forwarder_boshhealth_instance_count))
+      HEALTHWATCH_FORWARDER_BOSHTASKS_INSTANCE_COUNT: ((healthwatch_forwarder_boshtasks_instance_count))
+      HEALTHWATCH_FORWARDER_CANARY_INSTANCE_COUNT: ((healthwatch_forwarder_canary_instance_count))
+      HEALTHWATCH_FORWARDER_CLI_INSTANCE_COUNT: ((healthwatch_forwarder_cli_instance_count))
+      HEALTHWATCH_FORWARDER_FOUNDATION_NAME: ((healthwatch_forwarder_foundation_name))
+      HEALTHWATCH_FORWARDER_HEALTH_CHECK_AZ: ((healthwatch_forwarder_health_check_az))
+      HEALTHWATCH_FORWARDER_HEALTH_CHECK_VM_TYPE: ((healthwatch_forwarder_health_check_vm_type))
+      HEALTHWATCH_FORWARDER_INGESTOR_INSTANCE_COUNT: ((healthwatch_forwarder_ingestor_instance_count))
+      HEALTHWATCH_FORWARDER_OPSMAN_INSTANCE_COUNT: ((healthwatch_forwarder_opsman_instance_count))
+      HEALTHWATCH_MYSQL_SKIP_NAME_RESOLVE: ((healthwatch_mysql_skip_name_resolve))
+      HEALTHWATCH_OPSMAN: ((healthwatch_opsman))
+      HEALTHWATCH_OPSMAN_ENABLE_URL: ((healthwatch_opsman_enable_url))
+      HEALTHWATCH_MYSQL_PERSISTENT_DISK_MB: ((healthwatch_mysql_persistent_disk_mb))
+      HEALTHWATCH_MYSQL_INSTANCES: ((healthwatch_mysql_instances))
+      HEALTHWATCH_MYSQL_INSTANCE_TYPE: ((healthwatch_mysql_instance_type))
+      HEALTHWATCH_REDIS_INSTANCES: ((healthwatch_redis_instances))
+      HEALTHWATCH_REDIS_INSTANCE_TYPE: ((healthwatch_redis_instance_type))
+      HEALTHWATCH_FORWARDER_PERSISTENT_DISK_MB: ((healthwatch_forwarder_persistent_disk_mb))
+      HEALTHWATCH_FORWARDER_INSTANCES: ((healthwatch_forwarder_instances))
+      HEALTHWATCH_FORWARDER_INSTANCE_TYPE: ((healthwatch_forwarder_instance_type))
+
+- name: disable-healthwatch-errands
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [config-healthwatch]
+    - get: pivnet-product
+      resource: pivnet-healthwatch
+      params:
+        globs: []
+      passed: [config-healthwatch]
+      trigger: true
+
+  - task: config-healthwatch-errands
+    file: pipelines-repo/tasks/config-errands/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_IDENTIFIER: p-healthwatch
+      ERRANDS_TO_DISABLE: ((healthwatch_errands_to_disable))
+      ERRANDS_TO_RUN_ON_CHANGE: ((healthwatch_errands_to_run_on_change))
+
+- name: upload-isoseg
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-isoseg
+      params:
+        globs:
+        - "*.pivotal"
+      trigger: true
+    - get: pivnet-cli
+      params:
+        globs:
+        - "*linux-amd64*"
+    - get: replicator
+      params:
+        globs:
+        - "*linux*"
+
+  - task: replicate-and-upload-tile
+    file: pipelines-repo/tasks/replicate-and-upload-tile/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+      REPLICATOR_NAME: ((isoseg_replicator_name))
+
+  - task: upload-stemcell
+    file: pipelines-repo/tasks/stemcell-uploader/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+      IAAS_TYPE: ((iaas_type))
+
+- name: stage-isoseg
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [upload-isoseg]
+    - get: pivnet-product
+      resource: pivnet-isoseg
+      params:
+        globs:
+        - "*.pivotal"
+      passed: [upload-isoseg]
+      trigger: true
+
+  - task: stage-tile
+    file: pipelines-repo/tasks/stage-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_IDENTIFIER: p-isolation-segment
+
+- name: config-isoseg
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-isoseg
+      params:
+        globs: []
+      passed: [stage-isoseg]
+      trigger: true
+
+  - task: config-tile
+    file: pipelines-repo/tasks/config-p-isolation-segment/task.yml
+    params:
+      DEBUG: ((debug))
+      PRODUCT_IDENTIFIER: p-isolation-segment
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      NETWORK_NAME: ((network_name))
+      SERVICES_NW_AZS: ((other_azs))
+      SERVICE_SINGLETON_JOB_AZ: ((singleton_jobs_az))
+      ISOLATION_SEGMENT_DOMAINS: ((isoseg_isolation_segment_domains))
+      REPLICATOR_NAME: ((isoseg_replicator_name))
+      ENABLE_GROOTFS: ((isoseg_enable_grootfs))
+      GARDEN_DISK_CLEANUP: ((isoseg_garden_disk_cleanup))
+      GOROUTER_SSL_CIPHERS: ((isoseg_gorouter_ssl_ciphers))
+      HAPROXY_FORWARD_TLS: ((isoseg_haproxy_forward_tls))
+      BACKEND_CA: ((isoseg_backend_ca))
+      HAPROXY_MAX_BUFFER_SIZE: ((isoseg_haproxy_max_buffer_size))
+      HAPROXY_SSL_CIPHERS: ((isoseg_haproxy_ssl_ciphers))
+      NETWORKING_POE_SSL_NAME: ((isoseg_networking_poe_ssl_name))
+      NETWORKING_POE_SSL_CERT_PEM: ((isoseg_networking_poe_ssl_cert_pem))
+      NETWORKING_POE_SSL_CERT_PRIVATE_KEY_PEM: ((isoseg_networking_poe_ssl_cert_private_key_pem))
+      NFS_VOLUME_DRIVER: ((isoseg_nfs_volume_driver))
+      LDAP_SERVER_HOST: ((isoseg_ldap_server_host))
+      LDAP_SERVER_PORT: ((isoseg_ldap_server_port))
+      LDAP_SERVICE_ACCOUNT_PASSWORD: ((isoseg_ldap_service_account_password))
+      LDAP_SERVICE_ACCOUNT_USER: ((isoseg_ldap_service_account_user))
+      LDAP_USER_FQDN: ((isoseg_ldap_user_fqdn))
+      ROUTER_BACKEND_MAX_CONN: ((isoseg_router_backend_max_conn))
+      ROUTER_CLIENT_CERT_VALIDATION: ((isoseg_router_client_cert_validation))
+      ROUTING_CUSTOM_CA_CERTIFICATES: ((isoseg_routing_custom_ca_certificates))
+      ROUTING_DISABLE_HTTP: ((isoseg_routing_disable_http))
+      ROUTING_MINIMUM_TLS_VERSION: ((isoseg_routing_minimum_tls_version))
+      ROUTING_TABLE_SHARDING_MODE: ((isoseg_routing_table_sharding_mode))
+      ROUTING_TLS_TERMINATION: ((isoseg_routing_tls_termination))
+      SKIP_CERT_VERIFY: ((isoseg_skip_cert_verify))
+      SYSTEM_LOGGING: ((isoseg_system_logging))
+      SYSLOG_HOST: ((isoseg_syslog_host))
+      SYSLOG_PORT: ((isoseg_syslog_port))
+      SYSLOG_PROTOCOL: ((isoseg_syslog_protocol))
+      SYSLOG_RULE: ((isoseg_syslog_rule))
+      SYSLOG_TLS_CA_CERT: ((isoseg_syslog_tls_ca_cert))
+      SYSLOG_TLS_ENABLED: ((isoseg_syslog_tls_enabled))
+      SYSLOG_TLS_PERMITTED_PEER: ((isoseg_syslog_tls_permitted_peer))
+      SYSLOG_USE_TCP_FOR_FILE_FORWARDING_LOCAL_TRANSPORT: ((isoseg_syslog_use_tcp_for_file_forwarding_local_transport))
+      HA_PROXY_STATIC_IPS: ((isoseg_ha_proxy_static_ips))
+      INTERNAL_ONLY_DOMAINS: ((isoseg_internal_only_domains))
+      TRUSTED_DOMAIN_CIDRS: ((isoseg_trusted_domain_cidrs))
+      ROUTER_STATIC_IPS: ((isoseg_router_static_ips))
+      DISABLE_INSECURE_COOKIES: ((isoseg_disable_insecure_cookies))
+      ENABLE_ZIPKIN: ((isoseg_enable_zipkin))
+      ENABLE_WRITE_ACCESS_LOGS: ((isoseg_enable_write_access_logs))
+      REQUEST_TIMEOUT_IN_SECONDS: ((isoseg_request_timeout_in_seconds))
+      EXTRA_HEADERS_TO_LOG: ((isoseg_extra_headers_to_log))
+      DRAIN_WAIT: ((isoseg_drain_wait))
+      LB_HEALTHY_THRESHOLD: ((isoseg_lb_healthy_threshold))
+      EXECUTOR_DISK_CAPACITY: ((isoseg_executor_disk_capacity))
+      EXECUTOR_MEMORY_CAPACITY: ((isoseg_executor_memory_capacity))
+      INSECURE_DOCKER_REGISTRY_LIST: ((isoseg_insecure_docker_registry_list))
+      PLACEMENT_TAG: ((isoseg_placement_tag))
+      ISOLATED_HA_PROXY_INSTANCES: ((isoseg_isolated_ha_proxy_instances))
+      ISOLATED_ROUTER_INSTANCES: ((isoseg_isolated_router_instances))
+      ISOLATED_DIEGO_CELL_INSTANCES: ((isoseg_isolated_diego_cell_instances))
+
+- name: disable-isoseg-errands
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [config-isoseg]
+    - get: pivnet-product
+      resource: pivnet-isoseg
+      params:
+        globs: []
+      passed: [config-isoseg]
+      trigger: true
+
+  - task: config-isoseg-errands
+    file: pipelines-repo/tasks/config-errands/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_IDENTIFIER: p-isoseg
+      ERRANDS_TO_DISABLE: ((isoseg_errands_to_disable))
+      ERRANDS_TO_RUN_ON_CHANGE: ((isoseg_errands_to_run_on_change))
+
+- name: upload-mysql
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-mysql
+      params:
+        globs:
+        - "*.pivotal"
+      trigger: true
+    - get: pivnet-cli
+      params:
+        globs:
+        - "*linux-amd64*"
+
+  - task: upload-mysql
+    file: pipelines-repo/tasks/upload-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+
+  - task: upload-stemcell
+    file: pipelines-repo/tasks/stemcell-uploader/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+      IAAS_TYPE: ((iaas_type))
+
+- name: stage-mysql
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [upload-mysql]
+    - get: pivnet-product
+      resource: pivnet-mysql
+      params:
+        globs:
+        - "*.pivotal"
+      passed: [upload-mysql]
+      trigger: true
+
+  - task: stage-mysql
+    file: pipelines-repo/tasks/stage-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_IDENTIFIER: p-mysql
+
+- name: config-mysql
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-mysql
+      params:
+        globs: []
+      passed: [stage-mysql]
+      trigger: true
+
+  - task: config-tile
+    file: pipelines-repo/tasks/config-mysql/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      NETWORK_NAME: ((network_name))
+      OTHER_AZS: ((other_azs))
+      SINGLETON_JOBS_AZ: ((singleton_jobs_az))
+      PRODUCT_NAME: p-mysql
+      CF_MYSQL_BROKER_ALLOW_TABLE_LOCKS: ((mysql_broker_allow_table_locks))
+      CF_MYSQL_BROKER_BIND_HOSTNAME: ((mysql_broker_bind_hostname))
+      CF_MYSQL_BROKER_QUOTA_ENFORCER_PAUSE: ((mysql_broker_quota_enforcer_pause))
+      MYSQL_ALLOW_LOCAL_INFILE: ((mysql_allow_local_infile))
+      MYSQL_ALLOW_REMOTE_ADMIN_ACCESS: ((mysql_allow_remote_admin_access))
+      MYSQL_BINLOG_EXPIRE_DAYS: ((mysql_binlog_expire_days))
+      MYSQL_CLI_HISTORY: ((mysql_cli_history))
+      MYSQL_CLUSTER_NAME: ((mysql_cluster_name))
+      MYSQL_CLUSTER_PROBE_TIMEOUT: ((mysql_cluster_probe_timeout))
+      MYSQL_INNODB_LARGE_PREFIX_ENABLED: ((mysql_innodb_large_prefix_enabled))
+      MYSQL_INNODB_STRICT_MODE: ((mysql_innodb_strict_mode))
+      MYSQL_MAX_CONNECTIONS: ((mysql_max_connections))
+      MYSQL_METRICS_POLLING_FREQUENCY: ((mysql_metrics_polling_frequency))
+      MYSQL_MYSQL_START_TIMEOUT: ((mysql_mysql_start_timeout))
+      MYSQL_ROADMIN_PASSWORD: ((mysql_roadmin_password))
+      MYSQL_SKIP_NAME_RESOLVE: ((mysql_skip_name_resolve))
+      MYSQL_TABLE_DEFINITION_CACHE: ((mysql_table_definition_cache))
+      MYSQL_TABLE_OPEN_CACHE: ((mysql_table_open_cache))
+      MYSQL_TMP_TABLE_SIZE: ((mysql_tmp_table_size))
+      BACKUP_OPTIONS: ((mysql_backup_options))
+      BACKUP_OPTIONS_ENABLE_BACKUP_ALL_MASTERS: ((mysql_backup_options_enable_backup_all_masters))
+      BACKUP_OPTIONS_ENABLE_CRON_SCHEDULE: ((mysql_backup_options_enable_cron_schedule))
+      BACKUPS: ((mysql_backups))
+      BACKUPS_AZURE_BASE_URL: ((mysql_backups_azure_base_url))
+      BACKUPS_AZURE_CONTAINER: ((mysql_backups_azure_container))
+      BACKUPS_AZURE_CONTAINER_PATH: ((mysql_backups_azure_container_path))
+      BACKUPS_AZURE_STORAGE_ACCESS_KEY: ((mysql_backups_azure_storage_access_key))
+      BACKUPS_AZURE_STORAGE_ACCOUNT: ((mysql_backups_azure_storage_account))
+      BACKUPS_ENABLE_ACCESS_KEY_ID: ((mysql_backups_enable_access_key_id))
+      BACKUPS_ENABLE_BUCKET_NAME: ((mysql_backups_enable_bucket_name))
+      BACKUPS_ENABLE_BUCKET_PATH: ((mysql_backups_enable_bucket_path))
+      BACKUPS_ENABLE_ENDPOINT_URL: ((mysql_backups_enable_endpoint_url))
+      BACKUPS_ENABLE_REGION: ((mysql_backups_enable_region))
+      BACKUPS_ENABLE_SECRET_ACCESS_KEY: ((mysql_backups_enable_secret_access_key))
+      BACKUPS_GCS_BUCKET_NAME: ((mysql_backups_gcs_bucket_name))
+      BACKUPS_GCS_PROJECT_ID: ((mysql_backups_gcs_project_id))
+      BACKUPS_GCS_SERVICE_ACCOUNT_JSON: ((mysql_backups_gcs_service_account_json))
+      BACKUPS_SCP_DESTINATION: ((mysql_backups_scp_destination))
+      BACKUPS_SCP_PORT: ((mysql_backups_scp_port))
+      BACKUPS_SCP_SCP_KEY: ((mysql_backups_scp_scp_key))
+      BACKUPS_SCP_SERVER: ((mysql_backups_scp_server))
+      BACKUPS_SCP_USER: ((mysql_backups_scp_user))
+      BUFFER_POOL_SIZE: ((mysql_buffer_pool_size))
+      BUFFER_POOL_SIZE_BYTES_BUFFER_POOL_SIZE_BYTES: ((mysql_buffer_pool_size_bytes_buffer_pool_size_bytes))
+      BUFFER_POOL_SIZE_PERCENT_BUFFER_POOL_SIZE_PERCENT: ((mysql_buffer_pool_size_percent_buffer_pool_size_percent))
+      INNODB_FLUSH_LOG_AT_TRX_COMMIT: ((mysql_innodb_flush_log_at_trx_commit))
+      OPTIONAL_PROTECTIONS: ((mysql_optional_protections))
+      OPTIONAL_PROTECTIONS_ENABLE_CANARY_POLL_FREQUENCY: ((mysql_optional_protections_enable_canary_poll_frequency))
+      OPTIONAL_PROTECTIONS_ENABLE_CANARY_WRITE_READ_DELAY: ((mysql_optional_protections_enable_canary_write_read_delay))
+      OPTIONAL_PROTECTIONS_ENABLE_NOTIFY_ONLY: ((mysql_optional_protections_enable_notify_only))
+      OPTIONAL_PROTECTIONS_ENABLE_PREVENT_AUTO_REJOIN: ((mysql_optional_protections_enable_prevent_auto_rejoin))
+      OPTIONAL_PROTECTIONS_ENABLE_RECIPIENT_EMAIL: ((mysql_optional_protections_enable_recipient_email))
+      OPTIONAL_PROTECTIONS_ENABLE_REPLICATION_CANARY: ((mysql_optional_protections_enable_replication_canary))
+      PLAN_COLLECTION: ((mysql_plan_collection))
+      SERVER_ACTIVITY_LOGGING: ((mysql_server_activity_logging))
+      SERVER_ACTIVITY_LOGGING_ENABLE_AUDIT_LOGGING_EVENTS: ((mysql_server_activity_logging_enable_audit_logging_events))
+      SERVER_ACTIVITY_LOGGING_ENABLE_SERVER_AUDIT_EXCLUDED_USERS_CSV: ((mysql_server_activity_logging_enable_server_audit_excluded_users_csv))
+      SYSLOG: ((mysql_syslog))
+      SYSLOG_ENABLED_ADDRESS: ((mysql_syslog_enabled_address))
+      SYSLOG_ENABLED_PORT: ((mysql_syslog_enabled_port))
+      SYSLOG_ENABLED_PROTOCOL: ((mysql_syslog_enabled_protocol))
+      PROXY_SHUTDOWN_DELAY: ((mysql_proxy_shutdown_delay))
+      PROXY_STARTUP_DELAY: ((mysql_proxy_startup_delay))
+      PROXY_STATIC_IPS: ((mysql_proxy_static_ips))
+      MYSQL_INSTANCES: ((mysql_instances))
+      MYSQL_INSTANCE_TYPE: ((mysql_instance_type))
+      MYSQL_PERSISTENT_DISK_MB: ((mysql_persistent_disk_mb))
+      BACKUP_PREPARE_INSTANCES: ((mysql_backup_prepare_instances))
+      BACKUP_PREPARE_INSTANCE_TYPE: ((mysql_backup_prepare_instance_type))
+      BACKUP_PREPARE_PERSISTENT_DISK_MB: ((mysql_backup_prepare_persistent_disk_mb))
+      PROXY_INSTANCES: ((mysql_proxy_instances))
+      PROXY_INSTANCE_TYPE: ((mysql_proxy_instance_type))
+      MONITORING_INSTANCES: ((mysql_monitoring_instances))
+      MONITORING_INSTANCE_TYPE: ((mysql_monitoring_instance_type))
+      CF_MYSQL_BROKER_INSTANCES: ((mysql_broker_instances))
+      CF_MYSQL_BROKER_INSTANCE_TYPE: ((mysql_broker_instance_type))
+
+- name: disable-mysql-errands
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [config-mysql]
+    - get: pivnet-product
+      resource: pivnet-mysql
+      params:
+        globs: []
+      passed: [config-mysql]
+      trigger: true
+
+  - task: disable-errands
+    file: pipelines-repo/tasks/disable-errands/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_IDENTIFIER: p-mysql
+      ERRANDS_TO_DISABLE: ((mysql_errands_to_disable))
+      ERRANDS_TO_RUN_ON_CHANGE: ((mysql_errands_to_run_on_change))
+
+
+
+- name: apply-changes
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [disable-healthwatch-errands,disable-isoseg-errands,disable-mysql-errands]
+      trigger: true
+
+  - task: apply-changes
+    file: pipelines-repo/tasks/apply-changes/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))

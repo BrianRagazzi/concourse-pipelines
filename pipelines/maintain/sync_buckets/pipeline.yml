@@ -1,0 +1,52 @@
+---
+resources: []
+
+jobs:
+- name: sync-buckets
+  plan:
+  - task: sync
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: czero/rootfs
+      params:
+        S3_BUCKET_SOURCE: ""
+        S3_ACCESS_KEY_SOURCE: ""
+        S3_SECRET_ACCESS_KEY_SOURCE: ""
+        S3_BUCKET_DESTINATION: ""
+        S3_ACCESS_KEY_DESTINATION: ""
+        S3_SECRET_ACCESS_KEY_DESTINATION: ""
+        S3_ENDPOINT_DESTINATION: ""
+        S3_ENDPOINT_SOURCE: ""
+        INCLUDE: ""
+        EXCLUDE: ""
+      run:
+        path: bash
+        args:
+        - -euc
+        - |
+          mkdir -p tmp
+          echo "Copy from source bucket to local"
+          aws configure set aws_access_key_id "${S3_ACCESS_KEY_SOURCE}"
+          aws configure set aws_secret_access_key "${S3_SECRET_ACCESS_KEY_SOURCE}"
+          # aws configure set default.region us-east-1
+          aws s3 --no-verify-ssl --endpoint-url "${S3_ENDPOINT_SOURCE}" sync s3://"${S3_BUCKET_SOURCE}" tmp/ --exclude "${EXCLUDE}" --include "${INCLUDE}" 
+
+          echo "Sync local copy with destination bucket"
+          aws configure set aws_access_key_id "${S3_ACCESS_KEY_DESTINATION}"
+          aws configure set aws_secret_access_key "${S3_SECRET_ACCESS_KEY_DESTINATION}"
+          #aws configure set default.region us-east-1
+          aws s3 --no-verify-ssl --endpoint-url "${S3_ENDPOINT_DESTINATION}" sync tmp/ s3://"${S3_BUCKET_DESTINATION}"  --exclude "${EXCLUDE}" --include "${INCLUDE}"
+    params:
+      S3_BUCKET_SOURCE: {{s3_bucket_source}}
+      S3_ACCESS_KEY_SOURCE: {{s3_access_key_source}}
+      S3_SECRET_ACCESS_KEY_SOURCE: {{s3_secret_key_source}}
+      S3_BUCKET_DESTINATION: {{s3_bucket_destination}}
+      S3_ACCESS_KEY_DESTINATION: {{s3_access_key_destination}}
+      S3_SECRET_ACCESS_KEY_DESTINATION: {{s3_secret_key_destination}}
+      S3_ENDPOINT_DESTINATION: {{s3_endpoint_destination}}
+      S3_ENDPOINT_SOURCE: {{s3_endpoint_source}}
+      INCLUDE: {{include}}
+      EXCLUDE: {{exclude}}

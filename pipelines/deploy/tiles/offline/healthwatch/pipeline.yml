@@ -1,0 +1,518 @@
+resources:
+- name: pivnet-product
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    bucket: {{s3_bucket}}
+    endpoint: {{s3_endpoint}}
+    regexp: PCF/Tiles/p-healthwatch-(.*).pivotal
+    secret_access_key: {{s3_secret_access_key}}
+    skip_ssl_verification: true    
+    
+
+jobs:
+
+- name: upload-product
+  plan:
+  - aggregate:
+    - get: pivnet-product
+      params: {globs: []}
+      trigger: true
+  - do:
+    - task: upload-tile
+      config:
+        platform: linux
+        image_resource:
+          type: s3
+          source:
+            access_key_id: {{s3_access_key_id}}
+            bucket: {{s3_bucket}}
+            endpoint: {{s3_endpoint}}
+            regexp: pcfnorm-rootfs/pcfnorm-rootfs-(.*).tgz
+            secret_access_key: {{s3_secret_access_key}}
+            skip_ssl_verification: true
+          params:
+            unpack: true
+        params:
+          IAAS: "vsphere"
+          OPSMAN_PASSWORD: {{opsman_password}}
+          OPSMAN_USERNAME: {{opsman_username}}
+          OPSMAN_DOMAIN_OR_IP_ADDRESS: {{opsman_domain_or_ip_address}}
+          S3_ACCESS_KEY_ID: {{s3_access_key_id}}
+          S3_BUCKET: {{s3_bucket}}
+          S3_ENDPOINT: {{s3_endpoint}}
+          S3_SECRET_ACCESS_KEY: {{s3_secret_access_key}}
+        run:
+          path: bash
+          args:
+          - -c
+          - |
+            cat > task.sh <<'EO_SH'
+            #!/bin/bash
+            
+            set -eu
+
+            FILE_PATH=`find ./pivnet-product -name *.pivotal | sort | head -1`
+            # echo $file_path
+            # echo $file_path > filepath    
+            om-linux \
+            --target https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+            --username "$OPSMAN_USERNAME" \
+            --password "$OPSMAN_PASSWORD" \
+            --request-timeout 3600 \
+            --skip-ssl-validation \
+            upload-product \
+            --product $FILE_PATH
+            
+            
+            
+            EO_SH
+
+            chmod +x task.sh
+            ./task.sh
+        inputs:
+        - name: pivnet-product
+          path: ""
+
+
+- name: stage-product
+  plan:
+  - aggregate:
+    - get: pivnet-product
+      params: {globs: ["*.pivotal"]}
+      trigger: true
+      passed: [upload-product]
+  - do:    
+    - task: stage-tile
+      config:
+        platform: linux
+        image_resource:
+          type: s3
+          source:
+            access_key_id: {{s3_access_key_id}}
+            bucket: {{s3_bucket}}
+            endpoint: {{s3_endpoint}}
+            regexp: pcfnorm-rootfs/pcfnorm-rootfs-(.*).tgz
+            secret_access_key: {{s3_secret_access_key}}
+            skip_ssl_verification: true
+          params:
+            unpack: true
+        params:
+          IAAS: "vsphere"
+          OPSMAN_PASSWORD: {{opsman_password}}
+          OPSMAN_USERNAME: {{opsman_username}}
+          OPSMAN_DOMAIN_OR_IP_ADDRESS: {{opsman_domain_or_ip_address}}
+        run:
+          path: bash
+          args:
+          - -c
+          - |
+            cat > task.sh <<'EO_SH'
+            #!/bin/bash
+            set -eu
+
+            TILE_RELEASE=$(om-linux -t https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+            -u $OPSMAN_USERNAME \
+            -p $OPSMAN_PASSWORD \
+            -k available-products \
+            | grep -e "p-healthwatch")
+
+            PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
+            PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
+            
+            om-linux \
+            --target "https://$OPSMAN_DOMAIN_OR_IP_ADDRESS" \
+            --skip-ssl-validation \
+            --username "${OPSMAN_USERNAME}" \
+            --password "${OPSMAN_PASSWORD}" \
+            stage-product \
+            --product-name "${PRODUCT_NAME}" \
+            --product-version "${PRODUCT_VERSION}"
+            
+            
+            
+            
+            EO_SH
+
+            chmod +x task.sh
+            ./task.sh
+
+        inputs:
+        - name: pivnet-product
+          path: ""
+
+
+- name: config-product
+  plan:
+  - aggregate:
+    - get: pivnet-product
+      resource: pivnet-product
+      params:
+        globs:
+        - "*.pivotal"
+      passed: [stage-product]
+      trigger: true
+
+  - task: config-tile
+    config:
+      platform: linux
+      image_resource:
+        type: s3
+        source:
+          access_key_id: {{s3_access_key_id}}
+          bucket: {{s3_bucket}}
+          endpoint: {{s3_endpoint}}
+          regexp: pcfnorm-rootfs/pcfnorm-rootfs-(.*).tgz
+          secret_access_key: {{s3_secret_access_key}}
+          skip_ssl_verification: true
+        params:
+          unpack: true
+      params:
+        DEBUG:
+        OPSMAN_HOST:
+        OPSMAN_USR:
+        OPSMAN_PWD:
+        NETWORK_NAME:
+        SERVICE_NETWORK_NAME:
+        OTHER_AZS:
+        SINGLETON_JOBS_AZ:
+        PRODUCT_NAME:
+        HEALTHWATCH_FORWARDER_BOSHHEALTH_INSTANCE_COUNT:
+        HEALTHWATCH_FORWARDER_BOSHTASKS_INSTANCE_COUNT:
+        HEALTHWATCH_FORWARDER_CANARY_INSTANCE_COUNT:
+        HEALTHWATCH_FORWARDER_CLI_INSTANCE_COUNT:
+        HEALTHWATCH_FORWARDER_FOUNDATION_NAME:
+        HEALTHWATCH_FORWARDER_HEALTH_CHECK_AZ:
+        HEALTHWATCH_FORWARDER_HEALTH_CHECK_VM_TYPE:
+        HEALTHWATCH_FORWARDER_INGESTOR_INSTANCE_COUNT:
+        HEALTHWATCH_FORWARDER_OPSMAN_INSTANCE_COUNT:
+        MYSQL_SKIP_NAME_RESOLVE:
+        OPSMAN:
+        OPSMAN_ENABLE_URL:
+        MYSQL_PERSISTENT_DISK_MB:
+        MYSQL_INSTANCES:
+        MYSQL_INSTANCE_TYPE:
+        PROXY_INSTANCES:
+        PROXY_INSTANCE_TYPE:
+        HEALTHWATCH_FORWARDER_PERSISTENT_DISK_MB:
+        HEALTHWATCH_FORWARDER_INSTANCES:
+        HEALTHWATCH_FORWARDER_INSTANCE_TYPE:
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+
+
+          properties_config=$(jq -n \
+            --arg healthwatch_forwarder_boshhealth_instance_count ${HEALTHWATCH_FORWARDER_BOSHHEALTH_INSTANCE_COUNT:-1} \
+            --arg healthwatch_forwarder_boshtasks_instance_count ${HEALTHWATCH_FORWARDER_BOSHTASKS_INSTANCE_COUNT:-2} \
+            --arg healthwatch_forwarder_canary_instance_count ${HEALTHWATCH_FORWARDER_CANARY_INSTANCE_COUNT:-2} \
+            --arg healthwatch_forwarder_cli_instance_count ${HEALTHWATCH_FORWARDER_CLI_INSTANCE_COUNT:-2} \
+            --arg healthwatch_forwarder_foundation_name ${HEALTHWATCH_FORWARDER_FOUNDATION_NAME:-null} \
+            --arg healthwatch_forwarder_health_check_az ${HEALTHWATCH_FORWARDER_HEALTH_CHECK_AZ:-null} \
+            --arg healthwatch_forwarder_health_check_vm_type ${HEALTHWATCH_FORWARDER_HEALTH_CHECK_VM_TYPE:-null} \
+            --arg healthwatch_forwarder_ingestor_instance_count ${HEALTHWATCH_FORWARDER_INGESTOR_INSTANCE_COUNT:-4} \
+            --arg healthwatch_forwarder_opsman_instance_count ${HEALTHWATCH_FORWARDER_OPSMAN_INSTANCE_COUNT:-2} \
+            --arg mysql_skip_name_resolve ${MYSQL_SKIP_NAME_RESOLVE:-true} \
+            --arg opsman ${OPSMAN:-"enable"} \
+            --arg opsman_enable_url ${OPSMAN_ENABLE_URL:-null} \
+          '{
+            ".properties.opsman": {
+              "value": $opsman
+            }
+          }
+          +
+          if $opsman == "enable" then
+          {
+            ".properties.opsman.enable.url": {
+              "value": $opsman_enable_url
+            }
+          }
+          else .
+          end
+          +
+          {
+            ".mysql.skip_name_resolve": {
+              "value": $mysql_skip_name_resolve
+            },
+            ".healthwatch-forwarder.foundation_name": {
+              "value": $healthwatch_forwarder_foundation_name
+            },
+            ".healthwatch-forwarder.ingestor_instance_count": {
+              "value": $healthwatch_forwarder_ingestor_instance_count
+            },
+            ".healthwatch-forwarder.canary_instance_count": {
+              "value": $healthwatch_forwarder_canary_instance_count
+            },
+            ".healthwatch-forwarder.boshhealth_instance_count": {
+              "value": $healthwatch_forwarder_boshhealth_instance_count
+            },
+            ".healthwatch-forwarder.boshtasks_instance_count": {
+              "value": $healthwatch_forwarder_boshtasks_instance_count
+            },
+            ".healthwatch-forwarder.cli_instance_count": {
+              "value": $healthwatch_forwarder_cli_instance_count
+            },
+            ".healthwatch-forwarder.opsman_instance_count": {
+              "value": $healthwatch_forwarder_opsman_instance_count
+            },
+            ".healthwatch-forwarder.health_check_az": {
+              "value": $healthwatch_forwarder_health_check_az
+            },
+            ".healthwatch-forwarder.health_check_vm_type": {
+              "value": $healthwatch_forwarder_health_check_vm_type
+            }
+          }'
+          )
+
+          resources_config="{
+            \"mysql\": {\"instances\": ${MYSQL_INSTANCES:-3}, \"instance_type\": { \"id\": \"${MYSQL_INSTANCE_TYPE:-2xlarge}\"}, \"persistent_disk\": { \"size_mb\": \"${MYSQL_PERSISTENT_DISK_MB:-102400}\"}},
+            \"proxy\": {\"instances\": ${PROXY_INSTANCES:-2}, \"instance_type\": { \"id\": \"${PROXY_INSTANCE_TYPE:-medium.disk}\"}},
+            \"healthwatch-forwarder\": {\"instances\": ${HEALTHWATCH_FORWARDER_INSTANCES:-1}, \"instance_type\": { \"id\": \"${HEALTHWATCH_FORWARDER_INSTANCE_TYPE:-xlarge}\"}, \"persistent_disk\": { \"size_mb\": \"${HEALTHWATCH_FORWARDER_PERSISTENT_DISK_MB:-102400}\"}}
+          }"
+
+          network_config=$(jq -n \
+            --arg network_name "$NETWORK_NAME" \
+            --arg other_azs "$OTHER_AZS" \
+            --arg singleton_az "$SINGLETON_JOBS_AZ" \
+            --arg service_network_name "$SERVICE_NETWORK_NAME" \
+            '
+            {
+              "network": {
+                "name": $network_name
+              },
+              "other_availability_zones": ($other_azs | split(",") | map({name: .})),
+              "singleton_availability_zone": {
+                "name": $singleton_az
+              },
+              "service_network": {
+                "name": $service_network_name
+              }
+            }
+            '
+          )
+
+          # echo $network_config
+          om-linux \
+            --target https://$OPSMAN_HOST \
+            --username "$OPSMAN_USR" \
+            --password "$OPSMAN_PWD" \
+            --skip-ssl-validation \
+            configure-product \
+            --product-name p-healthwatch \
+            --product-network "$network_config"
+
+          om-linux \
+            --target https://$OPSMAN_HOST \
+            --username "$OPSMAN_USR" \
+            --password "$OPSMAN_PWD" \
+            --skip-ssl-validation \
+            configure-product \
+            --product-name p-healthwatch \
+            --product-resources "$resources_config" \
+            --product-properties "$properties_config" \
+
+    
+            
+          EO_SH
+          
+          chmod +x task.sh
+          ./task.sh
+          
+      inputs:
+      - name: pivnet-product
+        path: ""      
+    params:
+      DEBUG: ((debug))
+      OPSMAN_HOST: ((opsman_domain_or_ip_address))
+      OPSMAN_USR: ((opsman_username))
+      OPSMAN_PWD: ((opsman_password))
+      NETWORK_NAME: ((network_name))
+      SERVICE_NETWORK_NAME: ((service_network_name))
+      OTHER_AZS: ((other_azs))
+      SINGLETON_JOBS_AZ: ((singleton_jobs_az))
+      PRODUCT_NAME: ((product_name))
+      HEALTHWATCH_FORWARDER_BOSHHEALTH_INSTANCE_COUNT: ((healthwatch_forwarder_boshhealth_instance_count))
+      HEALTHWATCH_FORWARDER_BOSHTASKS_INSTANCE_COUNT: ((healthwatch_forwarder_boshtasks_instance_count))
+      HEALTHWATCH_FORWARDER_CANARY_INSTANCE_COUNT: ((healthwatch_forwarder_canary_instance_count))
+      HEALTHWATCH_FORWARDER_CLI_INSTANCE_COUNT: ((healthwatch_forwarder_cli_instance_count))
+      HEALTHWATCH_FORWARDER_FOUNDATION_NAME: ((healthwatch_forwarder_foundation_name))
+      HEALTHWATCH_FORWARDER_HEALTH_CHECK_AZ: ((healthwatch_forwarder_health_check_az))
+      HEALTHWATCH_FORWARDER_HEALTH_CHECK_VM_TYPE: ((healthwatch_forwarder_health_check_vm_type))
+      HEALTHWATCH_FORWARDER_INGESTOR_INSTANCE_COUNT: ((healthwatch_forwarder_ingestor_instance_count))
+      HEALTHWATCH_FORWARDER_OPSMAN_INSTANCE_COUNT: ((healthwatch_forwarder_opsman_instance_count))
+      MYSQL_SKIP_NAME_RESOLVE: ((mysql_skip_name_resolve))
+      OPSMAN: ((opsman))
+      OPSMAN_ENABLE_URL: ((opsman_enable_url))
+      MYSQL_PERSISTENT_DISK_MB: ((mysql_persistent_disk_mb))
+      MYSQL_INSTANCES: ((mysql_instances))
+      MYSQL_INSTANCE_TYPE: ((mysql_instance_type))
+      PROXY_INSTANCES: ((proxy_instances))
+      PROXY_INSTANCE_TYPE: ((proxy_instance_type))
+      HEALTHWATCH_FORWARDER_PERSISTENT_DISK_MB: ((healthwatch_forwarder_persistent_disk_mb))
+      HEALTHWATCH_FORWARDER_INSTANCES: ((healthwatch_forwarder_instances))
+      HEALTHWATCH_FORWARDER_INSTANCE_TYPE: ((healthwatch_forwarder_instance_type))
+
+- name: upload-stemcell
+  plan:
+  - aggregate:
+    - get: pivnet-product
+      resource: pivnet-product
+      params:
+        globs:
+        - "*.pivotal"
+      passed: [stage-product]
+      trigger: true
+  - do:
+    - task: upload-stemcell
+      config:
+        platform: linux
+        image_resource:
+          type: s3
+          source:
+            access_key_id: {{s3_access_key_id}}
+            bucket: {{s3_bucket}}
+            endpoint: {{s3_endpoint}}
+            regexp: pcfnorm-rootfs/pcfnorm-rootfs-(.*).tgz
+            secret_access_key: {{s3_secret_access_key}}
+            skip_ssl_verification: true
+          params:
+            unpack: true
+        params:
+          IAAS: "vsphere"
+          OPSMAN_PASSWORD: {{opsman_password}}
+          OPSMAN_USERNAME: {{opsman_username}}
+          OPSMAN_DOMAIN_OR_IP_ADDRESS: {{opsman_domain_or_ip_address}}
+          S3_ACCESS_KEY_ID: {{s3_access_key_id}}
+          S3_BUCKET: {{s3_bucket}}
+          S3_ENDPOINT: {{s3_endpoint}}
+          S3_SECRET_ACCESS_KEY: {{s3_secret_access_key}}
+          S3_BUCKET_STEMCELL_FOLDER: {{s3_bucket_stemcell_folder}}
+        run:
+          path: bash
+          args:
+          - -c
+          - |
+            cat > task.sh <<'EO_SH'
+            #!/bin/bash
+            
+            set -eu
+
+            #stemcell_version=`cat ./pivnet-product/metadata.json | jq -r '.Dependencies[] | select(.Release.Product.Name | contains("Stemcells")) | .Release.Version' | head -1`
+            SC_VERSION=$(
+              om-linux --target https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+                --username "$OPSMAN_USERNAME" \
+                --password "$OPSMAN_PASSWORD" \
+                --skip-ssl-validation \
+                curl --silent --path "/api/v0/stemcell_assignments" | \
+                jq -r '.products[] | select(.identifier == "p-healthwatch") | .required_stemcell_version'
+            )
+            
+            
+            #STEMCELL_NAME=bosh-stemcell-$SC_VERSION-$IAAS-esxi-ubuntu-trusty-go_agent.tgz
+            
+            aws configure set aws_access_key_id "${S3_ACCESS_KEY_ID}"
+            aws configure set aws_secret_access_key "${S3_SECRET_ACCESS_KEY}"
+            
+            echo "Downloading stemcell $SC_VERSION"
+
+            available_stemcells=$(
+              aws --no-verify-ssl \
+              --endpoint-url $S3_ENDPOINT \
+              s3 ls "s3://${S3_BUCKET}/${S3_BUCKET_STEMCELL_FOLDER}/" | grep $IAAS | cut -d' ' -f5
+            )
+
+            if [[ -z "$available_stemcells" ]]; then
+              echo "No stemcells available for ${IAAS} in s3://${S3_BUCKET}/${S3_BUCKET_STEMCELL_FOLDER}/"
+              exit 1
+            fi
+
+            stemcell_to_download=$(
+              set +e
+              echo "$available_stemcells" | grep $SC_VERSION | tail -1
+              set -e
+            )
+
+            if [[ -z "$stemcell_to_download" ]]; then
+              echo "Stemcell with version '$SC_VERSION' not found in s3://${S3_BUCKET}/${S3_BUCKET_STEMCELL_FOLDER}/"
+              exit 1
+            fi
+
+            aws --no-verify-ssl \
+              --endpoint-url $S3_ENDPOINT \
+              s3 cp "s3://${S3_BUCKET}/${S3_BUCKET_STEMCELL_FOLDER}/${stemcell_to_download}" .
+
+            om-linux --target https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+              --username "$OPSMAN_USERNAME" \
+              --password "$OPSMAN_PASSWORD" \
+              --skip-ssl-validation \
+              upload-stemcell \
+              --stemcell "./${stemcell_to_download}"
+            
+            EO_SH
+
+            chmod +x task.sh
+            ./task.sh
+        inputs:
+        - name: pivnet-product
+          path: ""
+
+      
+
+- name: deploy
+  plan:
+  - aggregate:
+    - get: pivnet-product
+      passed: [config-product,upload-stemcell]
+      trigger: false
+      params: {globs: []}
+  - task: deploy
+    config:
+      platform: linux
+      image_resource:
+        type: s3
+        source:
+          access_key_id: {{s3_access_key_id}}
+          bucket: {{s3_bucket}}
+          endpoint: {{s3_endpoint}}
+          regexp: pcfnorm-rootfs/pcfnorm-rootfs-(.*).tgz
+          secret_access_key: {{s3_secret_access_key}}
+          skip_ssl_verification: true
+        params:
+          unpack: true
+      params:
+        OPSMAN_DOMAIN_OR_IP_ADDRESS: ""
+        OPSMAN_PASSWORD: ""
+        OPSMAN_USERNAME: ""
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+
+          set -eu
+
+          echo "Applying changes on Ops Manager @ ${OPSMAN_DOMAIN_OR_IP_ADDRESS}"
+
+           om-linux \
+            --target "https://${OPSMAN_DOMAIN_OR_IP_ADDRESS}" \
+            --skip-ssl-validation \
+            --username "${OPSMAN_USERNAME}" \
+            --password "${OPSMAN_PASSWORD}" \
+            apply-changes \
+            --ignore-warnings
+
+          EO_SH
+
+          chmod +x task.sh
+          ./task.sh
+    params:
+      OPSMAN_DOMAIN_OR_IP_ADDRESS: {{opsman_domain_or_ip_address}}
+      OPSMAN_PASSWORD: {{opsman_password}}
+      OPSMAN_USERNAME: {{opsman_username}}
+

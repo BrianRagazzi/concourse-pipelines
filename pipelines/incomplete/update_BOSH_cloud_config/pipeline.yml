@@ -1,0 +1,101 @@
+groups: []
+
+resources:
+- name: bosh-cli
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    bucket: {{s3_bucket}}
+    endpoint: {{s3_endpoint}}
+    regexp: BOSH/bosh-cli-(.*)-linux-amd64
+    secret_access_key: {{s3_secret_access_key}}
+
+- name: bosh-config-creds
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "BOSH/config/creds-(.*).yml"
+
+- name: bosh-config-cloud-config
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "BOSH/config/cloud-config-(.*).cfg"
+
+resource_types: []
+jobs:
+- name: cloud-config
+  plan:
+  - aggregate:
+    - get: bosh-config-creds
+    - get: bosh-config-cloud-config
+    - get: bosh-cli
+      params: {globs: []}
+      trigger: true
+  - task: login_set_config
+    config:
+      platform: linux
+      image_resource:
+        type: s3
+        source:
+          access_key_id: {{s3_access_key_id}}
+          bucket: {{s3_bucket}}
+          endpoint: {{s3_endpoint}}
+          regexp: czero-cflinuxfs2/czero-cflinuxfs2-(.*)-.*.tar
+          secret_access_key: {{s3_secret_access_key}}
+        params:
+          unpack: true
+      params:
+        INTERNAL_IP: ""
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+
+          set -eu
+          boshclipath=`find ./bosh-cli/ -name bosh-cli-*`
+          echo $boshclipath
+          chmod +x $boshclipath
+          #ln -s $boshclipath bosh
+          mv $boshclipath ./bosh
+          
+          credspath=`find ./bosh-config-creds/ -name creds-*.yml`
+          ccpath=`find ./bosh-config-cloud-config/ -name cloud-config-*.cfg`
+
+          ./bosh alias-env bosh-1 -e $INTERNAL_IP --ca-cert <(./bosh int $credspath --path /director_ssl/ca)
+          export BOSH_CLIENT=admin
+          export BOSH_CLIENT_SECRET=`./bosh int $credspath --path /admin_password`
+          ./bosh -e bosh-1 env
+
+          echo 'y' | ./bosh -e bosh-1 update-cloud-config $ccpath
+          
+          datever=$(date +"%y%m%d%H%M%S")
+          cp $ccpath ./out/cloud-config-${datever}.cfg
+          EO_SH
+
+          chmod +x task.sh
+          ./task.sh
+      inputs:
+      - name: bosh-config-cloud-config
+        path: ""
+      - name: bosh-cli
+        path: ""
+      - name: bosh-config-creds
+        path: ""
+      outputs: 
+      - name: out
+    params:
+      INTERNAL_IP: {{internal_ip}}
+  - put: bosh-config-cloud-config
+    params:
+      file: ./out/cloud-config-*.cfg
+

@@ -1,0 +1,51 @@
+pivnet_token: ((pivnet_token)) # [R] PivNet Access Token
+github_token: ((github_token)) # [R] Your github token
+github_repo: https://github.com/BrianRagazzi/concourse-pipelines # [R] Pipelines github repo
+github_branch: master
+github_username: ((github_username)) # [R] Your github username
+
+iaas_type: vsphere
+
+debug: false  # Set to true if you want to see all the tasks output. This will also show all the secrets and certs, so think twice
+
+## Ops Manager installation meta data
+ops_mgr_host: ((ops_mgr_host)) # [R] Ops Manager FQDN, ex: opsmgr.example.com
+ops_mgr_usr: ((ops_mgr_usr))  # [R] Ops Manager admin user
+ops_mgr_pwd: ((ops_mgr_pwd))  # [R] Ops Manager admin password
+
+product_name: harbor-container-registry
+product_identifier: harbor-container-registry
+product_version: ^1\.4\..*$
+
+singleton_jobs_az: AZ1 # [R] Place singleton jobs in an AZ
+other_azs: AZ1,AZ2,AZ3        # [R] Balance other jobs in AZ's (comma-separated)
+network_name: SERVICES     # [R] Tile network name
+
+harbor_hostname:
+harbor_domain:
+harbor_admin_password:
+### Options:
+### - db_auth        (Internal, i.e. Harbor internal user management)
+### - ldap_auth      (LDAP)
+### - uaa_auth_pks   (UAA in Pivotal Container Service)
+### - uaa_auth_pas   (UAA in Pivotal Application Service)
+harbor_auth_mode: db_auth
+harbor_ldap_auth_url: # The LDAP Endpoint URL.
+harbor_ldap_auth_verify_cert: # Verify LDAP server SSL certificate (flag) - true or false
+harbor_ldap_auth_searchdn: # The DN of the user who has the permission to search the LDAP server.
+harbor_ldap_auth_searchpw: # The password of the user who has the permission to search the LDAP server.
+harbor_ldap_auth_basedn: # The base DN from which to look up a user in LDAP server
+harbor_ldap_auth_uid: # The attribute used in a search to match a user, it could be uid, cn, email, sAMAccountName or other attributes depending on your LDAP server
+harbor_ldap_auth_filter: # Search filter for LDAP server. Make sure the syntax of the filter is correct
+harbor_ldap_auth_scope: # The LDAP scope to search for users Options: 0 (Base), 1 (nsx_networking_enabledevel), 2 (Subtree)
+harbor_ldap_auth_timeout: # The timeout (in seconds) when connecting to the LDAP Server
+harbor_registry_storage: filesystem #options: filesystem: Local File System, s3: AWS S3
+harbor_s3_registry_storage_access_key: # S3 Access Key
+harbor_s3s3_registry_storage_secret_key: # S3 Secret Key
+harbor_s3_registry_storage_region: # S3 Region
+harbor_s3s3_registry_storage_endpoint_url: # S3 Endpoint URL of your S3-compatible file store
+harbor_s3_registry_storage_bucket: # S3 Bucket Name
+harbor_s3s3_registry_storage_root_directory: # S3 Root Directory in the Bucket
+harbor_use_clair: true # Determine if include Clair in the deployment to support vulnerability scanning (flag: true or false)
+harbor_use_notary: true # Determine if include Notary in the deployment to support content trust (flag: true or false)
+harbor_errands_to_disable:

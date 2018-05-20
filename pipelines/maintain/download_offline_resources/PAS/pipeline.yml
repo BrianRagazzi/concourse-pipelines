@@ -1,0 +1,272 @@
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tag: latest-final
+
+resources:
+- name: wee-hours
+  type: time
+  source:
+    start: 12:00 AM
+    stop: 2:00 AM
+
+- name: stemcell-pivnet
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: stemcells
+    sort_by: semver
+
+- name: ops-manager-pivnet
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: ops-manager
+    product_version: {{opsman_major_minor_version}}
+    sort_by: semver
+
+- name: elastic-runtime-pivnet
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: elastic-runtime
+    product_version: {{ert_major_minor_version}}
+    sort_by: semver
+
+- name: pcf-metrics-pivnet
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: apm
+    sort_by: semver
+
+- name: iso-seg-pivnet
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: p-isolation-segment
+    sort_by: semver
+
+- name: mysql-pivnet
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: p-mysql
+    sort_by: semver
+
+- name: redis-pivnet
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: p-redis
+    sort_by: semver
+
+- name: pcfnorm-rootfs
+  type: docker-image
+  source:
+    repository: pcfnorm/rootfs
+    tag: latest
+    username: {{dockerhub_username}}
+    password: {{dockerhub_password}}
+
+- name: ops-manager-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "PCF/ops-manager/pcf-vsphere-(.*).ova"
+    disable_ssl: false
+    skip_ssl_verification: true
+
+- name: pivotal-app-services-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "PCF/PAS/cf-(.*).pivotal"
+    disable_ssl: false
+    skip_ssl_verification: true
+
+- name: pcf-metrics-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "PCF/Tiles/apm-(.*).pivotal"
+    disable_ssl: false
+    skip_ssl_verification: true
+
+- name: iso-seg-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "PCF/Tiles/p-isolation-segment-(.*).pivotal"
+    disable_ssl: false
+    skip_ssl_verification: true
+
+- name: mysql-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "PCF/Tiles/p-mysql-(.*).pivotal"
+    disable_ssl: false
+    skip_ssl_verification: true
+
+- name: redis-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "PCF/Tiles/p-redis-(.*).pivotal"
+    disable_ssl: false
+    skip_ssl_verification: true
+
+- name: pcfnorm-rootfs-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "pcfnorm-rootfs/pcfnorm-rootfs-(.*).tgz"
+    disable_ssl: false
+    skip_ssl_verification: true
+
+
+- name: stemcell-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    disable_ssl: false
+    regexp: PCF/stemcells/bosh-stemcell-(.*)-.*.tgz
+    skip_ssl_verification: true
+
+jobs:
+- name: stemcell
+  plan:
+  - get: wee-hours
+    trigger: true
+  - get: stemcell-pivnet
+    params:
+      globs: ["*vsphere*"]
+  - put: stemcell-s3
+    params:
+      file: "stemcell-pivnet/*.tgz"
+
+- name: ops-manager
+  plan:
+  - get: wee-hours
+    trigger: true
+  - get: ops-manager-pivnet
+    params:
+      globs: ["*.ova"]
+  - put: ops-manager-s3
+    params:
+      file: "ops-manager-pivnet/pcf-vsphere-*.ova"
+
+- name: elastic-runtime
+  plan:
+  - get: wee-hours
+    trigger: true
+  - get: elastic-runtime-pivnet
+    params:
+      globs: ["cf-*.pivotal"]
+  - put: pivotal-app-services-s3
+    params:
+      file: "elastic-runtime-pivnet/cf-*.pivotal"
+
+- name: pcf-metrics
+  plan:
+  - get: wee-hours
+    trigger: true
+  - get: pcf-metrics-pivnet
+    params:
+      globs: ["*.pivotal"]
+  - put: pcf-metrics-s3
+    params:
+      file: "pcf-metrics-pivnet/apm-*.pivotal"
+
+- name: iso-seg
+  plan:
+  - get: wee-hours
+    trigger: true
+  - get: iso-seg-pivnet
+    params:
+      globs: ["*.pivotal"]
+  - put: iso-seg-s3
+    params:
+      file: "iso-seg-pivnet/p-isolation-segment-*.pivotal"
+
+- name: mysql
+  plan:
+  - get: wee-hours
+    trigger: true
+  - get: mysql-pivnet
+    params:
+      globs: ["*.pivotal"]
+  - put: mysql-s3
+    params:
+      file: "mysql-pivnet/p-mysql-*.pivotal"
+
+- name: redis
+  plan:
+  - get: wee-hours
+    trigger: true
+  - get: redis-pivnet
+    params:
+      globs: ["*.pivotal"]
+  - put: redis-s3
+    params:
+      file: "redis-pivnet/p-redis-*.pivotal"
+
+- name: czero-cflinuxfs2
+  plan:
+  - aggregate:
+    - get: pcfnorm-rootfs
+    - get: wee-hours
+      trigger: true
+  - task: create-tarball
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: pcfnorm/rootfs
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          set -eu
+          datever=$(date +"%y%m%d%H%M%S")
+          echo "Creating tarball with version ${datever}..."
+          tar czf "pcfnorm-rootfs-tarball/pcfnorm-rootfs-${datever}.tgz" -C pcfnorm-rootfs .
+      inputs:
+      - name: czero-cflinuxfs2
+        path: ""
+        optional: false
+      outputs:
+      - name: pcfnorm-rootfs-tarball
+        path: ""
+  - put: pcfnorm-rootfs-s3
+    params:
+      file: pcfnorm-rootfs-tarball/pcfnorm-rootfs-*.tgz

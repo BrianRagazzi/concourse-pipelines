@@ -1,0 +1,19 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: pcfnorm/rootfs
+
+
+inputs:
+  - name: pipelines-repo
+
+params:
+  OPSMAN_USERNAME:
+  OPSMAN_PASSWORD:
+  OPSMAN_DOMAIN_OR_IP_ADDRESS:
+
+run:
+  path: pipelines-repo/tasks/wait-opsman-clear/task.sh

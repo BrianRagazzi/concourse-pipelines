@@ -1,0 +1,226 @@
+groups: []
+
+resources:
+- name: bosh-config-creds
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "BOSH/config/creds-(.*).yml"
+    skip_ssl_verification: true
+
+- name: bosh-cli
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    bucket: {{s3_bucket}}
+    endpoint: {{s3_endpoint}}
+    regexp: BOSH/bosh-cli-(.*)-linux-amd64
+    secret_access_key: {{s3_secret_access_key}}
+    skip_ssl_verification: true
+
+- name: bosh-manifests-concourse
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    bucket: {{s3_bucket}}
+    endpoint: {{s3_endpoint}}
+    regexp: BOSH/manifests/concourse-deployment-(.*).tgz
+    secret_access_key: {{s3_secret_access_key}}
+    skip_ssl_verification: true
+
+   
+# - name: bosh-config-concourse-cluster-creds
+#  type: s3
+#  source:
+#    access_key_id: {{s3_access_key_id}}
+#    secret_access_key: {{s3_secret_access_key}}
+#    endpoint: {{s3_endpoint}}
+#    bucket: {{s3_bucket}}
+#    regexp: "BOSH/config/concourse-cluster-creds-(.*).yml"
+#    skip_ssl_verification: true
+
+resource_types: []
+jobs:
+- name: scale-up-concourse
+  plan:
+  - aggregate:
+     - get: bosh-config-creds
+     - get: bosh-manifests-concourse
+       params:
+         unpack: true
+         globs: [] 
+     - get: bosh-cli
+       params: {globs: []}
+  - task: deploy_concourse_release
+    config:
+      platform: linux
+      image_resource:
+        type: s3
+        source:
+          access_key_id: {{s3_access_key_id}}
+          bucket: {{s3_bucket}}
+          endpoint: {{s3_endpoint}}
+          regexp: czero-cflinuxfs2/czero-cflinuxfs2-(.*).tgz
+          secret_access_key: {{s3_secret_access_key}}
+          skip_ssl_verification: true
+        params:
+          unpack: true
+      params:
+        INTERNAL_IP: ""
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+
+          set -e
+          #uo pipefail
+          boshclipath=`find ./bosh-cli/ -name bosh-cli-*`
+          echo $boshclipath
+          chmod +x $boshclipath
+          mv $boshclipath ./bosh
+          
+          credspath=`find ./bosh-config-creds/ -name creds-*.yml`
+          concoursepath=./bosh-manifests-concourse/cluster
+
+          ./bosh alias-env bosh-1 -e $INTERNAL_IP --ca-cert <(./bosh int $credspath --path /director_ssl/ca)
+          export BOSH_CLIENT=admin
+          export BOSH_CLIENT_SECRET=`./bosh int $credspath --path /admin_password`
+          ./bosh -e bosh-1 env
+          
+          # get existing manifest
+          ./bosh -e bosh-1 -d concourse manifest > concourse.yml
+          currworkers=`./bosh int concourse.yml --path /instance_groups/name=worker/instances`
+          currwebs=`./bosh int concourse.yml --path /instance_groups/name=web/instances`
+          newworkers=`expr $currworkers + 1`
+
+          echo "Increasing worker count from $currworkers to $newworkers"
+          echo 'y' | ./bosh -e bosh-1 deploy -d concourse ./concourse.yml \
+          -o $concoursepath/operations/scale.yml \
+           --var worker_instances=$newworkers \
+           --var web_instances=$currwebs \
+          
+           
+          EO_SH
+
+          chmod +x task.sh
+          ./task.sh
+          
+          #datever=$(date +"%y%m%d%H%M%S")
+          #if [ -e ./cluster-creds.yml] && [-s ./cluster-creds.yml]
+          #then
+          #  cp ./cluster-creds.yml ./out/concourse-cluster-creds-${datever}.yml
+          #fi  
+      inputs:
+      - name: bosh-config-creds
+        path: ""
+      - name: bosh-cli
+        path: ""
+      - name: bosh-manifests-concourse
+        path: ""
+#      outputs: 
+#      - name: out
+    params:
+      INTERNAL_IP: {{internal_ip}}
+#  - put: bosh-config-concourse-cluster-creds
+#    params:
+#      file: ./out/concourse-cluster-creds-*.yml
+      
+- name: scale-down-concourse
+  plan:
+  - aggregate:
+     - get: bosh-config-creds
+     - get: bosh-manifests-concourse
+       params:
+         unpack: true
+         globs: [] 
+     - get: bosh-cli
+       params: {globs: []}
+  - task: deploy_concourse_release
+    config:
+      platform: linux
+      image_resource:
+        type: s3
+        source:
+          access_key_id: {{s3_access_key_id}}
+          bucket: {{s3_bucket}}
+          endpoint: {{s3_endpoint}}
+          regexp: czero-cflinuxfs2/czero-cflinuxfs2-(.*).tgz
+          secret_access_key: {{s3_secret_access_key}}
+          skip_ssl_verification: true
+        params:
+          unpack: true
+      params:
+        INTERNAL_IP: ""
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+
+          set -e
+          #uo pipefail
+          boshclipath=`find ./bosh-cli/ -name bosh-cli-*`
+          echo $boshclipath
+          mv $boshclipath ./bosh
+          if [ -e ./bosh ]; then
+            chmod +x ./bosh
+          fi
+                    
+          credspath=`find ./bosh-config-creds/ -name creds-*.yml`
+          concoursepath=./bosh-manifests-concourse/cluster
+
+          ./bosh alias-env bosh-1 -e $INTERNAL_IP --ca-cert <(./bosh int $credspath --path /director_ssl/ca)
+          export BOSH_CLIENT=admin
+          export BOSH_CLIENT_SECRET=`./bosh int $credspath --path /admin_password`
+          ./bosh -e bosh-1 env
+          
+          # get existing manifest
+          ./bosh -e bosh-1 -d concourse manifest > concourse.yml
+          currworkers=`./bosh int concourse.yml --path /instance_groups/name=worker/instances`
+          currwebs=`./bosh int concourse.yml --path /instance_groups/name=web/instances`
+          newworkers=`expr $currworkers - 1`
+          
+          if [ $newworkers -lt 2 ]
+          then
+            newworkers=2
+            echo "Not scaling Workers below 2"
+          fi
+          
+          echo "Adjusting worker count from $currworkers to $newworkers"
+          echo 'y' | ./bosh -e bosh-1 deploy -d concourse ./concourse.yml \
+           -o $concoursepath/operations/scale.yml \
+            --var worker_instances=$newworkers \
+            --var web_instances=$currwebs \
+                    
+          EO_SH
+
+          chmod +x task.sh
+          ./task.sh
+          
+          #datever=$(date +"%y%m%d%H%M%S")
+          #if [ -e ./cluster-creds.yml] && [-s ./cluster-creds.yml]
+          #then
+          #  cp ./cluster-creds.yml ./out/concourse-cluster-creds-${datever}.yml
+          #fi  
+      inputs:
+      - name: bosh-config-creds
+        path: ""
+      - name: bosh-cli
+        path: ""
+      - name: bosh-manifests-concourse
+        path: ""
+#      outputs: 
+#      - name: out
+    params:
+      INTERNAL_IP: {{internal_ip}}
+#  - put: bosh-config-concourse-cluster-creds
+#    params:
+#      file: ./out/concourse-cluster-creds-*.yml      

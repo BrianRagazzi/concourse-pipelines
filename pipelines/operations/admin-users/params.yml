@@ -1,0 +1,10 @@
+opsman_domain_or_ip_address: opsmgr.domain.local   # [O] Ops Manager IP if behind proxy
+opsman_username: admin  # [R] Ops Manager admin user
+opsman_password: CHANGEME  # [R] Ops Manager admin password
+s3_endpoint: https://minio.domain.local:9000
+s3_bucket: binaries
+s3_access_key_id: MYACCESSKEY
+s3_secret_access_key: MYSECRETKEY
+username: new_admin_user
+password: CHANGEME
+email: user@domain.local

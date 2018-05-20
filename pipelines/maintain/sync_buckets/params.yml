@@ -1,0 +1,10 @@
+s3_bucket_source: CHANGEME           #Name of S3 bucket on Source
+s3_access_key_source: CHANGEME       #ACCESS KEY for Source
+s3_secret_key_source: CHANGEME       #SECRET KEY for Source
+s3_bucket_destination: CHANGEME      #Name of S3 bucket on Destination
+s3_access_key_destination: CHANGEME  #ACCESS KEY for Destination
+s3_secret_key_destination: CHANGEME  #SECRET KEY for Destination
+s3_endpoint_source: CHANGEME         #Source S3 endpoint ex: http://192.168.1.23:9000
+s3_endpoint_destination: CHANGEME    #Destination S3 endpoint ex:  https://minio.domain.local:9000
+include: "*BOSH/config/*"  #ex: *
+exclude: "*"               #ex: *.tmp

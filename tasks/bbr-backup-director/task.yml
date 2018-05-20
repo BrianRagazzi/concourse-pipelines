@@ -1,0 +1,21 @@
+---
+platform: linux
+image_resource:
+  type: docker-image
+  source: {repository: pcfnorm/rootfs}
+
+inputs:
+  - name: pipelines-repo
+  - name: bbr-release
+outputs:
+  - name: director-backup-artifact
+
+params:
+  SKIP_SSL_VALIDATION: true
+  OPS_MGR_HOST:
+  OPS_MGR_USR:
+  OPS_MGR_PWD:
+  BOSH_ADDRESS:  
+
+run:
+  path: pipelines-repo/tasks/bbr-backup-director/task.sh

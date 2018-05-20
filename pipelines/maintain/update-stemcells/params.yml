@@ -1,0 +1,14 @@
+iaas_type: vsphere
+
+debug: false # Set to true if you want to see all the tasks output. This will also show all the secrets and certs, so think twice
+pivnet_token: CHANGEME
+github_token: CHANGEME # [R] Your github token
+github_repo: https://github.com/BrianRagazzi/concourse-pipelines # [R] Pipelines github repo
+github_branch: master
+github_username: CHANGEME # [R] Your github username
+
+## Ops Manager installation meta data
+# opsman_admin_username/opsman_admin_password needs to be specified
+ops_mgr_usr: CHANGEME      # Username for Ops Manager admin account
+ops_mgr_pwd: CHANGEME       # Password for Ops Manager admin account
+ops_mgr_host: CHANGEME

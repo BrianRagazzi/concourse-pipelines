@@ -1,0 +1,176 @@
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tag: latest-final
+
+resources:
+- name: stemcell-pivnet
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: stemcells
+    sort_by: semver
+
+- name: ops-manager-pivnet
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: ops-manager
+    product_version: {{opsman_major_minor_version}}
+    sort_by: semver
+    
+- name: pks-pivnet
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: pivotal-container-service
+    sort_by: semver
+
+- name: nsxt-pivnet
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: vmware-nsx-t
+    sort_by: semver
+    
+- name: harbor-pivnet
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: harbor-container-registry
+    sort_by: semver
+
+- name: ops-manager-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "PCF/ops-manager/pcf-vsphere-(.*).ova"
+    disable_ssl: false
+    skip_ssl_verification: true
+    
+- name: stemcell-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    disable_ssl: false
+    regexp: PCF/stemcells/bosh-stemcell-(.*)-.*.tgz
+    skip_ssl_verification: true    
+    
+- name: pivotal-container-service-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "PCF/PKS/pivotal-container-service-(.*).pivotal"
+    disable_ssl: false
+    skip_ssl_verification: true
+    
+- name: pks-cli-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "PCF/PKS/pks-linux-amd64-(.*)"
+    disable_ssl: false
+    skip_ssl_verification: true    
+
+- name: kubectl-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "PCF/PKS/kubectl-linux-amd64-(.*)"
+    disable_ssl: false
+    skip_ssl_verification: true     
+
+- name: harbor-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "PCF/Tiles/harbor-container-registry-(.*).pivotal"
+    disable_ssl: false
+    skip_ssl_verification: true
+    
+    
+- name: nsxt-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "PCF/Tiles/VMware-NSX-T-(.*).pivotal"
+    disable_ssl: false
+    skip_ssl_verification: true
+
+jobs:
+- name: ops-manager
+  plan:
+  - get: ops-manager-pivnet
+    trigger: true
+    params:
+      globs: ["*.ova"]
+  - put: ops-manager-s3
+    params:
+      file: "ops-manager-pivnet/pcf-vsphere-*.ova"
+
+- name: stemcell
+  plan:
+  - get: stemcell-pivnet
+    trigger: true
+    params:
+      globs: ["*vsphere*"]
+  - put: stemcell-s3
+    params:
+      file: "stemcell-pivnet/*.tgz"
+
+- name: pks
+  plan:
+  - get: pks-pivnet
+    trigger: true
+  - put: pivotal-container-service-s3
+    params:
+      file: "pks-pivnet/pivotal-container-service-*.pivotal"
+  - put: pks-cli-s3
+    params:
+      file: "pks-pivnet/pks-linux-amd64-*"      
+  - put: kubectl-s3
+    params:
+      file: "pks-pivnet/kubectl-linux-amd64-*"      
+
+- name: harbor
+  plan:
+  - get: harbor-pivnet
+    trigger: true
+    params:
+      globs: ["*.pivotal"]
+  - put: harbor-s3
+    params:
+      file: "harbor-pivnet/harbor-container-registry-*.pivotal"      
+    
+- name: nsxt
+  plan:
+  - get: nsxt-pivnet
+    trigger: true
+    params:
+      globs: ["*.pivotal"]
+  - put: nsxt-s3
+    params:
+      file: "nsxt-pivnet/VMware-NSX-T-*.pivotal"      

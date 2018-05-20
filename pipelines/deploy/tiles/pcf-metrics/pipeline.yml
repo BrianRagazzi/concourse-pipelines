@@ -1,0 +1,244 @@
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tag: latest-final
+
+resources:
+
+- name: om-cli
+  type: github-release
+  source:
+    user: pivotal-cf
+    repository: om
+    access_token: ((github_token)) ## Optional: Removing this will cause you to hit the rate limit
+
+- name: pivnet-cli
+  type: github-release
+  source:
+    user: pivotal-cf
+    repository: pivnet-cli
+    access_token: ((github_token)) ## Optional: Removing this will cause you to hit the rate limit
+
+- name: jq
+  type: github-release
+  source:
+    user: stedolan
+    repository: jq
+    access_token: ((github_token)) ## Optional: Removing this will cause you to hit the rate limit
+
+- name: pipelines-repo
+  type: git
+  source:
+    uri: ((github_repo))
+    branch: ((github_branch))
+    username: ((github_username))
+    password: ((github_token))
+
+- name: pivnet-product
+  type: pivnet
+  source:
+    api_token: ((pivnet_token))
+    product_slug: ((product_name))
+    product_version: ((product_version))
+
+jobs:
+
+- name: upload-product
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-product
+      params:
+        globs:
+        - "*.pivotal"
+      trigger: true
+    - get: om-cli
+      params:
+        globs:
+        - "*-linux"
+    - get: pivnet-cli
+      params:
+        globs:
+        - "*linux-amd64*"
+
+  - task: upload-tile
+    file: pipelines-repo/tasks/upload-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+
+  - task: upload-stemcell
+    file: pipelines-repo/tasks/stemcell-uploader/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+      IAAS_TYPE: ((iaas_type))
+
+- name: stage-product
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [upload-product]
+    - get: pivnet-product
+      resource: pivnet-product
+      params:
+        globs:
+        - "*.pivotal"
+      passed: [upload-product]
+      trigger: true
+    - get: om-cli
+      params:
+        globs:
+        - "*-linux"
+      passed: [upload-product]
+
+  - task: stage-tile
+    file: pipelines-repo/tasks/stage-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_IDENTIFIER: ((product_identifier))
+
+- name: config-product
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [stage-product]
+    - get: pivnet-product
+      resource: pivnet-product
+      params:
+        globs: []
+      passed: [stage-product]
+      trigger: true
+    - get: om-cli
+      params:
+        globs:
+        - "*-linux"
+      passed: [stage-product]
+    - get: jq
+      params:
+        globs:
+        - "*linux64*"
+
+  - task: config-tile
+    file: pipelines-repo/tasks/config-pcf-metrics/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      NETWORK_NAME: ((network_name))
+      OTHER_AZS: ((other_azs))
+      SINGLETON_JOBS_AZ: ((singleton_jobs_az))
+      PRODUCT_NAME: ((product_name))
+      MYSQL_ROADMIN_PASSWORD: ((mysql_roadmin_password))
+      MYSQL_SKIP_NAME_RESOLVE: ((mysql_skip_name_resolve))
+      PUSH_APPS_ELASTICSEARCH_LOGQUEUE_INSTANCE_COUNT: ((push_apps_elasticsearch_logqueue_instance_count))
+      PUSH_APPS_INGESTOR_INSTANCE_COUNT: ((push_apps_ingestor_instance_count))
+      PUSH_APPS_LOGS_RETENTION_WINDOW: ((push_apps_logs_retention_window))
+      PUSH_APPS_METRICS_RETENTION_WINDOW: ((push_apps_metrics_retention_window))
+      PUSH_APPS_MYSQL_LOGQUEUE_INSTANCE_COUNT: ((push_apps_mysql_logqueue_instance_count))
+      PUSH_APPS_SERVER_INSTANCE_COUNT: ((push_apps_server_instance_count))
+      ELASTICSEARCH_MASTER_INSTANCES: ((elasticsearch_master_instances))
+      ELASTICSEARCH_MASTER_INSTANCE_TYPE: ((elasticsearch_master_instance_type))
+      ELASTICSEARCH_MASTER_PERSISTENT_DISK_MB: ((elasticsearch_master_persistent_disk_mb))
+      ELASTICSEARCH_DATA_INSTANCES: ((elasticsearch_data_instances))
+      ELASTICSEARCH_DATA_INSTANCE_TYPE: ((elasticsearch_data_instance_type))
+      ELASTICSEARCH_DATA_PERSISTENT_DISK_MB: ((elasticsearch_data_persistent_disk_mb))
+      REDIS_INSTANCES: ((redis_instances))
+      REDIS_INSTANCE_TYPE: ((redis_instance_type))
+      REDIS_PERSISTENT_DISK_MB: ((redis_persistent_disk_mb))
+
+- name: disable-errands
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [config-product]
+    - get: om-cli
+      params:
+        globs:
+        - "*om-linux*"
+      passed: [config-product]
+    - get: pivnet-product
+      resource: pivnet-product
+      params:
+        globs: []
+      passed: [config-product]
+      trigger: true
+    - get: jq
+      params:
+        globs:
+        - "*linux64*"
+      passed: [config-product]
+
+  - task: disable-errands
+    file: pipelines-repo/tasks/disable-errands/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_IDENTIFIER: ((product_identifier))
+      ERRANDS: ((errands_to_disable))
+
+- name: apply-changes
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [disable-errands]
+    - get: pivnet-product
+      resource: pivnet-product
+      params:
+        globs: []
+      passed: [disable-errands]
+      trigger: true
+    - get: om-cli
+      params:
+        globs:
+        - "*-linux"
+      passed: [disable-errands]
+
+  - task: apply-changes
+    file: pipelines-repo/tasks/apply-changes/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+
+- name: set-upgrade-pipeline
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [apply-changes]
+    - get: pivnet-product
+      resource: pivnet-product
+      params:
+        globs: []
+      passed: [apply-changes]
+      trigger: true
+
+  - task: set-upgrade-pipeline
+    file: pipelines-repo/tasks/set-upgrade-pipeline/task.yml
+    params:
+      DEBUG: ((debug))
+      CONCOURSE_USERNAME: ((concourse_user))
+      CONCOURSE_PASSWD: ((concourse_pwd))
+      CONCOURSE_URL: ((concourse_url))
+      BUILD_PIPELINE_NAME: ((pipeline-name))
+      BUILD_TEAM_NAME: ((team-name))
+      UPGRADE_PIPELINE_NAME: ((upgrade-pipeline-name))
+      PRODUCT_NAME: ((product_name))
+      PRODUCT_IDENTIFIER: ((product_identifier))
+      PRODUCT_VERSION: ((product_version))

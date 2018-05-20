@@ -1,0 +1,215 @@
+pivnet_token: CHANGEME
+github_token: CHANGEME # [R] Your github token
+github_repo: https://github.com/BrianRagazzi/concourse-pipelines # [R] Pipelines github repo
+github_branch: master
+github_username: CHANGEME # [R] Your github username
+
+iaas_type: vsphere
+debug: false
+
+opsman_major_minor_version: ^2\.1\..*$   # PCF Ops Manager minor version to track
+pks_major_minor_version: ^1\.0\.3.*$   # NSX Container Plugin minor version to track
+harbor_major_minor_version: ^1\.4\..*$
+
+vcenter_host: CHANGEME       # vCenter host or IP
+vcenter_usr: CHANGEME              # vCenter username. If user is tied to a domain, then escape the \, example `domain\\user`
+vcenter_pwd: CHANGEME              # vCenter password
+vcenter_usr_worker:  #will use master account if empty, optional for PKS 1.0.3+
+vcenter_pwd_worker:  #will use master account if empty, optional for PKS 1.0.3+
+vcenter_data_center: CHANGEME       # vCenter datacenter
+vcenter_insecure: 1         # vCenter skip TLS cert validation; enter `1` to disable cert verification, `0` to enable verification
+vcenter_ca_cert:           # vCenter CA cert at the API endpoint; enter a value if `vcenter_insecure: 0`
+
+# Ops Manager VM configuration
+om_vm_host:                           # Optional - vCenter host to deploy Ops Manager in
+om_vm_folder: CHANGEME                      # Optional - vCenter folder to put Ops Manager in
+om_data_store: CHANGEME           # vCenter datastore name to deploy Ops Manager in
+ops_mgr_host: CHANGEME # FQDN to access Ops Manager without protocol (will use https), ex: opsmgr.example.com
+
+# Either opsman_client_id/opsman_client_secret or opsman_admin_username/opsman_admin_password needs to be specified
+ops_mgr_usr: admin       # Username for Ops Manager admin account
+ops_mgr_pwd: CHANGEME       # Password for Ops Manager admin account
+
+om_ssh_pwd: CHANGEME         # SSH password for Ops Manager (ssh user is ubuntu)
+om_decryption_pwd: CHANGEME           # Decryption password for Ops Manager exported settings
+om_ntp_servers: CHANGEME              # Comma-separated list of NTP Servers
+om_dns_servers: CHANGEME       # Comma-separated list of DNS Servers
+om_gateway: CHANGEME                  # Gateway for Ops Manager network
+om_netmask: CHANGEME                  # Netmask for Ops Manager network
+om_ip: CHANGEME                      # IP to assign to Ops Manager VM
+om_vm_network: CHANGEME               # vCenter network name to use to deploy Ops Manager in
+om_vm_name: CHANGEME                  # Name to use for Ops Manager VM
+opsman_disk_type: "thin"              # Disk type for Ops Manager VM (thick|thin)
+om_vm_power_state: true               # Whether to power on Ops Manager VM after creation
+
+# vCenter Cluster or Resource Pool to use to deploy Ops Manager.
+# Possible formats:
+#   cluster:       /<Data Center Name>/host/<Cluster Name>
+#   resource pool: /<Data Center Name>/host/<Cluster Name>/Resources/<Resource Pool Name>
+om_resource_pool: CHANGEME
+
+# If smtp_address is configured, smtp_from, smtp_port, smtp_user, smtp_pwd,
+# smtp_enable_starttls_auto, and smtp_auth_mechanism must also be set.
+smtp_address: CHANGEME
+smtp_auth_mechanism: none # (none|plain|cram-md5)
+smtp_enable_starttls_auto: false
+smtp_from: CHANGEME@CHANGEME
+smtp_port: 25
+smtp_pwd:
+smtp_user:
+
+ephemeral_storage_names: CHANGEME  # Ephemeral Storage names in vCenter for use by PCF
+persistent_storage_names: CHANGEME # Persistent Storage names in vCenter for use by PCF
+
+bosh_vm_folder: "CHANGEME"                 # vSphere datacenter folder (such as pcf_vms) where VMs will be placed
+bosh_template_folder: "CHANGEME"     # vSphere datacenter folder (such as pcf_templates) where templates will be placed
+bosh_disk_path: "pcf_disk"                # vSphere datastore folder (such as pcf_disk) where attached disk images will be created
+
+# Optional PEM-encoded certificates to add to BOSH director
+trusted_certificates:
+# Trusted certificates to be deployed along with all VM's provisioned by BOSH
+vm_disk_type: "thin"         # Disk type for BOSH provisioned VM. (thick|thin)
+
+# AZ configuration for Ops Director
+az_1_name: AZ1                    # Logical name of availability zone. No spaces or special characters.
+az_1_cluster_name: AZ1          # Name of cluster in vCenter for AZ1
+az_1_rp_name: CHANGEME                 # Resource pool name in vCenter for AZ1
+# az_3_name: AZ3                    # Logical name of availability zone. No spaces or special characters.
+# az_3_cluster_name: AZ3            # Name of cluster in vCenter for AZ3
+# az_3_rp_name: PCF1                 # Resource pool name in vCenter for AZ3
+
+ntp_servers: CHANGEME                  # Comma-separated list of NTP servers to use for VMs deployed by BOSH
+ops_dir_hostname:                      # Optional DNS name for Ops Director. Should be reachable from all networks.
+enable_vm_resurrector: true            # Whether to enable BOSH VM resurrector
+post_deploy_enabled: true # must be true for pks
+bosh_recreate_on_next_deploy: false
+retry_bosh_deploys: false
+keep_unreachable_vms: false
+max_threads: 8                        # Max threads count for deploying VMs
+
+# Network configuration for Ops Director
+icmp_checks_enabled: false     # Enable or disable ICMP checks
+#Director Configuration
+ssl_verification_enabled: false
+metrics_ip:
+opentsdb_ip:
+post_deploy_enabled: true
+bosh_recreate_on_next_deploy: false
+retry_bosh_deploys: false
+keep_unreachable_vms: false
+director_worker_count: 5
+pager_duty_enabled: false
+pager_duty_service_key:
+pager_duty_http_proxy:
+hm_email_enabled: false
+smtp_host: CHANGEME
+smtp_domain: CHANGEME
+from_address: CHANGEME@CHANGEME
+recipients_address: CHANGEME
+smtp_password:
+smtp_tls_enabled: false
+blobstore_type: local #local or s3
+s3_bucket_name:
+s3_access_key:
+s3_secret_key:
+s3_signature_version:
+database_type: internal #internal or external
+external_mysql_db_host:
+external_mysql_db_port:
+external_mysql_db_user:
+external_mysql_db_password:
+external_mysql_db_database:
+syslog_enabled: true
+syslog_address: CHANGEME
+syslog_transport_protocol: udp
+syslog_tls_enabled: false
+syslog_permitted_peer:
+syslog_ssl_ca_certificate:
+generate_vm_passwords: true
+## Syslog endpoint configuration goes here
+# Optional. If syslog_host is specified, syslog_port, syslog_protocol,
+# syslog_drain_buffer_size, and enable_security_event_logging must be set.
+enable_security_event_logging: false
+syslog_drain_buffer_size: 10000
+#syslog_host: syslog.lab13.cse.lab
+syslog_port: 514
+#syslog_protocol: udp
+
+nsx_networking_enabled: false # set to false for Director when using PKS
+nsx_address:  CHANGEME
+nsx_username: admin
+nsx_password: CHANGEME
+nsx_mode:
+nsx_ca_certificate: |
+ -----BEGIN CERTIFICATE-----
+ CHANGEME
+ -----END CERTIFICATE-----
+nsxt_t0_routerid: CHANGEME
+nsxt_ip_block_id: CHANGEME
+nsxt_floating_ip_pool_id: CHANGEME
+
+
+main_network_name: "MAIN"
+main_vsphere_network: CHANGEME   # vCenter Deployment network name
+main_nw_cidr: CHANGEME           # Deployment network CIDR, ex: 10.0.0.0/22
+main_excluded_range: CHANGEME    # Deployment network exclusion range
+main_nw_dns: CHANGEME            # Deployment network DNS
+main_nw_gateway: CHANGEME        # Deployment network Gateway
+main_nw_azs: AZ1            # Comma separated list of AZ's to be associated with this network
+
+infra_network_name: "INFRA"
+infra_vsphere_network: CHANGEME     # vCenter Infra network name
+infra_nw_cidr: CHANGEME             # Infra network CIDR, ex: 10.0.0.0/22
+infra_excluded_range: CHANGEME      # Infra network exclusion range
+infra_nw_dns: CHANGEME              # Infra network DNS
+infra_nw_gateway: CHANGEME          # Infra network Gateway
+infra_nw_azs: AZ1              # Comma separated list of AZ's to be associated with this network
+
+uaa_url: uaa.system.CHANGEME
+pks_errands_to_run_on_change: pks-nsx-t-precheck,delete-all-clusters,upgrade-all-service-instances
+system_domain: system.CHANGEME # e.g. system.pcf.example.com
+
+pks_cli_username: CHANGEME
+pks_cli_useremail: CHANGEME@CHANGEME
+pks_cli_password: CHANGEME
+pks_service_plan_name: small
+pks_cluster_number_of_workers: 1
+pks_keep_failed_cluster_alive: false  #set to "true" to leave failed K8s cluster intact
+
+
+# Harbor configuration Section
+singleton_jobs_az: AZ1 # [R] Place singleton jobs in an AZ
+other_azs: AZ1        # [R] Balance other jobs in AZ's (comma-separated)
+network_name: INFRA     # [R] Tile network name
+harbor_hostname: CHANGEME #harbor.pcf.domain.local
+harbor_cert_pem: #certificate chain that includes Subject Alt Name for harbor_hostname
+harbor_private_key_pem: #private key for cert
+harbor_server_cert_ca_pem: #Trusted CA cert pem
+harbor_domain: CHANGEME #populate to generate self-signed cert.  this will be used in a wildcard, so make sure it is just the domain portion and not the hostname
+harbor_admin_password: CHANGEME
+### Options:
+### - db_auth        (Internal, i.e. Harbor internal user management)
+### - ldap_auth      (LDAP)
+### - uaa_auth_pks   (UAA in Pivotal Container Service)
+### - uaa_auth_pas   (UAA in Pivotal Application Service)
+harbor_auth_mode: uaa_auth_pks
+harbor_ldap_auth_url: # The LDAP Endpoint URL.
+harbor_ldap_auth_verify_cert: # Verify LDAP server SSL certificate (flag) - true or false
+harbor_ldap_auth_searchdn: # The DN of the user who has the permission to search the LDAP server.
+harbor_ldap_auth_searchpwd: # The password of the user who has the permission to search the LDAP server.
+harbor_ldap_auth_basedn: # The base DN from which to look up a user in LDAP server
+harbor_ldap_auth_uid: # The attribute used in a search to match a user, it could be uid, cn, email, sAMAccountName or other attributes depending on your LDAP server
+harbor_ldap_auth_filter: # Search filter for LDAP server. Make sure the syntax of the filter is correct
+harbor_ldap_auth_scope: # The LDAP scope to search for users Options: 0 (Base), 1 (nsx_networking_enabledevel), 2 (Subtree)
+harbor_ldap_auth_timeout: # The timeout (in seconds) when connecting to the LDAP Server
+harbor_registry_storage: filesystem #options: filesystem: Local File System, s3: AWS S3
+harbor_s3_registry_storage_access_key: # S3 Access Key
+harbor_s3_registry_storage_secret_key: # S3 Secret Key
+harbor_s3_registry_storage_region: # S3 Region
+harbor_s3_registry_storage_endpoint_url: # S3 Endpoint URL of your S3-compatible file store
+harbor_s3_registry_storage_bucket: # S3 Bucket Name
+harbor_s3_registry_storage_root_directory: # S3 Root Directory in the Bucket
+harbor_use_clair: true # Determine if include Clair in the deployment to support vulnerability scanning (flag: true or false)
+harbor_use_notary: true # Determine if include Notary in the deployment to support content trust (flag: true or false)
+harbor_errands_to_disable: uaa-deregistration
+harbor_errands_to_run_on_change: smoke-testing

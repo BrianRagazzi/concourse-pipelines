@@ -1,0 +1,131 @@
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tag: latest-final
+
+resources:
+- name: pipelines-repo
+  type: git
+  source:
+    uri: ((github_repo))
+    branch: ((github_branch))
+    username: ((github_username))
+    password: ((github_token))
+
+- name: om-backup-artifact
+  type: s3
+  source:
+    bucket: ((s3_bucket))
+    region_name: ((s3_region))
+    endpoint: ((s3_endpoint))
+    access_key_id: ((s3_access_key_id))
+    secret_access_key: ((s3_secret_access_key))
+    regexp: ((foundation_name))/installation-(.*).zip
+    skip_ssl_verification: true
+
+- name: bbr-backup-bucket
+  type: s3
+  source:
+    bucket: ((s3_bucket))
+    region_name: ((s3_region))
+    endpoint: ((s3_endpoint))
+    access_key_id: ((s3_access_key_id))
+    secret_access_key: ((s3_secret_access_key))
+    regexp: ((foundation_name))/(.*).tar
+    skip_ssl_verification: true
+
+- name: director-backup-bucket
+  type: s3
+  source:
+    bucket: ((s3_bucket))
+    region_name: ((s3_region))
+    endpoint: ((s3_endpoint))
+    access_key_id: ((s3_access_key_id))
+    secret_access_key: ((s3_secret_access_key))
+    regexp: ((foundation_name))/director-backup-(.*).tar
+    skip_ssl_verification: true
+
+- name: bbr-release
+  type: pivnet
+  source:
+    api_token: ((pivnet_token))
+    product_slug: p-bosh-backup-and-restore
+
+# - name: schedule
+#   type: time
+#   source:
+#     interval: 30m
+#     start: "12:00 AM"
+#     stop: "11:59 PM"
+#     location: America/Chicago
+#     days: [Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday]
+
+jobs:
+# - name: regulator
+#   plan:
+#   - get: pipelines-repo
+#   - get: schedule
+#     trigger: true
+
+- name: export-om-installation
+  serial: true
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      trigger: true
+      #passed: [regulator]
+  - task: export-om-installation
+    file: pipelines-repo/tasks/export-om-installation/task.yml
+    params:
+      SKIP_SSL_VALIDATION: ((skip-ssl-validation))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+  - put: om-backup-artifact
+    params:
+      file: om-installation/installation-*.zip
+
+- name: bbr-backup-deployments
+  serial: true
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      trigger: true
+    - get: bbr-release
+      trigger: true
+
+  - task: bbr-backup-depl
+    file: pipelines-repo/tasks/bbr-backup-deployment/task.yml
+    params:
+      SKIP_SSL_VALIDATION: ((skip-ssl-validation))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      BOSH_ADDRESS: ((director_fqdn))
+  - put: bbr-backup-bucket
+    params:
+      file: bbr-backup-artifact/*.tar
+
+- name: bbr-backup-director
+  serial: true
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      trigger: true
+      # passed: [regulator]
+    - get: bbr-release
+      trigger: true
+
+  - task: bbr-backup-director
+    file: pipelines-repo/tasks/bbr-backup-director/task.yml
+    params:
+      SKIP_SSL_VALIDATION: ((skip-ssl-validation))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      BOSH_ADDRESS: ((director_fqdn))
+  - put: director-backup-bucket
+    params:
+      file: director-backup-artifact/director-backup-*.tar

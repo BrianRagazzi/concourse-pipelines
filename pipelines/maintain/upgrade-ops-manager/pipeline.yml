@@ -1,0 +1,207 @@
+# Copyright 2017-Present Pivotal Software, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tag: latest-final
+
+resources:
+- name: pipelines-repo
+  type: git
+  source:
+    uri: {{github_repo}}
+    branch: {{github_branch}}
+    username: {{github_username}}
+    password: {{github_token}}
+
+- name: pivnet-opsman-product
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: ops-manager
+    product_version: {{opsman_major_minor_version}}
+    sort_by: semver
+
+- name: om-backup-artifact
+  type: s3
+  source:
+    bucket: {{s3_bucket}}
+    region_name: {{s3_region}}
+    endpoint: {{s3_endpoint}}
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    regexp: ((foundation_name))/installation-(.*).zip
+    skip_ssl_verification: true
+
+# - name: pivnet-cli
+#   type: github-release
+#   source:
+#     user: pivotal-cf
+#     repository: pivnet-cli
+#     access_token: ((github_token)) ## Optional: Removing this will cause you to hit the rate limit
+
+
+- name: schedule
+  type: time
+  source:
+    interval: 30m
+    start: "4:00 AM"
+    stop: "5:00 AM"
+    location: America/Chicago
+    days: [Sunday]
+
+jobs:
+- name: regulator
+  plan:
+  - get: schedule
+    trigger: true
+  - get: pipelines-repo
+    params: { globs: [] }
+
+
+- name: export-settings-from-current-opsmgr
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      trigger: true
+      passed: [regulator]
+
+  - task: wait-opsman-clear
+    file: pipelines-repo/tasks/wait-opsman-clear/task.yml
+    params:
+      OPS_MGR_USR: {{ops_mgr_usr}}
+      OPS_MGR_PWD: {{ops_mgr_pwd}}
+      OPS_MGR_HOST: {{ops_mgr_host}}
+
+  - task: export-om-installation
+    file: pipelines-repo/tasks/export-om-installation/task.yml
+    params:
+      SKIP_SSL_VALIDATION: ((skip-ssl-validation))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+  - put: om-backup-artifact
+    params:
+      file: om-installation/installation-*.zip
+
+    # - task: export-opsmgr-diagnostic-report
+    #   file: pipelines-repo/tasks/export-opsmgr-diagnostic-report/task.yml
+    #   params:
+    #     OPS_MGR_USR: {{ops_mgr_usr}}
+    #     OPS_MGR_PWD: {{ops_mgr_pwd}}
+    #     OPS_MGR_HOST: {{ops_mgr_host}}
+
+- name: take-opsmgr-offline
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      trigger: true
+      passed: [export-settings-from-current-opsmgr]
+      params:
+        globs: []
+  - task: shutdown-and-rename-opsman
+    file: pipelines-repo/tasks/shutdown-and-rename-opsman/task.yml
+    params:
+      OPSMAN_IP: {{om_ip}}
+      GOVC_INSECURE: {{vcenter_insecure}}
+      GOVC_CA_CERT: {{vcenter_ca_cert}}
+      GOVC_URL: {{vcenter_host}}
+      GOVC_USERNAME: {{vcenter_usr}}
+      GOVC_PASSWORD: {{vcenter_pwd}}
+      GOVC_DATACENTER: {{vcenter_data_center}}
+      GOVC_DATASTORE: {{om_data_store}}
+      GOVC_RESOURCE_POOL: {{om_resource_pool}}
+
+
+- name: deploy-new-opsmgr
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      trigger: true
+      passed: [take-opsmgr-offline]
+    - get: pivnet-opsman-product
+      params:
+        globs: ["*.ova"]
+  - task: deploy-opsman-vm
+    file: pipelines-repo/tasks/import-opsman/task.yml
+    params:
+      GOVC_INSECURE: {{vcenter_insecure}}
+      GOVC_CA_CERT: {{vcenter_ca_cert}}
+      GOVC_URL: {{vcenter_host}}
+      GOVC_USERNAME: {{vcenter_usr}}
+      GOVC_PASSWORD: {{vcenter_pwd}}
+      GOVC_DATACENTER: {{vcenter_data_center}}
+      GOVC_DATASTORE: {{om_data_store}}
+      GOVC_RESOURCE_POOL: {{om_resource_pool}}
+      OPS_MGR_HOST: {{om_vm_host}}
+      OPS_MGR_SSH_PWD: {{om_ssh_pwd}}
+      OM_NTP_SERVERS: {{om_ntp_servers}}
+      OM_DNS_SERVERS: {{om_dns_servers}}
+      OM_GATEWAY: {{om_gateway}}
+      OM_NETMASK: {{om_netmask}}
+      OM_IP: {{om_ip}}
+      OM_VM_NETWORK: {{om_vm_network}}
+      OM_VM_NAME: {{om_vm_name}}
+      OPSMAN_DISK_TYPE: {{opsman_disk_type}}
+      OM_VM_FOLDER: {{om_vm_folder}}
+      OM_VM_POWER_STATE: true
+
+- name: restore-settings
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      trigger: true
+      passed: [deploy-new-opsmgr]
+    - get: om-backup-artifact
+      passed: [export-settings-from-current-opsmgr]
+      params:
+        globs: ["*.zip"]
+  - task: import-opsmgr-settings
+    file: pipelines-repo/tasks/import-opsmgr-settings/task.yml
+    params:
+      OPS_MGR_USR: {{ops_mgr_usr}}
+      OPS_MGR_PWD: {{ops_mgr_pwd}}
+      OPSMAN_PASSPHRASE: {{om_decryption_pwd}}
+      OPS_MGR_HOST: {{ops_mgr_host}}
+
+- name: update-stemcells
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      trigger: true
+      passed: [restore-settings]
+  - task: upload-stemcells
+    file: pipelines-repo/tasks/stemcell-updater/task.yml
+    params:
+      PIVNET_API_TOKEN: {{pivnet_token}}
+      IAAS_TYPE: vsphere
+      OPS_MGR_USR: {{ops_mgr_usr}}
+      OPS_MGR_PWD: {{ops_mgr_pwd}}
+      OPS_MGR_HOST: {{ops_mgr_host}}
+
+- name: finish
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      trigger: true
+      passed: [update-stemcells]
+  - task: apply-changes
+    file: pipelines-repo/tasks/apply-changes/task.yml
+    params:
+      OPS_MGR_USR: {{ops_mgr_usr}}
+      OPS_MGR_PWD: {{ops_mgr_pwd}}
+      OPS_MGR_HOST: {{ops_mgr_host}}

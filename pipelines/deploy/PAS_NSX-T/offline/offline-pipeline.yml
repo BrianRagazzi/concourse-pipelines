@@ -1,0 +1,2776 @@
+groups: []
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tag: latest-final
+resources:
+# - name: pcf-ops-manager
+  # type: s3
+  # source:
+    # access_key_id: {{s3_access_key_id}}
+    # bucket: {{s3_bucket}}
+    # endpoint: {{s3_endpoint}}
+    # regexp: PCF/ops-manager/pcf-vsphere-(.*).ova
+    # secret_access_key: {{s3_secret_access_key}}
+    # skip_ssl_verification: true
+- name: pcf-ops-manager
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: ops-manager
+    product_version: {{opsman_major_minor_version}}
+    sort_by: semver
+# - name: elastic-runtime
+  # type: s3
+  # source:
+    # access_key_id: {{s3_access_key_id}}
+    # bucket: {{s3_bucket}}
+    # endpoint: {{s3_endpoint}}
+    # regexp: PCF/PAS/cf-(.*).pivotal
+    # secret_access_key: {{s3_secret_access_key}}
+    # skip_ssl_verification: true
+- name: elastic-runtime
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: elastic-runtime
+    product_version: {{ert_major_minor_version}}
+    sort_by: semver
+
+- name: nsx-t-tile
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: vmware-nsx-t
+    product_version: {{nsxt_major_minor_version}}
+    sort_by: semver
+jobs:
+- name: deploy-opsman
+  plan:
+  - aggregate:
+    - do: []
+    - get: pivnet-opsman-product
+      resource: pcf-ops-manager
+      params: {globs: ["*.ova"]}
+      trigger: true
+  - task: deploy
+    config:
+      platform: linux
+      image_resource:
+        type: s3
+        source:
+          access_key_id: {{s3_access_key_id}}
+          bucket: {{s3_bucket}}
+          endpoint: {{s3_endpoint}}
+          regexp: pcfnorm-rootfs/pcfnorm-rootfs-(.*).tgz
+          secret_access_key: {{s3_secret_access_key}}
+          skip_ssl_verification: true
+        params:
+          unpack: true
+      params:
+        GOVC_CA_CERT: ""
+        GOVC_DATACENTER: ""
+        GOVC_DATASTORE: ""
+        GOVC_HOST: ""
+        GOVC_INSECURE: ""
+        GOVC_NETWORK: ""
+        GOVC_PASSWORD: ""
+        GOVC_RESOURCE_POOL: ""
+        GOVC_URL: ""
+        GOVC_USERNAME: ""
+        OM_DNS_SERVERS: ""
+        OM_GATEWAY: ""
+        OM_IP: ""
+        OM_NETMASK: ""
+        OM_NTP_SERVERS: ""
+        OM_RESOURCE_POOL: ""
+        OM_VM_FOLDER: ""
+        OM_VM_NAME: ""
+        OM_VM_NETWORK: ""
+        OM_VM_POWER_STATE: ""
+        OPS_MGR_SSH_PWD: ""
+        OPSMAN_DISK_TYPE: ""
+        OPSMAN_DOMAIN_OR_IP_ADDRESS: ""
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+
+          set -eu
+
+          file_path=`find ./pivnet-opsman-product/ -name *.ova`
+
+          echo $file_path
+          echo "Deploy to folder: " $OM_VM_FOLDER
+
+          export GOVC_TLS_CA_CERTS=/tmp/vcenter-ca.pem
+          echo "$GOVC_CA_CERT" > $GOVC_TLS_CA_CERTS
+
+          govc import.spec $file_path | python -m json.tool > om-import.json
+
+          cat > filters <<'EOF'
+          del(.Deployment) |
+          .Name = $vmName |
+          .DiskProvisioning = $diskType |
+          .NetworkMapping[].Network = $network |
+          .PowerOn = $powerOn |
+          (.PropertyMapping[] | select(.Key == "ip0")).Value = $ip0 |
+          (.PropertyMapping[] | select(.Key == "netmask0")).Value = $netmask0 |
+          (.PropertyMapping[] | select(.Key == "gateway")).Value = $gateway |
+          (.PropertyMapping[] | select(.Key == "DNS")).Value = $dns |
+          (.PropertyMapping[] | select(.Key == "ntp_servers")).Value = $ntpServers |
+          (.PropertyMapping[] | select(.Key == "admin_password")).Value = $adminPassword |
+          (.PropertyMapping[] | select(.Key == "custom_hostname")).Value = $customHostname
+          EOF
+
+          echo "calling jq"
+
+          jq \
+            --arg ip0 "$OM_IP" \
+            --arg netmask0 "$OM_NETMASK" \
+            --arg gateway "$OM_GATEWAY" \
+            --arg dns "$OM_DNS_SERVERS" \
+            --arg ntpServers "$OM_NTP_SERVERS" \
+            --arg adminPassword "$OPS_MGR_SSH_PWD" \
+            --arg customHostname "$OPSMAN_DOMAIN_OR_IP_ADDRESS" \
+            --arg network "$OM_VM_NETWORK" \
+            --arg vmName "$OM_VM_NAME" \
+            --arg diskType "$OPSMAN_DISK_TYPE" \
+            --argjson powerOn "$OM_VM_POWER_STATE" \
+            --from-file filters \
+            om-import.json > options.json
+
+          # cat options.json
+
+          if [ -z "$OM_VM_FOLDER" ]; then
+            govc import.ova -options=options.json "$file_path"
+          else
+            if [ `govc folder.info $OM_VM_FOLDER 2>&1 | grep $OM_VM_FOLDER | awk '{print $2}'` != $OM_VM_FOLDER ]; then
+              govc folder.create "$OM_VM_FOLDER"
+            fi
+            echo "calling govc"
+            govc import.ova -folder=$OM_VM_FOLDER -options=options.json $file_path
+          fi
+
+          EO_SH
+
+          chmod +x task.sh
+          ./task.sh
+      inputs:
+      - name: pivnet-opsman-product
+        path: ""
+    params:
+      GOVC_INSECURE: {{vcenter_insecure}}
+      GOVC_CA_CERT: {{vcenter_ca_cert}}
+      GOVC_URL: {{vcenter_host}}
+      GOVC_USERNAME: {{vcenter_usr}}
+      GOVC_PASSWORD: {{vcenter_pwd}}
+      GOVC_DATACENTER: {{vcenter_datacenter}}
+      GOVC_DATASTORE: {{vcenter_datastore}}
+      GOVC_NETWORK: {{om_vm_network}}
+      GOVC_RESOURCE_POOL: {{om_resource_pool}}
+      GOVC_HOST: {{om_vm_host}}
+      OPSMAN_DOMAIN_OR_IP_ADDRESS: {{opsman_domain_or_ip_address}}
+      OM_VM_FOLDER: {{om_vm_folder}}
+      OPS_MGR_SSH_PWD: {{opsman_ssh_password}}
+      OM_NTP_SERVERS: {{om_ntp_servers}}
+      OM_DNS_SERVERS: {{om_dns_servers}}
+      OM_GATEWAY: {{om_gateway}}
+      OM_NETMASK: {{om_netmask}}
+      OM_IP: {{om_ip}}
+      OM_VM_NETWORK: {{om_vm_network}}
+      OM_VM_NAME: {{om_vm_name}}
+      OM_RESOURCE_POOL: {{om_resource_pool}}
+      OPSMAN_DISK_TYPE: {{opsman_disk_type}}
+      OM_VM_POWER_STATE: {{om_vm_power_state}}
+
+- name: configure-director
+  plan:
+  - aggregate:
+    - do: []
+    - get: pcf-ops-manager
+      passed: [deploy-opsman]
+      trigger: true
+      params: {globs: []}
+  - task: config-opsman-auth
+    config:
+      platform: linux
+      image_resource:
+        type: s3
+        source:
+          access_key_id: {{s3_access_key_id}}
+          bucket: {{s3_bucket}}
+          endpoint: {{s3_endpoint}}
+          regexp: pcfnorm-rootfs/pcfnorm-rootfs-(.*).tgz
+          secret_access_key: {{s3_secret_access_key}}
+          skip_ssl_verification: true
+        params:
+          unpack: true
+      params:
+        OM_DECRYPTION_PWD: ""
+        OPS_MGR_PWD: ""
+        OPS_MGR_USR: ""
+        OPSMAN_DOMAIN_OR_IP_ADDRESS: ""
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+
+          set -eu
+
+          until $(curl --output /dev/null -k --silent --head --fail https://$OPSMAN_DOMAIN_OR_IP_ADDRESS/setup); do
+              printf '.'
+              sleep 5
+          done
+
+          om-linux \
+            --target https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+            --skip-ssl-validation \
+            configure-authentication \
+            --username "$OPS_MGR_USR" \
+            --password "$OPS_MGR_PWD" \
+            --decryption-passphrase $OM_DECRYPTION_PWD
+
+          EO_SH
+
+          chmod +x task.sh
+          ./task.sh
+    params:
+      OM_DECRYPTION_PWD: {{om_decryption_pwd}}
+      OPS_MGR_PWD: {{opsman_admin_password}}
+      OPS_MGR_USR: {{opsman_admin_username}}
+      OPSMAN_DOMAIN_OR_IP_ADDRESS: {{opsman_domain_or_ip_address}}
+  - task: configure-director
+    config:
+      platform: linux
+      image_resource:
+        type: s3
+        source:
+          access_key_id: {{s3_access_key_id}}
+          bucket: {{s3_bucket}}
+          endpoint: {{s3_endpoint}}
+          regexp: pcfnorm-rootfs/pcfnorm-rootfs-(.*).tgz
+          secret_access_key: {{s3_secret_access_key}}
+          skip_ssl_verification: true
+        params:
+          unpack: true
+      params:
+        OPS_MGR_HOST:
+        OPSMAN_USERNAME:
+        OPSMAN_PASSWORD:
+        VCENTER_HOST:
+        VCENTER_USR:
+        VCENTER_PWD:
+        VCENTER_DATA_CENTER:
+        VCENTER_DISK_TYPE:
+        EPHEMERAL_STORAGE_NAMES:
+        PERSISTENT_STORAGE_NAMES:
+        BOSH_VM_FOLDER:
+        BOSH_TEMPLATES_FOLDER:
+        BOSH_DISK_PATH:
+        NSX_NETWORKING_ENABLED:
+        NSX_MODE:
+        NSX_ADDRESS:
+        NSX_PASSWORD:
+        NSX_USERNAME:
+        NSX_CA_CERTIFICATE:
+        SSL_VERIFICATION_ENABLED:
+        NTP_SERVERS:
+        ENABLE_VM_RESURRECTOR:
+        METRICS_IP:
+        OPENTSDB_IP:
+        POST_DEPLOY_ENABLED:
+        BOSH_RECREATE_ON_NEXT_DEPLOY:
+        RETRY_BOSH_DEPLOYS:
+        KEEP_UNREACHABLE_VMS:
+        MAX_THREADS:
+        DIRECTOR_WORKER_COUNT:
+        OPS_DIR_HOSTNAME:
+        PAGER_DUTY_ENABLED:
+        PAGER_DUTY_SERVICE_KEY:
+        PAGER_DUTY_HTTP_PROXY:
+        HM_EMAIL_ENABLED:
+        SMTP_HOST:
+        SMTP_PORT:
+        SMTP_DOMAIN:
+        FROM_ADDRESS:
+        RECIPIENTS_ADDRESS:
+        SMTP_USER:
+        SMTP_PASSWORD:
+        SMTP_TLS_ENABLED:
+        BLOBSTORE_TYPE:
+        S3_ENDPOINT:
+        S3_BUCKET_NAME:
+        S3_ACCESS_KEY:
+        S3_SECRET_KEY:
+        S3_SIGNATURE_VERSION:
+        DATABASE_TYPE:
+        EXTERNAL_MYSQL_DB_HOST:
+        EXTERNAL_MYSQL_DB_PORT:
+        EXTERNAL_MYSQL_DB_USER:
+        EXTERNAL_MYSQL_DB_PASSWORD:
+        EXTERNAL_MYSQL_DB_DATABASE:
+        SYSLOG_ENABLED:
+        SYSLOG_ADDRESS:
+        SYSLOG_PORT:
+        SYSLOG_TRANSPORT_PROTOCOL:
+        SYSLOG_TLS_ENABLED:
+        SYSLOG_PERMITTED_PEER:
+        SYSLOG_SSL_CA_CERTIFICATE:
+        ICMP_CHECKS_ENABLED:
+        INFRA_NETWORK_NAME:
+        INFRA_VCENTER_NETWORK:
+        INFRA_NW_CIDR:
+        INFRA_EXCLUDED_RANGE:
+        INFRA_NW_DNS:
+        INFRA_NW_GATEWAY:
+        INFRA_NW_AZS:
+        DEPLOYMENT_NETWORK_NAME:
+        DEPLOYMENT_VCENTER_NETWORK:
+        DEPLOYMENT_NW_CIDR:
+        DEPLOYMENT_EXCLUDED_RANGE:
+        DEPLOYMENT_NW_DNS:
+        DEPLOYMENT_NW_GATEWAY:
+        DEPLOYMENT_NW_AZS:
+        SERVICES_NETWORK_NAME:
+        SERVICES_NW_IS_SERVICE_NW:
+        SERVICES_VCENTER_NETWORK:
+        SERVICES_NW_CIDR:
+        SERVICES_EXCLUDED_RANGE:
+        SERVICES_NW_DNS:
+        SERVICES_NW_GATEWAY:
+        SERVICES_NW_AZS:
+        DYNAMIC_SERVICES_NETWORK_NAME:
+        DYNAMIC_SERVICES_NW_IS_SERVICE_NW:
+        DYNAMIC_SERVICES_VCENTER_NETWORK:
+        DYNAMIC_SERVICES_NW_CIDR:
+        DYNAMIC_SERVICES_EXCLUDED_RANGE:
+        DYNAMIC_SERVICES_NW_DNS:
+        DYNAMIC_SERVICES_NW_GATEWAY:
+        DYNAMIC_SERVICES_NW_AZS:
+        AZ_1:
+        AZ_1_CUSTER_NAME:
+        AZ_1_RP_NAME:
+        AZ_2:
+        AZ_2_CUSTER_NAME:
+        AZ_2_RP_NAME:
+        AZ_3:
+        AZ_3_CUSTER_NAME:
+        AZ_3_RP_NAME:
+        TRUSTED_CERTIFICATES:
+        GENERATE_VM_PASSWORDS:
+        DIRECTOR_INSTANCE_TYPE:
+        DIRECTOR_INSTANCES:
+        DIRECTOR_PERSISTENT_DISK_SIZE_MB:
+        COMPILATION_INSTANCE_TYPE:
+        COMPILATION_INSTANCES:
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+
+          set -eu
+
+          iaas_configuration=$(
+            jq -n \
+            --arg vcenter_host "$VCENTER_HOST" \
+            --arg vcenter_username "$VCENTER_USR" \
+            --arg vcenter_password "$VCENTER_PWD" \
+            --arg datacenter "$VCENTER_DATA_CENTER" \
+            --arg disk_type "$VCENTER_DISK_TYPE" \
+            --arg ephemeral_datastores_string "$EPHEMERAL_STORAGE_NAMES" \
+            --arg persistent_datastores_string "$PERSISTENT_STORAGE_NAMES" \
+            --arg bosh_vm_folder "$BOSH_VM_FOLDER" \
+            --arg bosh_template_folder "$BOSH_TEMPLATE_FOLDER" \
+            --arg bosh_disk_path "$BOSH_DISK_PATH" \
+            --arg ssl_verification_enabled false \
+            --arg nsx_networking_enabled $NSX_NETWORKING_ENABLED \
+            --arg nsx_mode "$NSX_MODE" \
+            --arg nsx_address "$NSX_ADDRESS" \
+            --arg nsx_username "$NSX_USERNAME" \
+            --arg nsx_password "$NSX_PASSWORD" \
+            --arg nsx_ca_certificate "$NSX_CA_CERTIFICATE" \
+            '
+            {
+              "vcenter_host": $vcenter_host,
+              "vcenter_username": $vcenter_username,
+              "vcenter_password": $vcenter_password,
+              "datacenter": $datacenter,
+              "disk_type": $disk_type,
+              "ephemeral_datastores_string": $ephemeral_datastores_string,
+              "persistent_datastores_string": $persistent_datastores_string,
+              "bosh_vm_folder": $bosh_vm_folder,
+              "bosh_template_folder": $bosh_template_folder,
+              "bosh_disk_path": $bosh_disk_path,
+              "ssl_verification_enabled": $ssl_verification_enabled,
+              "nsx_networking_enabled": $nsx_networking_enabled,
+              "nsx_mode": $nsx_mode,
+              "nsx_address": $nsx_address,
+              "nsx_username": $nsx_username,
+              "nsx_password": $nsx_password,
+              "nsx_ca_certificate": $nsx_ca_certificate
+            }'
+          )
+
+          az_configuration=$(cat <<-EOF
+           [
+              {
+                "name": "$AZ_1",
+                "cluster": "$AZ_1_CLUSTER_NAME",
+                "resource_pool": "$AZ_1_RP_NAME"
+              },
+              {
+                "name": "$AZ_2",
+                "cluster": "$AZ_2_CLUSTER_NAME",
+                "resource_pool": "$AZ_2_RP_NAME"
+              },
+              {
+                "name": "$AZ_3",
+                "cluster": "$AZ_3_CLUSTER_NAME",
+                "resource_pool": "$AZ_3_RP_NAME"
+              }
+           ]
+          EOF
+          )
+
+          network_configuration=$(
+            jq -n \
+              --argjson icmp_checks_enabled $ICMP_CHECKS_ENABLED \
+              --arg infra_network_name "$INFRA_NETWORK_NAME" \
+              --arg infra_vcenter_network "$INFRA_VCENTER_NETWORK" \
+              --arg infra_network_cidr "$INFRA_NW_CIDR" \
+              --arg infra_reserved_ip_ranges "$INFRA_EXCLUDED_RANGE" \
+              --arg infra_dns "$INFRA_NW_DNS" \
+              --arg infra_gateway "$INFRA_NW_GATEWAY" \
+              --arg infra_availability_zones "$INFRA_NW_AZS" \
+              --arg deployment_network_name "$DEPLOYMENT_NETWORK_NAME" \
+              --arg deployment_vcenter_network "$DEPLOYMENT_VCENTER_NETWORK" \
+              --arg deployment_network_cidr "$DEPLOYMENT_NW_CIDR" \
+              --arg deployment_reserved_ip_ranges "$DEPLOYMENT_EXCLUDED_RANGE" \
+              --arg deployment_dns "$DEPLOYMENT_NW_DNS" \
+              --arg deployment_gateway "$DEPLOYMENT_NW_GATEWAY" \
+              --arg deployment_availability_zones "$DEPLOYMENT_NW_AZS" \
+              --arg services_network_name "$SERVICES_NETWORK_NAME" \
+              --arg services_vcenter_network "$SERVICES_VCENTER_NETWORK" \
+              --arg services_network_cidr "$SERVICES_NW_CIDR" \
+              --arg services_reserved_ip_ranges "$SERVICES_EXCLUDED_RANGE" \
+              --arg services_dns "$SERVICES_NW_DNS" \
+              --arg services_gateway "$SERVICES_NW_GATEWAY" \
+              --arg services_availability_zones "$SERVICES_NW_AZS" \
+              --arg dynamic_services_network_name "$DYNAMIC_SERVICES_NETWORK_NAME" \
+              --arg dynamic_services_vcenter_network "$DYNAMIC_SERVICES_VCENTER_NETWORK" \
+              --arg dynamic_services_network_cidr "$DYNAMIC_SERVICES_NW_CIDR" \
+              --arg dynamic_services_reserved_ip_ranges "$DYNAMIC_SERVICES_EXCLUDED_RANGE" \
+              --arg dynamic_services_dns "$DYNAMIC_SERVICES_NW_DNS" \
+              --arg dynamic_services_gateway "$DYNAMIC_SERVICES_NW_GATEWAY" \
+              --arg dynamic_services_availability_zones "$DYNAMIC_SERVICES_NW_AZS" \
+              '
+              {
+                "icmp_checks_enabled": $icmp_checks_enabled,
+                "networks": [
+                  {
+                    "name": $infra_network_name,
+                    "service_network": false,
+                    "subnets": [
+                      {
+                        "iaas_identifier": $infra_vcenter_network,
+                        "cidr": $infra_network_cidr,
+                        "reserved_ip_ranges": $infra_reserved_ip_ranges,
+                        "dns": $infra_dns,
+                        "gateway": $infra_gateway,
+                        "availability_zone_names": ($infra_availability_zones | split(","))
+                      }
+                    ]
+                  },
+                  {
+                    "name": $deployment_network_name,
+                    "service_network": false,
+                    "subnets": [
+                      {
+                        "iaas_identifier": $deployment_vcenter_network,
+                        "cidr": $deployment_network_cidr,
+                        "reserved_ip_ranges": $deployment_reserved_ip_ranges,
+                        "dns": $deployment_dns,
+                        "gateway": $deployment_gateway,
+                        "availability_zone_names": ($deployment_availability_zones | split(","))
+                      }
+                    ]
+                  },
+                  {
+                    "name": $services_network_name,
+                    "service_network": false,
+                    "subnets": [
+                      {
+                        "iaas_identifier": $services_vcenter_network,
+                        "cidr": $services_network_cidr,
+                        "reserved_ip_ranges": $services_reserved_ip_ranges,
+                        "dns": $services_dns,
+                        "gateway": $services_gateway,
+                        "availability_zone_names": ($services_availability_zones | split(","))
+                      }
+                    ]
+                  },
+                  {
+                    "name": $dynamic_services_network_name,
+                    "service_network": true,
+                    "subnets": [
+                      {
+                        "iaas_identifier": $dynamic_services_vcenter_network,
+                        "cidr": $dynamic_services_network_cidr,
+                        "reserved_ip_ranges": $dynamic_services_reserved_ip_ranges,
+                        "dns": $dynamic_services_dns,
+                        "gateway": $dynamic_services_gateway,
+                        "availability_zone_names": ($dynamic_services_availability_zones | split(","))
+                      }
+                    ]
+                  }
+                ]
+              }'
+          )
+
+          director_config=$(cat <<-EOF
+          {
+            "ntp_servers_string": "$NTP_SERVERS",
+            "resurrector_enabled": $ENABLE_VM_RESURRECTOR,
+            "post_deploy_enabled": true,
+            "max_threads": $MAX_THREADS,
+            "database_type": "internal",
+            "blobstore_type": "local",
+            "director_hostname": "$OPS_DIR_HOSTNAME"
+          }
+          EOF
+          )
+
+          security_configuration=$(
+            jq -n \
+              --arg trusted_certificates "$TRUSTED_CERTIFICATES" \
+              '
+              {
+                "trusted_certificates": $trusted_certificates,
+                "vm_password_type": "generate"
+              }'
+          )
+
+          network_assignment=$(
+          jq -n \
+            --arg infra_availability_zones "$INFRA_NW_AZS" \
+            --arg network "$INFRA_NETWORK_NAME" \
+            '
+            {
+            "singleton_availability_zone": {
+              "name": ($infra_availability_zones | split(",") | .[0])
+            },
+            "network": {
+              "name": $network
+            }
+            }'
+          )
+
+          echo "Configuring IaaS, AZ and Director..."
+          om-linux \
+            --target https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+            --skip-ssl-validation \
+            --username "$OPSMAN_USERNAME" \
+            --password "$OPSMAN_PASSWORD" \
+            configure-director \
+            --iaas-configuration "$iaas_configuration" \
+            --director-configuration "$director_config" \
+            --az-configuration "$az_configuration"
+
+          echo "Configuring Network and Security..."
+          om-linux \
+            --target https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+            --skip-ssl-validation \
+            --username "$OPSMAN_USERNAME" \
+            --password "$OPSMAN_PASSWORD" \
+            configure-director \
+            --networks-configuration "$network_configuration" \
+            --network-assignment "$network_assignment" \
+            --security-configuration "$security_configuration"
+
+
+          EO_SH
+
+          chmod +x task.sh
+          ./task.sh
+    params:
+      OPS_MGR_HOST: {{opsman_domain_or_ip_address}}
+      OPSMAN_DOMAIN_OR_IP_ADDRESS: {{opsman_domain_or_ip_address}}
+      OPSMAN_USERNAME: {{opsman_admin_username}}
+      OPSMAN_PASSWORD: {{opsman_admin_password}}
+      VCENTER_HOST: {{vcenter_host}}
+      VCENTER_USR: {{vcenter_usr}}
+      VCENTER_PWD: {{vcenter_pwd}}
+      VCENTER_DATA_CENTER: {{vcenter_datacenter}}
+      VCENTER_DISK_TYPE: {{vm_disk_type}}
+      EPHEMERAL_STORAGE_NAMES: {{ephemeral_storage_names}}
+      PERSISTENT_STORAGE_NAMES: {{persistent_storage_names}}
+      BOSH_VM_FOLDER:  {{bosh_vm_folder}}
+      BOSH_TEMPLATE_FOLDER: {{bosh_template_folder}}
+      BOSH_DISK_PATH: {{bosh_disk_path}}
+      NSX_NETWORKING_ENABLED: {{nsx_networking_enabled}}
+      NSX_MODE: {{nsx_mode}}
+      NSX_ADDRESS: {{nsx_address}}
+      NSX_USERNAME: {{nsx_username}}
+      NSX_PASSWORD: {{nsx_password}}
+      NSX_CA_CERTIFICATE: {{nsx_ca_certificate}}
+      SSL_VERIFICATION_ENABLED: {{ssl_verification_enabled}}
+      NTP_SERVERS: {{ntp_servers}}
+      ENABLE_VM_RESURRECTOR: {{enable_vm_resurrector}}
+      METRICS_IP: {{metrics_ip}}
+      OPENTSDB_IP: {{opentsdb_ip}}
+      POST_DEPLOY_ENABLED: {{post_deploy_enabled}}
+      BOSH_RECREATE_ON_NEXT_DEPLOY: {{bosh_recreate_on_next_deploy}}
+      RETRY_BOSH_DEPLOYS: {{retry_bosh_deploys}}
+      KEEP_UNREACHABLE_VMS: {{keep_unreachable_vms}}
+      MAX_THREADS: {{max_threads}}
+      DIRECTOR_WORKER_COUNT: {{director_worker_count}}
+      OPS_DIR_HOSTNAME: {{ops_dir_hostname}}
+      PAGER_DUTY_ENABLED: {{pager_duty_enabled}}
+      PAGER_DUTY_SERVICE_KEY: {{pager_duty_service_key}}
+      PAGER_DUTY_HTTP_PROXY: {{pager_duty_http_proxy}}
+      HM_EMAIL_ENABLED: {{hm_email_enabled}}
+      SMTP_HOST: {{smtp_host}}
+      SMTP_PORT: {{smtp_port}}
+      SMTP_DOMAIN: {{smtp_domain}}
+      FROM_ADDRESS: {{from_address}}
+      RECIPIENTS_ADDRESS: {{recipients_address}}
+      SMTP_USER: {{smtp_user}}
+      SMTP_PASSWORD: {{smtp_password}}
+      SMTP_TLS_ENABLED: {{smtp_tls_enabled}}
+      BLOBSTORE_TYPE: {{blobstore_type}}
+      S3_ENDPOINT: {{s3_endpoint}}
+      S3_BUCKET_NAME: {{s3_bucket_name}}
+      S3_ACCESS_KEY: {{s3_access_key}}
+      S3_SECRET_KEY: {{s3_secret_key}}
+      S3_SIGNATURE_VERSION: {{s3_signature_version}}
+      DATABASE_TYPE: {{database_type}}
+      EXTERNAL_MYSQL_DB_HOST: {{external_mysql_db_host}}
+      EXTERNAL_MYSQL_DB_PORT: {{external_mysql_db_port}}
+      EXTERNAL_MYSQL_DB_USER: {{external_mysql_db_user}}
+      EXTERNAL_MYSQL_DB_PASSWORD: {{external_mysql_db_password}}
+      EXTERNAL_MYSQL_DB_DATABASE: {{external_mysql_db_database}}
+      SYSLOG_ENABLED: {{syslog_enabled}}
+      SYSLOG_ADDRESS: {{syslog_address}}
+      SYSLOG_PORT: {{syslog_port}}
+      SYSLOG_TRANSPORT_PROTOCOL: {{syslog_transport_protocol}}
+      SYSLOG_TLS_ENABLED: {{syslog_tls_enabled}}
+      SYSLOG_PERMITTED_PEER: {{syslog_permitted_peer}}
+      SYSLOG_SSL_CA_CERTIFICATE: {{syslog_ssl_ca_certificate}}
+      ICMP_CHECKS_ENABLED: {{icmp_checks_enabled}}
+      INFRA_NETWORK_NAME: {{infra_network_name}}
+      INFRA_VCENTER_NETWORK: {{infra_vsphere_network}}
+      INFRA_NW_CIDR: {{infra_nw_cidr}}
+      INFRA_EXCLUDED_RANGE: {{infra_excluded_range}}
+      INFRA_NW_DNS: {{infra_nw_dns}}
+      INFRA_NW_GATEWAY: {{infra_nw_gateway}}
+      INFRA_NW_AZS: {{infra_nw_azs}}
+      DEPLOYMENT_NETWORK_NAME: {{deployment_network_name}}
+      DEPLOYMENT_VCENTER_NETWORK: {{deployment_vsphere_network}}
+      DEPLOYMENT_NW_CIDR: {{deployment_nw_cidr}}
+      DEPLOYMENT_EXCLUDED_RANGE: {{deployment_excluded_range}}
+      DEPLOYMENT_NW_DNS: {{deployment_nw_dns}}
+      DEPLOYMENT_NW_GATEWAY: {{deployment_nw_gateway}}
+      DEPLOYMENT_NW_AZS: {{deployment_nw_azs}}
+      SERVICES_NETWORK_NAME: {{services_network_name}}
+      SERVICES_VCENTER_NETWORK: {{services_vsphere_network}}
+      SERVICES_NW_CIDR: {{services_nw_cidr}}
+      SERVICES_EXCLUDED_RANGE: {{services_excluded_range}}
+      SERVICES_NW_DNS: {{services_nw_dns}}
+      SERVICES_NW_GATEWAY: {{services_nw_gateway}}
+      SERVICES_NW_AZS: {{services_nw_azs}}
+      DYNAMIC_SERVICES_NETWORK_NAME: {{dynamic_services_network_name}}
+      DYNAMIC_SERVICES_VCENTER_NETWORK: {{dynamic_services_vsphere_network}}
+      DYNAMIC_SERVICES_NW_CIDR: {{dynamic_services_nw_cidr}}
+      DYNAMIC_SERVICES_EXCLUDED_RANGE: {{dynamic_services_excluded_range}}
+      DYNAMIC_SERVICES_NW_DNS: {{dynamic_services_nw_dns}}
+      DYNAMIC_SERVICES_NW_GATEWAY: {{dynamic_services_nw_gateway}}
+      DYNAMIC_SERVICES_NW_AZS: {{dynamic_services_nw_azs}}
+      AZ_1: {{az_1_name}}
+      AZ_1_CLUSTER_NAME: {{az_1_cluster_name}}
+      AZ_1_RP_NAME: {{az_1_rp_name}}
+      AZ_2: {{az_2_name}}
+      AZ_2_CLUSTER_NAME: {{az_2_cluster_name}}
+      AZ_2_RP_NAME: {{az_2_rp_name}}
+      AZ_3: {{az_3_name}}
+      AZ_3_CLUSTER_NAME: {{az_3_cluster_name}}
+      AZ_3_RP_NAME: {{az_3_rp_name}}
+      TRUSTED_CERTIFICATES: {{trusted_certificates}}
+      GENERATE_VM_PASSWORDS: {{generate_vm_passwords}}
+
+
+- name: deploy-director
+  plan:
+  - aggregate:
+    - do: []
+    - get: pcf-ops-manager
+      passed: [configure-director]
+      trigger: true
+      params: {globs: []}
+  - task: apply-changes
+    config:
+      platform: linux
+      image_resource:
+        type: s3
+        source:
+          access_key_id: {{s3_access_key_id}}
+          bucket: {{s3_bucket}}
+          endpoint: {{s3_endpoint}}
+          regexp: pcfnorm-rootfs/pcfnorm-rootfs-(.*).tgz
+          secret_access_key: {{s3_secret_access_key}}
+          skip_ssl_verification: true
+        params:
+          unpack: true
+      params:
+        OPSMAN_DOMAIN_OR_IP_ADDRESS: ""
+        OPSMAN_PASSWORD: ""
+        OPSMAN_USERNAME: ""
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+
+          set -eu
+
+          # Copyright 2017-Present Pivotal Software, Inc. All rights reserved.
+          #
+          # Licensed under the Apache License, Version 2.0 (the "License");
+          # you may not use this file except in compliance with the License.
+          # You may obtain a copy of the License at
+          #
+          #  http://www.apache.org/licenses/LICENSE-2.0
+          #
+          # Unless required by applicable law or agreed to in writing, software
+          # distributed under the License is distributed on an "AS IS" BASIS,
+          # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+          # See the License for the specific language governing permissions and
+          # limitations under the License.
+
+          echo "Applying changes on Ops Manager @ ${OPSMAN_DOMAIN_OR_IP_ADDRESS}"
+
+          om-linux \
+            --target "https://${OPSMAN_DOMAIN_OR_IP_ADDRESS}" \
+            --skip-ssl-validation \
+            --username "${OPSMAN_USERNAME}" \
+            --password "${OPSMAN_PASSWORD}" \
+            apply-changes \
+            --ignore-warnings
+
+          EO_SH
+
+          chmod +x task.sh
+          ./task.sh
+    params:
+      OPSMAN_DOMAIN_OR_IP_ADDRESS: {{opsman_domain_or_ip_address}}
+      OPSMAN_PASSWORD: {{opsman_admin_password}}
+      OPSMAN_USERNAME: {{opsman_admin_username}}
+
+- name: upload-ert
+  plan:
+  - aggregate:
+    # - get: pcf-pipelines
+    - get: pivnet-product
+      resource: elastic-runtime
+      params: {globs: ["cf*.pivotal"]}
+    - get: pcf-ops-manager
+      params: {globs: []}
+      passed: [deploy-director]
+      trigger: true
+  - do:
+    # - task: upload-stemcell
+      # config:
+        # platform: linux
+        # image_resource:
+          # type: s3
+          # source:
+            # access_key_id: {{s3_access_key_id}}
+            # bucket: {{s3_bucket}}
+            # endpoint: {{s3_endpoint}}
+            # regexp: pcfnorm-rootfs/pcfnorm-rootfs-(.*).tgz
+            # secret_access_key: {{s3_secret_access_key}}
+            # skip_ssl_verification: true
+          # params:
+            # unpack: true
+        # params:
+          # IAAS: vsphere
+          # OPS_MGR_DOMAIN: {{opsman_domain_or_ip_address}}
+          # OPS_MGR_PASSWORD: {{opsman_admin_password}}
+          # OPS_MGR_USERNAME: {{opsman_admin_username}}
+          # S3_ACCESS_KEY_ID: {{s3_access_key_id}}
+          # S3_BUCKET: {{s3_bucket}}
+          # S3_ENDPOINT: {{s3_endpoint}}
+          # S3_SECRET_ACCESS_KEY: {{s3_secret_access_key}}
+        # run:
+          # path: bash
+          # args:
+          # - -c
+          # - |
+            # stemcellpath=`find ./stemcell/ -name bosh-stemcell-*.tgz`
+
+            # # om-linux \
+            # #   --target https://$OPS_MGR_DOMAIN \
+            # #   --username "$OPS_MGR_USERNAME" \
+            # #   --password "$OPS_MGR_PASSWORD" \
+            # #   --skip-ssl-validation \
+            # #   upload-stemcell \
+            # #   --stemcell "$stemcellpath"
+        # inputs:
+        # - name: pivnet-product
+          # path: ""
+        # - name: stemcell
+          # path: ""
+    - task: upload-tile
+      config:
+        platform: linux
+        image_resource:
+          type: s3
+          source:
+            access_key_id: {{s3_access_key_id}}
+            bucket: {{s3_bucket}}
+            endpoint: {{s3_endpoint}}
+            regexp: pcfnorm-rootfs/pcfnorm-rootfs-(.*).tgz
+            secret_access_key: {{s3_secret_access_key}}
+            skip_ssl_verification: true
+          params:
+            unpack: true
+        params:
+          IAAS: "vsphere"
+          OPS_MGR_DOMAIN: {{opsman_domain_or_ip_address}}
+          OPS_MGR_PASSWORD: {{opsman_admin_password}}
+          OPS_MGR_USERNAME: {{opsman_admin_username}}
+          OPSMAN_DOMAIN_OR_IP_ADDRESS: {{opsman_domain_or_ip_address}}
+          OPS_MGR_USR: {{opsman_admin_username}}
+          OPS_MGR_PWD: {{opsman_admin_password}}
+          OM_IP: {{om_ip}}
+        run:
+          path: bash
+          args:
+          - -c
+          - |
+            set -eu
+
+            file_path=$(find ./pivnet-product -name "cf*.pivotal")
+            echo $file_path
+            echo $file_path > filepath
+            om-linux \
+            --target https://$OPS_MGR_DOMAIN \
+            --username "$OPS_MGR_USERNAME" \
+            --password "$OPS_MGR_PASSWORD" \
+            --request-timeout 3600 \
+            --skip-ssl-validation \
+            upload-product \
+            --product $file_path
+        inputs:
+        - name: pivnet-product
+          path: ""
+- name: stage-ert
+  plan:
+  - aggregate:
+    - do: []
+    - get: pcf-ops-manager
+      passed: [upload-ert]
+      trigger: true
+      params: {globs: []}
+    - get: pivnet-product
+      passed: [upload-ert]
+      resource: elastic-runtime
+      params: {globs: ["cf*.pivotal"]}
+  - task: stage
+    config:
+      platform: linux
+      image_resource:
+        type: s3
+        source:
+          access_key_id: {{s3_access_key_id}}
+          bucket: {{s3_bucket}}
+          endpoint: {{s3_endpoint}}
+          regexp: pcfnorm-rootfs/pcfnorm-rootfs-(.*).tgz
+          secret_access_key: {{s3_secret_access_key}}
+          skip_ssl_verification: true
+        params:
+          unpack: true
+      params:
+        OPSMAN_DOMAIN_OR_IP_ADDRESS: ""
+        OPSMAN_PASSWORD: ""
+        OPSMAN_USERNAME: ""
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+
+          set -eu
+
+          # Copyright 2017-Present Pivotal Software, Inc. All rights reserved.
+          #
+          # Licensed under the Apache License, Version 2.0 (the "License");
+          # you may not use this file except in compliance with the License.
+          # You may obtain a copy of the License at
+          #
+          #  http://www.apache.org/licenses/LICENSE-2.0
+          #
+          # Unless required by applicable law or agreed to in writing, software
+          # distributed under the License is distributed on an "AS IS" BASIS,
+          # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+          # See the License for the specific language governing permissions and
+          # limitations under the License.
+
+          # desired_version=$(jq --raw-output '.Release.Version' < ./pivnet-product/metadata.json)
+
+          AVAILABLE=$(om-linux \
+            --skip-ssl-validation \
+            --username "${OPSMAN_USERNAME}" \
+            --password "${OPSMAN_PASSWORD}" \
+            --target "https://${OPSMAN_DOMAIN_OR_IP_ADDRESS}" \
+            curl -path /api/v0/available_products)
+          STAGED=$(om-linux \
+            --skip-ssl-validation \
+            --username "${OPSMAN_USERNAME}" \
+            --password "${OPSMAN_PASSWORD}" \
+            --target "https://${OPSMAN_DOMAIN_OR_IP_ADDRESS}" \
+            curl -path /api/v0/staged/products)
+
+          # echo $STAGED
+          # echo "Staged: $STAGED" > STAGED_PRODUCTS
+          # echo $AVAILABLE
+          # echo "Avail: $AVAILABLE" > AVAIL_PRODUCTS
+
+          # Should the slug contain more than one product, pick only the first.
+          FILE_PATH=`find ./pivnet-product -name *.pivotal | sort | head -1`
+          unzip $FILE_PATH metadata/*
+
+          PRODUCT_NAME="$(cat metadata/*.yml | grep '^name' | cut -d' ' -f 2)"
+
+          # Figure out which products are unstaged.
+          UNSTAGED_ALL=$(jq -n --argjson available "$AVAILABLE" --argjson staged "$STAGED" \
+            '$available - ($staged | map({"name": .type, "product_version": .product_version}))')
+
+          full_version=$(echo "$UNSTAGED_ALL" | jq -r '.[].product_version')
+
+          om-linux --target "https://${OPSMAN_DOMAIN_OR_IP_ADDRESS}" \
+            --skip-ssl-validation \
+            --username "${OPSMAN_USERNAME}" \
+            --password "${OPSMAN_PASSWORD}" \
+            stage-product \
+            --product-name "${PRODUCT_NAME}" \
+            --product-version "${full_version}"
+
+          EO_SH
+
+          chmod +x task.sh
+          ./task.sh
+      inputs:
+      - name: pivnet-product
+        path: ""
+    params:
+      OPSMAN_DOMAIN_OR_IP_ADDRESS: {{opsman_domain_or_ip_address}}
+      OPSMAN_PASSWORD: {{opsman_admin_password}}
+      OPSMAN_USERNAME: {{opsman_admin_username}}
+
+- name: configure-ert
+  plan:
+  - aggregate:
+    - get: pcf-ops-manager
+      passed: [stage-ert]
+      trigger: true
+      params: {globs: []}
+    - get: pivnet-product
+      passed: [stage-ert]
+      resource: elastic-runtime
+      params: {globs: ["cf*.pivotal"]}
+  - task: configure
+    config:
+      platform: linux
+      image_resource:
+        type: s3
+        source:
+          access_key_id: {{s3_access_key_id}}
+          bucket: {{s3_bucket}}
+          endpoint: {{s3_endpoint}}
+          regexp: pcfnorm-rootfs/pcfnorm-rootfs-(.*).tgz
+          secret_access_key: {{s3_secret_access_key}}
+          skip_ssl_verification: true
+        params:
+          unpack: true
+      params:
+        ALLOW_APP_SSH_ACCESS: ""
+        APPS_DOMAIN: ""
+        AUTHENTICATION_MODE: ""
+        BACKUP_PREPARE_INSTANCES: ""
+        CLOCK_GLOBAL_INSTANCES: ""
+        CLOUD_CONTROLLER_INSTANCES: ""
+        CLOUD_CONTROLLER_WORKER_INSTANCES: ""
+        COMPANY_NAME: ""
+        CONSUL_SERVER_INSTANCES: ""
+        CONTAINER_NETWORKING_NW_CIDR: ""
+        CONTAINER_NETWORKING_INTERFACE_PLUGIN:
+        CREDHUB_PASSWORD: ""
+        BLOBSTORE_INTERNAL_ACCESS_SUBNET: ""
+        ENABLE_GROOTFS: ""
+        CREDHUB_INSTANCES: ""
+        DEFAULT_QUOTA_MAX_SERVICES_COUNT: ""
+        DEFAULT_QUOTA_MEMORY_LIMIT_IN_MB: ""
+        DEPLOYMENT_NW_AZS: ""
+        DIEGO_BRAIN_INSTANCES: ""
+        DIEGO_BRAIN_NSX_LB_EDGE_NAME: ""
+        DIEGO_BRAIN_NSX_LB_POOL_NAME: ""
+        DIEGO_BRAIN_NSX_LB_PORT: ""
+        DIEGO_BRAIN_NSX_LB_SECURITY_GROUP: ""
+        DIEGO_BRAIN_NSX_SECURITY_GROUP: ""
+        DIEGO_CELL_INSTANCES: ""
+        DIEGO_DATABASE_INSTANCES: ""
+        DISABLE_HTTP_PROXY: ""
+        DISABLE_INSECURE_COOKIES: ""
+        DOPPLER_INSTANCES: ""
+        ENABLE_SECURITY_EVENT_LOGGING: ""
+        ERT_SINGLETON_JOB_AZ: ""
+        FIRST_NAME_ATTR: ""
+        GARDEN_NETWORK_MTU: ""
+        GARDEN_NETWORK_POOL_CIDR: ""
+        GROUP_SEARCH_BASE: ""
+        GROUP_SEARCH_FILTER: ""
+        HA_PROXY_INSTANCES: ""
+        HA_PROXY_IPS: ""
+        HA_PROXY_LB_NAME: ""
+        HAPROXY_BACKEND_CA: ""
+        HAPROXY_FLOATING_IPS: ""
+        HAPROXY_FORWARD_TLS: ""
+        HAPROXY_TLS_CIPHERS: ""
+        IAAS: "vsphere"
+        IGNORE_SSL_CERT: ""
+        INTERNET_CONNECTED: ""
+        LAST_NAME_ATTR: ""
+        LDAP_PWD: ""
+        LDAP_URL: ""
+        LDAP_USER: ""
+        LOGGREGATOR_ENDPOINT_PORT: ""
+        LOGGREGATOR_TRAFFICCONTROLLER_INSTANCES: ""
+        MAIL_ATTR_NAME: ""
+        MYSQL_BACKUPS: ""
+        MYSQL_BACKUPS_S3_ACCESS_KEY_ID: ""
+        MYSQL_BACKUPS_S3_BUCKET_NAME: ""
+        MYSQL_BACKUPS_S3_BUCKET_PATH: ""
+        MYSQL_BACKUPS_S3_CRON_SCHEDULE: ""
+        MYSQL_BACKUPS_S3_ENDPOINT_URL: ""
+        MYSQL_BACKUPS_S3_SECRET_ACCESS_KEY: ""
+        MYSQL_BACKUPS_SCP_CRON_SCHEDULE: ""
+        MYSQL_BACKUPS_SCP_DESTINATION: ""
+        MYSQL_BACKUPS_SCP_KEY: ""
+        MYSQL_BACKUPS_SCP_PORT: ""
+        MYSQL_BACKUPS_SCP_SERVER: ""
+        MYSQL_BACKUPS_SCP_USER: ""
+        MYSQL_INSTANCES: ""
+        MYSQL_MONITOR_EMAIL: ""
+        MYSQL_MONITOR_INSTANCES: ""
+        MYSQL_NSX_LB_EDGE_NAME: ""
+        MYSQL_NSX_LB_POOL_NAME: ""
+        MYSQL_NSX_LB_PORT: ""
+        MYSQL_NSX_LB_SECURITY_GROUP: ""
+        MYSQL_NSX_SECURITY_GROUP: ""
+        MYSQL_PROXY_INSTANCES: ""
+        MYSQL_STATIC_IPS: ""
+        NATS_INSTANCES: ""
+        NETWORK_NAME: ""
+        NETWORKING_POE_SSL_CERTS: ""
+        NFS_SERVER_INSTANCES: ""
+        OPS_MGR_PWD: ""
+        OPS_MGR_USR: ""
+        OPSMAN_DOMAIN_OR_IP_ADDRESS: ""
+        ROUTE_SERVICES: ""
+        ROUTER_INSTANCES: ""
+        ROUTER_NSX_LB_EDGE_NAME: ""
+        ROUTER_NSX_LB_POOL_NAME: ""
+        ROUTER_NSX_LB_PORT: ""
+        ROUTER_NSX_LB_SECURITY_GROUP: ""
+        ROUTER_NSX_SECURITY_GROUP: ""
+        ROUTER_REQUEST_TIMEOUT_IN_SEC: ""
+        ROUTER_STATIC_IPS: ""
+        ROUTER_TLS_CIPHERS: ""
+        ROUTING_CUSTOM_CA_CERTIFICATES: ""
+        ROUTING_TLS_TERMINATION: ""
+        SAML_SSL_CERT: ""
+        SAML_SSL_PRIVATE_KEY: ""
+        SEARCH_BASE: ""
+        SEARCH_FILTER: ""
+        SECURITY_ACKNOWLEDGEMENT: ""
+        SKIP_CERT_VERIFY: ""
+        SMTP_ADDRESS: ""
+        SMTP_AUTH_MECHANISM: ""
+        SMTP_ENABLE_STARTTLS_AUTO: ""
+        SMTP_FROM: ""
+        SMTP_PORT: ""
+        SMTP_PWD: ""
+        SMTP_USER: ""
+        SSH_STATIC_IPS: ""
+        SYSLOG_ADAPTER_INSTANCES: ""
+        SYSLOG_DRAIN_BUFFER_SIZE: ""
+        SYSLOG_HOST: ""
+        SYSLOG_PORT: ""
+        SYSLOG_PROTOCOL: ""
+        SYSLOG_SCHEDULER_INSTANCES: ""
+        SYSTEM_DOMAIN: ""
+        TCP_ROUTER_INSTANCES: ""
+        TCP_ROUTER_NSX_LB_EDGE_NAME: ""
+        TCP_ROUTER_NSX_LB_POOL_NAME: ""
+        TCP_ROUTER_NSX_LB_PORT: ""
+        TCP_ROUTER_NSX_LB_SECURITY_GROUP: ""
+        TCP_ROUTER_NSX_SECURITY_GROUP: ""
+        TCP_ROUTER_STATIC_IPS: ""
+        TCP_ROUTING: ""
+        TCP_ROUTING_PORTS: ""
+        UAA_INSTANCES: ""
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+
+          # Copy over the latest binaries into /usr/bin so they are in path
+          function copy_binaries {
+           handle_om
+           handle_pivnet_cli
+           handle_govc
+          }
+
+          function handle_om {
+              set +e
+            om_cli=$(find / -name om-linux 2>/dev/null)
+            if [ "$om_cli" != "" ]; then
+             chmod +x $om_cli
+             cp $om_cli /usr/bin/om
+            fi
+              set -e
+          }
+
+          function handle_pivnet_cli {
+              set +e
+            pivnet_cli=$(find / -name "pivnet-linux-amd64*" 2>/dev/null)
+            if [ "$pivnet_cli" != "" ]; then
+             chmod +x $pivnet_cli
+             cp $pivnet_cli /usr/bin/pivnet-cli
+            fi
+              set -e
+          }
+
+          function handle_govc {
+              set +e
+            govc_gz=$(find / -name govc_linux_amd64.gz 2>/dev/null)
+            if [ "$govc_gz" != "" ]; then
+             gunzip $govc_gz
+            fi
+
+            govc=$(find / -name govc_linux_amd64 2>/dev/null)
+            if [ "$govc" != "" ]; then
+             chmod +x $govc
+             cp $govc /usr/bin/govc
+            fi
+              set -e
+          }
+
+          copy_binaries
+
+          function check_bosh_version {
+            export BOSH_PRODUCT_VERSION=$(om-linux \
+                                            -t https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+                                            -u $OPS_MGR_USR \
+                                            -p $OPS_MGR_PWD \
+                                            -k curl -p "/api/v0/deployed/products" \
+                                            2>/dev/null \
+                                            | jq '.[] | select(.installation_name=="p-bosh") | .product_version' \
+                                            | tr -d '"')
+            export BOSH_MAJOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $1}' )
+            export BOSH_MINOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $2}' | sed -e 's/-.*//g' )
+
+            echo "Bosh Product version: $BOSH_PRODUCT_VERSION"
+          }
+
+          function check_available_product_version {
+
+            local product_code="$1"
+            TILE_RELEASE=$(om-linux \
+                              -t https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+                              -u $OPS_MGR_USR \
+                              -p $OPS_MGR_PWD \
+                              -k available-products 2>/dev/null \
+                              | grep $product_code)
+
+            export PRODUCT_NAME=$(echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " ")
+            export PRODUCT_VERSION=$(echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " ")
+            export PRODUCT_MAJOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $1}' )
+            export PRODUCT_MINOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $2}' | sed -e 's/-.*//g' )
+
+            echo "Available Product name: $PRODUCT_NAME and version: $PRODUCT_VERSION"
+          }
+
+          function check_staged_product_guid {
+
+            local product_code="$1"
+            # jq contains does not appear to be able to use env variable
+            # export PRODUCT_GUID=$(om-linux \
+            #                 -t https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+            #                 -u $OPS_MGR_USR \
+            #                 -p $OPS_MGR_PWD \
+            #                 -k curl -p "/api/v0/staged/products" \
+            #                 -x GET \
+            #                 | jq --arg product_code $product_code '.[] | select(.installation_name | contains("$product_code")) | .guid' \
+            #                 | tr -d '"')
+
+            export PRODUCT_GUID=$(om-linux \
+                            -t https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+                            -u $OPS_MGR_USR \
+                            -p $OPS_MGR_PWD \
+                            -k curl -p "/api/v0/staged/products" \
+                            -x GET 2>/dev/null \
+                            | grep "guid" | grep "\"$product_code" \
+                            | awk -F '"' '{print $4}' )
+
+             export STAGED_PRODUCT_PROPERTIES=$(om-linux \
+                                      -t https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+                                      -u $OPS_MGR_USR \
+                                      -p $OPS_MGR_PWD -k \
+                                      curl -p "/api/v0/staged/products/${PRODUCT_GUID}/properties" \
+                                      2>/dev/null)
+
+            echo "Staged Product: $product_code with guid: $PRODUCT_GUID"
+          }
+
+          function check_installed_cf_version {
+
+            export CF_PRODUCT_VERSION=$(om-linux \
+                                      -t https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+                                      -u $OPS_MGR_USR \
+                                      -p $OPS_MGR_PWD -k \
+                                      curl -p "/api/v0/staged/products" \
+                                      -x GET  2>/dev/null \
+                                      | jq '.[] | select(.installation_name | contains("cf-")) | .product_version' \
+                                      | tr -d '"')
+
+            export CF_MAJOR_VERSION=$(echo $cf_product_version | awk -F '.' '{print $1}' )
+            export CF_MINOR_VERSION=$(echo $cf_product_version | awk -F '.' '{print $2}' | sed -e 's/-.*//g')
+
+            echo "Installed CF (Full) version: $CF_PRODUCT_VERSION"
+
+          }
+
+          function check_installed_srt_version {
+
+            export SRT_PRODUCT_VERSION=$(om-linux \
+                                      -t https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+                                      -u $OPS_MGR_USR \
+                                      -p $OPS_MGR_PWD -k \
+                                      curl -p "/api/v0/staged/products" \
+                                      -x GET  2>/dev/null \
+                                      | jq '.[] | select(.installation_name | contains("srt-")) | .product_version' \
+                                      | tr -d '"')
+
+            export SRT_MAJOR_VERSION=$(echo $cf_product_version | awk -F '.' '{print $1}' )
+            export SRT_MINOR_VERSION=$(echo $cf_product_version | awk -F '.' '{print $2}' | sed -e 's/-.*//g')
+            echo "Installed CF (SRT) version: $SRT_PRODUCT_VERSION"
+          }
+
+          function generate_cert () {
+            set -eu
+            local domains="$1"
+
+            local data=$(echo $domains | jq --raw-input -c '{"domains": (. | split(" "))}')
+
+            local response=$(
+              om-linux \
+                --target "https://${OPSMAN_DOMAIN_OR_IP_ADDRESS}" \
+                --username "$OPS_MGR_USR" \
+                --password "$OPS_MGR_PWD" \
+                --skip-ssl-validation \
+                curl \
+                --silent \
+                --path "/api/v0/certificates/generate" \
+                -x POST \
+                -d $data
+              )
+
+            echo "$response"
+          }
+
+          if [[ -z "$SSL_CERT" ]]; then
+            domains=(
+              "*.${SYSTEM_DOMAIN}"
+              "*.${APPS_DOMAIN}"
+              "*.login.${SYSTEM_DOMAIN}"
+              "*.uaa.${SYSTEM_DOMAIN}"
+            )
+
+            certificates=$(generate_cert "${domains[*]}")
+            SSL_CERT=`echo $certificates | jq --raw-output '.certificate'`
+            SSL_PRIVATE_KEY=`echo $certificates | jq --raw-output '.key'`
+          fi
+
+
+          if [[ -z "$SAML_SSL_CERT" ]]; then
+            saml_cert_domains=(
+              "*.${SYSTEM_DOMAIN}"
+              "*.login.${SYSTEM_DOMAIN}"
+              "*.uaa.${SYSTEM_DOMAIN}"
+            )
+
+            saml_certificates=$(generate_cert "${saml_cert_domains[*]}")
+            SAML_SSL_CERT=$(echo $saml_certificates | jq --raw-output '.certificate')
+            SAML_SSL_PRIVATE_KEY=$(echo $saml_certificates | jq --raw-output '.key')
+          fi
+
+          # SABHA
+          # Change in ERT 2.0
+          # from: ".push-apps-manager.company_name"
+          # to: ".properties.push_apps_manager_company_name"
+
+          # Generate CredHub passwd
+          if [ "$CREDHUB_PASSWORD" == "" ]; then
+            CREDHUB_PASSWORD=$(echo $OPS_MGR_PWD{,,,,} | sed -e 's/ //g' | cut -c1-25)
+          fi
+
+
+          check_bosh_version
+          check_available_product_version "cf"
+
+          om-linux \
+              -t https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+              -u $OPS_MGR_USR \
+              -p $OPS_MGR_PWD \
+              -k stage-product \
+              -p $PRODUCT_NAME \
+              -v $PRODUCT_VERSION
+
+          check_staged_product_guid "cf-"
+
+          has_blobstore_internal_access_subnet=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".nfs_server\.blobstore_internal_access_rules" | wc -l || true)
+          has_grootfs=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties\.enable_grootfs" | wc -l || true)
+
+          cf_properties=$(
+            jq -n \
+              --arg tcp_routing "$TCP_ROUTING" \
+              --arg tcp_routing_ports "$TCP_ROUTING_PORTS" \
+              --arg loggregator_endpoint_port "$LOGGREGATOR_ENDPOINT_PORT" \
+              --arg route_services "$ROUTE_SERVICES" \
+              --arg ignore_ssl_cert "$IGNORE_SSL_CERT" \
+              --arg security_acknowledgement "$SECURITY_ACKNOWLEDGEMENT" \
+              --arg system_domain "$SYSTEM_DOMAIN" \
+              --arg apps_domain "$APPS_DOMAIN" \
+              --arg default_quota_memory_limit_in_mb "$DEFAULT_QUOTA_MEMORY_LIMIT_IN_MB" \
+              --arg default_quota_max_services_count "$DEFAULT_QUOTA_MAX_SERVICES_COUNT" \
+              --arg allow_app_ssh_access "$ALLOW_APP_SSH_ACCESS" \
+              --arg ha_proxy_ips "$HA_PROXY_IPS" \
+              --arg skip_cert_verify "$SKIP_CERT_VERIFY" \
+              --arg router_static_ips "$ROUTER_STATIC_IPS" \
+              --arg disable_insecure_cookies "$DISABLE_INSECURE_COOKIES" \
+              --arg router_request_timeout_seconds "$ROUTER_REQUEST_TIMEOUT_IN_SEC" \
+              --arg mysql_monitor_email "$MYSQL_MONITOR_EMAIL" \
+              --arg tcp_router_static_ips "$TCP_ROUTER_STATIC_IPS" \
+              --arg company_name "$COMPANY_NAME" \
+              --arg ssh_static_ips "$SSH_STATIC_IPS" \
+              --arg cert_pem "$SSL_CERT" \
+              --arg private_key_pem "$SSL_PRIVATE_KEY" \
+              --arg haproxy_forward_tls "$HAPROXY_FORWARD_TLS" \
+              --arg haproxy_backend_ca "$HAPROXY_BACKEND_CA" \
+              --arg router_tls_ciphers "$ROUTER_TLS_CIPHERS" \
+              --arg haproxy_tls_ciphers "$HAPROXY_TLS_CIPHERS" \
+              --arg disable_http_proxy "$DISABLE_HTTP_PROXY" \
+              --arg smtp_from "$SMTP_FROM" \
+              --arg smtp_address "$SMTP_ADDRESS" \
+              --arg smtp_port "$SMTP_PORT" \
+              --arg smtp_user "$SMTP_USER" \
+              --arg smtp_password "$SMTP_PWD" \
+              --arg smtp_auth_mechanism "$SMTP_AUTH_MECHANISM" \
+              --arg enable_security_event_logging "$ENABLE_SECURITY_EVENT_LOGGING" \
+              --arg syslog_host "$SYSLOG_HOST" \
+              --arg syslog_drain_buffer_size "$SYSLOG_DRAIN_BUFFER_SIZE" \
+              --arg syslog_port "$SYSLOG_PORT" \
+              --arg syslog_protocol "$SYSLOG_PROTOCOL" \
+              --arg authentication_mode "$AUTHENTICATION_MODE" \
+              --arg ldap_url "$LDAP_URL" \
+              --arg ldap_user "$LDAP_USER" \
+              --arg ldap_password "$LDAP_PWD" \
+              --arg ldap_search_base "$SEARCH_BASE" \
+              --arg ldap_search_filter "$SEARCH_FILTER" \
+              --arg ldap_group_search_base "$GROUP_SEARCH_BASE" \
+              --arg ldap_group_search_filter "$GROUP_SEARCH_FILTER" \
+              --arg ldap_mail_attr_name "$MAIL_ATTR_NAME" \
+              --arg ldap_first_name_attr "$FIRST_NAME_ATTR" \
+              --arg ldap_last_name_attr "$LAST_NAME_ATTR" \
+              --arg saml_cert_pem "$SAML_SSL_CERT" \
+              --arg saml_key_pem "$SAML_SSL_PRIVATE_KEY" \
+              --arg mysql_backups "$MYSQL_BACKUPS" \
+              --arg mysql_backups_s3_endpoint_url "$MYSQL_BACKUPS_S3_ENDPOINT_URL" \
+              --arg mysql_backups_s3_bucket_name "$MYSQL_BACKUPS_S3_BUCKET_NAME" \
+              --arg mysql_backups_s3_bucket_path "$MYSQL_BACKUPS_S3_BUCKET_PATH" \
+              --arg mysql_backups_s3_access_key_id "$MYSQL_BACKUPS_S3_ACCESS_KEY_ID" \
+              --arg mysql_backups_s3_secret_access_key "$MYSQL_BACKUPS_S3_SECRET_ACCESS_KEY" \
+              --arg mysql_backups_s3_cron_schedule "$MYSQL_BACKUPS_S3_CRON_SCHEDULE" \
+              --arg mysql_backups_scp_server "$MYSQL_BACKUPS_SCP_SERVER" \
+              --arg mysql_backups_scp_port "$MYSQL_BACKUPS_SCP_PORT" \
+              --arg mysql_backups_scp_user "$MYSQL_BACKUPS_SCP_USER" \
+              --arg mysql_backups_scp_key "$MYSQL_BACKUPS_SCP_KEY" \
+              --arg mysql_backups_scp_destination "$MYSQL_BACKUPS_SCP_DESTINATION" \
+              --arg mysql_backups_scp_cron_schedule "$MYSQL_BACKUPS_SCP_CRON_SCHEDULE" \
+              --arg container_networking_nw_cidr "$CONTAINER_NETWORKING_NW_CIDR" \
+              --arg credhub_password "$CREDHUB_PASSWORD" \
+              --arg container_networking_interface_plugin "$CONTAINER_NETWORKING_INTERFACE_PLUGIN" \
+              --arg has_blobstore_internal_access_subnet "$has_blobstore_internal_access_subnet" \
+              --arg blobstore_internal_access_subnet "$BLOBSTORE_INTERNAL_ACCESS_SUBNET" \
+              --arg has_grootfs "$has_grootfs" \
+              --arg enable_grootfs "${ENABLE_GROOTFS}" \
+              --arg routing_tls_termination "$ROUTING_TLS_TERMINATION" \
+              '
+              {
+                ".properties.routing_tls_termination": {
+                  "value": $routing_tls_termination
+                },
+                ".properties.system_blobstore": {
+                  "value": "internal"
+                },
+                ".properties.logger_endpoint_port": {
+                  "value": $loggregator_endpoint_port
+                },
+                ".properties.security_acknowledgement": {
+                  "value": $security_acknowledgement
+                },
+                ".cloud_controller.system_domain": {
+                  "value": $system_domain
+                },
+                ".cloud_controller.apps_domain": {
+                  "value": $apps_domain
+                },
+                ".cloud_controller.default_quota_memory_limit_mb": {
+                  "value": $default_quota_memory_limit_in_mb
+                },
+                ".cloud_controller.default_quota_max_number_services": {
+                  "value": $default_quota_max_services_count
+                },
+                ".cloud_controller.allow_app_ssh_access": {
+                  "value": $allow_app_ssh_access
+                },
+                ".ha_proxy.static_ips": {
+                  "value": $ha_proxy_ips
+                },
+                ".ha_proxy.skip_cert_verify": {
+                  "value": $skip_cert_verify
+                },
+                ".router.static_ips": {
+                  "value": $router_static_ips
+                },
+                ".router.disable_insecure_cookies": {
+                  "value": $disable_insecure_cookies
+                },
+                ".router.request_timeout_in_seconds": {
+                  "value": $router_request_timeout_seconds
+                },
+                ".mysql_monitor.recipient_email": {
+                  "value": $mysql_monitor_email
+                },
+                ".tcp_router.static_ips": {
+                  "value": $tcp_router_static_ips
+                },
+                ".properties.push_apps_manager_company_name": {
+                  "value": $company_name
+                },
+                ".diego_brain.static_ips": {
+                  "value": $ssh_static_ips
+                }
+              }
+
+              +
+
+              # Blobstore access subnet
+              if $has_blobstore_internal_access_subnet != "0" then
+              {
+                  ".nfs_server.blobstore_internal_access_rules": {
+                  "value": $blobstore_internal_access_subnet
+                }
+              }
+              else
+              .
+              end
+
+              +
+
+              # Grootfs option
+              if $has_grootfs != "0" then
+              {
+                  ".properties.enable_grootfs": {
+                  "value": $enable_grootfs
+                }
+              }
+              else
+              .
+              end
+
+              +
+
+              # Route Services
+              if $route_services == "enable" then
+               {
+                 ".properties.route_services": {
+                   "value": "enable"
+                 },
+                 ".properties.route_services.enable.ignore_ssl_cert_verification": {
+                   "value": $ignore_ssl_cert
+                 }
+               }
+              else
+               {
+                 ".properties.route_services": {
+                   "value": "disable"
+                 }
+               }
+              end
+
+              +
+
+              # TCP Routing
+              if $tcp_routing == "enable" then
+               {
+                 ".properties.tcp_routing": {
+                    "value": "enable"
+                  },
+                  ".properties.tcp_routing.enable.reservable_ports": {
+                    "value": $tcp_routing_ports
+                  }
+                }
+              else
+                {
+                  ".properties.tcp_routing": {
+                    "value": "disable"
+                  }
+                }
+              end
+
+              +
+
+              # SSL Termination
+              # SABHA - Change structure to take multiple certs.. for PCF 2.0
+              {
+                ".properties.networking_poe_ssl_certs": {
+                  "value": [
+                    {
+                      "name": "certificate",
+                      "certificate": {
+                        "cert_pem": $cert_pem,
+                        "private_key_pem": $private_key_pem
+                      }
+                    }
+                  ]
+                }
+              }
+
+              +
+
+              # SABHA - Credhub integration
+              {
+               ".properties.credhub_key_encryption_passwords": {
+                  "value": [
+                    {
+                      "name": "primary-encryption-key",
+                      "key": { "secret": $credhub_password },
+                      "primary": true
+                    }
+                  ]
+                }
+              }
+
+              +
+
+
+              # SABHA - NSX-T Vs Silk integration
+              if $container_networking_interface_plugin != "silk" then
+                {
+                  ".properties.container_networking_interface_plugin": {
+                    "value": "external"
+                  }
+                }
+              else
+                {
+                  ".properties.container_networking_interface_plugin": {
+                    "value": "silk"
+                  }
+                }
+              end
+
+              +
+
+              # HAProxy Forward TLS
+              if $haproxy_forward_tls == "enable" then
+                {
+                  ".properties.haproxy_forward_tls": {
+                    "value": "enable"
+                  },
+                  ".properties.haproxy_forward_tls.enable.backend_ca": {
+                    "value": $haproxy_backend_ca
+                  }
+                }
+              else
+                {
+                  ".properties.haproxy_forward_tls": {
+                    "value": "disable"
+                  }
+                }
+              end
+
+              +
+
+              {
+                ".properties.routing_disable_http": {
+                  "value": $disable_http_proxy
+                }
+              }
+
+              +
+
+              # TLS Cipher Suites
+              {
+                ".properties.gorouter_ssl_ciphers": {
+                  "value": $router_tls_ciphers
+                },
+                ".properties.haproxy_ssl_ciphers": {
+                  "value": $haproxy_tls_ciphers
+                }
+              }
+
+              +
+
+              # SMTP Configuration
+              if $smtp_address != "" then
+                {
+                  ".properties.smtp_from": {
+                    "value": $smtp_from
+                  },
+                  ".properties.smtp_address": {
+                    "value": $smtp_address
+                  },
+                  ".properties.smtp_port": {
+                    "value": $smtp_port
+                  },
+                  ".properties.smtp_credentials": {
+                    "value": {
+                      "identity": $smtp_user,
+                      "password": $smtp_password
+                    }
+                  },
+                  ".properties.smtp_enable_starttls_auto": {
+                    "value": true
+                  },
+                  ".properties.smtp_auth_mechanism": {
+                    "value": $smtp_auth_mechanism
+                  }
+                }
+              else
+                .
+              end
+
+              +
+
+              # Syslog
+              if $syslog_host != "" then
+                {
+                  ".doppler.message_drain_buffer_size": {
+                    "value": $syslog_drain_buffer_size
+                  },
+                  ".cloud_controller.security_event_logging_enabled": {
+                    "value": $enable_security_event_logging
+                  },
+                  ".properties.syslog_host": {
+                    "value": $syslog_host
+                  },
+                  ".properties.syslog_port": {
+                    "value": $syslog_port
+                  },
+                  ".properties.syslog_protocol": {
+                    "value": $syslog_protocol
+                  }
+                }
+              else
+                .
+              end
+
+              +
+
+              # Authentication
+              if $authentication_mode == "internal" then
+                {
+                  ".properties.uaa": {
+                    "value": "internal"
+                  }
+                }
+              elif $authentication_mode == "ldap" then
+                {
+                  ".properties.uaa": {
+                    "value": "ldap"
+                  },
+                  ".properties.uaa.ldap.url": {
+                    "value": $ldap_url
+                  },
+                  ".properties.uaa.ldap.credentials": {
+                    "value": {
+                      "identity": $ldap_user,
+                      "password": $ldap_password
+                    }
+                  },
+                  ".properties.uaa.ldap.search_base": {
+                    "value": $ldap_search_base
+                  },
+                  ".properties.uaa.ldap.search_filter": {
+                    "value": $ldap_search_filter
+                  },
+                  ".properties.uaa.ldap.group_search_base": {
+                    "value": $ldap_group_search_base
+                  },
+                  ".properties.uaa.ldap.group_search_filter": {
+                    "value": $ldap_group_search_filter
+                  },
+                  ".properties.uaa.ldap.mail_attribute_name": {
+                    "value": $ldap_mail_attr_name
+                  },
+                  ".properties.uaa.ldap.first_name_attribute": {
+                    "value": $ldap_first_name_attr
+                  },
+                  ".properties.uaa.ldap.last_name_attribute": {
+                    "value": $ldap_last_name_attr
+                  }
+                }
+              else
+                .
+              end
+
+              +
+
+              # UAA SAML Credentials
+              {
+                ".uaa.service_provider_key_credentials": {
+                  value: {
+                    "cert_pem": $saml_cert_pem,
+                    "private_key_pem": $saml_key_pem
+                  }
+                }
+              }
+
+              +
+
+              # MySQL Backups
+              if $mysql_backups == "s3" then
+                {
+                  ".properties.mysql_backups": {
+                    "value": "s3"
+                  },
+                  ".properties.mysql_backups.s3.endpoint_url":  {
+                    "value": $mysql_backups_s3_endpoint_url
+                  },
+                  ".properties.mysql_backups.s3.bucket_name":  {
+                    "value": $mysql_backups_s3_bucket_name
+                  },
+                  ".properties.mysql_backups.s3.bucket_path":  {
+                    "value": $mysql_backups_s3_bucket_path
+                  },
+                  ".properties.mysql_backups.s3.access_key_id":  {
+                    "value": $mysql_backups_s3_access_key_id
+                  },
+                  ".properties.mysql_backups.s3.secret_access_key":  {
+                    "value": $mysql_backups_s3_secret_access_key
+                  },
+                  ".properties.mysql_backups.s3.cron_schedule":  {
+                    "value": $mysql_backups_s3_cron_schedule
+                  }
+                }
+              elif $mysql_backups == "scp" then
+                {
+                  ".properties.mysql_backups": {
+                    "value": "scp"
+                  },
+                  ".properties.mysql_backups.scp.server": {
+                    "value": $mysql_backups_scp_server
+                  },
+                  ".properties.mysql_backups.scp.port": {
+                    "value": $mysql_backups_scp_port
+                  },
+                  ".properties.mysql_backups.scp.user": {
+                    "value": $mysql_backups_scp_user
+                  },
+                  ".properties.mysql_backups.scp.key": {
+                    "value": $mysql_backups_scp_key
+                  },
+                  ".properties.mysql_backups.scp.destination": {
+                    "value": $mysql_backups_scp_destination
+                  },
+                  ".properties.mysql_backups.scp.cron_schedule" : {
+                    "value": $mysql_backups_scp_cron_schedule
+                  }
+                }
+              else
+                .
+              end
+              '
+          )
+
+          ## SABHA - removed cidr
+          # ".properties.container_networking_network_cidr": {
+          #         "value": $container_networking_nw_cidr
+          #       },
+
+
+
+
+          cf_network=$(
+            jq -n \
+              --arg network_name "$NETWORK_NAME" \
+              --arg other_azs "$DEPLOYMENT_NW_AZS" \
+              --arg singleton_az "$ERT_SINGLETON_JOB_AZ" \
+              '
+              {
+                "network": {
+                  "name": $network_name
+                },
+                "other_availability_zones": ($other_azs | split(",") | map({name: .})),
+                "singleton_availability_zone": {
+                  "name": $singleton_az
+                }
+              }
+              '
+
+          )
+
+          echo "preparing cf_resources"
+          cf_resources=$(
+            jq -n \
+              --arg iaas "$IAAS" \
+              --argjson consul_server_instances $CONSUL_SERVER_INSTANCES \
+              --argjson nats_instances $NATS_INSTANCES \
+              --argjson nfs_server_instances $NFS_SERVER_INSTANCES \
+              --argjson mysql_proxy_instances $MYSQL_PROXY_INSTANCES \
+              --argjson mysql_instances $MYSQL_INSTANCES \
+              --argjson backup_prepare_instances $BACKUP_PREPARE_INSTANCES \
+              --argjson diego_database_instances $DIEGO_DATABASE_INSTANCES \
+              --argjson uaa_instances $UAA_INSTANCES \
+              --argjson cloud_controller_instances $CLOUD_CONTROLLER_INSTANCES \
+              --argjson ha_proxy_instances $HA_PROXY_INSTANCES \
+              --argjson router_instances $ROUTER_INSTANCES \
+              --argjson mysql_monitor_instances $MYSQL_MONITOR_INSTANCES \
+              --argjson clock_global_instances $CLOCK_GLOBAL_INSTANCES \
+              --argjson cloud_controller_worker_instances $CLOUD_CONTROLLER_WORKER_INSTANCES \
+              --argjson diego_brain_instances $DIEGO_BRAIN_INSTANCES \
+              --argjson diego_cell_instances $DIEGO_CELL_INSTANCES \
+              --argjson loggregator_tc_instances $LOGGREGATOR_TRAFFICCONTROLLER_INSTANCES \
+              --argjson tcp_router_instances $TCP_ROUTER_INSTANCES \
+              --argjson syslog_adapter_instances $SYSLOG_ADAPTER_INSTANCES \
+              --argjson doppler_instances $DOPPLER_INSTANCES \
+              --argjson internet_connected $INTERNET_CONNECTED \
+              --arg ha_proxy_elb_name "$HA_PROXY_LB_NAME" \
+              --arg ha_proxy_floating_ips "$HAPROXY_FLOATING_IPS" \
+              --arg tcp_router_nsx_security_group "${TCP_ROUTER_NSX_SECURITY_GROUP}" \
+              --arg tcp_router_nsx_lb_edge_name "${TCP_ROUTER_NSX_LB_EDGE_NAME}" \
+              --arg tcp_router_nsx_lb_pool_name "${TCP_ROUTER_NSX_LB_POOL_NAME}" \
+              --arg tcp_router_nsx_lb_security_group "${TCP_ROUTER_NSX_LB_SECURITY_GROUP}" \
+              --arg tcp_router_nsx_lb_port "${TCP_ROUTER_NSX_LB_PORT}" \
+              --arg router_nsx_security_group "${ROUTER_NSX_SECURITY_GROUP}" \
+              --arg router_nsx_lb_edge_name "${ROUTER_NSX_LB_EDGE_NAME}" \
+              --arg router_nsx_lb_pool_name "${ROUTER_NSX_LB_POOL_NAME}" \
+              --arg router_nsx_lb_security_group "${ROUTER_NSX_LB_SECURITY_GROUP}" \
+              --arg router_nsx_lb_port "${ROUTER_NSX_LB_PORT}" \
+              --arg diego_brain_nsx_security_group "${DIEGO_BRAIN_NSX_SECURITY_GROUP}" \
+              --arg diego_brain_nsx_lb_edge_name "${DIEGO_BRAIN_NSX_LB_EDGE_NAME}" \
+              --arg diego_brain_nsx_lb_pool_name "${DIEGO_BRAIN_NSX_LB_POOL_NAME}" \
+              --arg diego_brain_nsx_lb_security_group "${DIEGO_BRAIN_NSX_LB_SECURITY_GROUP}" \
+              --arg diego_brain_nsx_lb_port "${DIEGO_BRAIN_NSX_LB_PORT}" \
+              '
+              {
+                "consul_server": { "instances": $consul_server_instances },
+                "nats": { "instances": $nats_instances },
+                "nfs_server": { "instances": $nfs_server_instances },
+                "mysql_proxy": { "instances": $mysql_proxy_instances },
+                "mysql": { "instances": $mysql_instances },
+                "backup-prepare": { "instances": $backup_prepare_instances },
+                "diego_database": { "instances": $diego_database_instances },
+                "uaa": { "instances": $uaa_instances },
+                "cloud_controller": { "instances": $cloud_controller_instances },
+                "ha_proxy": { "instances": $ha_proxy_instances },
+                "router": { "instances": $router_instances },
+                "mysql_monitor": { "instances": $mysql_monitor_instances },
+                "clock_global": { "instances": $clock_global_instances },
+                "cloud_controller_worker": { "instances": $cloud_controller_worker_instances },
+                "diego_brain": { "instances": $diego_brain_instances },
+                "diego_cell": { "instances": $diego_cell_instances },
+                "loggregator_trafficcontroller": { "instances": $loggregator_tc_instances },
+                "tcp_router": { "instances": $tcp_router_instances },
+                "syslog_adapter": { "instances": $syslog_adapter_instances },
+                "doppler": { "instances": $doppler_instances }
+              }
+
+              +
+
+              if $ha_proxy_elb_name != "" then
+                .ha_proxy |= . + { "elb_names": [ $ha_proxy_elb_name ] }
+              else
+                .
+              end
+
+              +
+
+              if $ha_proxy_floating_ips != "" then
+                .ha_proxy |= . + { "floating_ips": $ha_proxy_floating_ips }
+              else
+                .
+              end
+
+              +
+
+              # NSX LBs
+
+              if $tcp_router_nsx_lb_edge_name != "" then
+                .tcp_router |= . + {
+                  "nsx_security_groups": [$tcp_router_nsx_security_group],
+                  "nsx_lbs": [
+                    {
+                      "edge_name": $tcp_router_nsx_lb_edge_name,
+                      "pool_name": $tcp_router_nsx_lb_pool_name,
+                      "security_group": $tcp_router_nsx_lb_security_group,
+                      "port": $tcp_router_nsx_lb_port
+                    }
+                  ]
+                }
+              else
+                .
+              end
+
+              +
+
+              if $router_nsx_lb_edge_name != "" then
+                .router |= . + {
+                  "nsx_security_groups": [$router_nsx_security_group],
+                  "nsx_lbs": [
+                    {
+                      "edge_name": $router_nsx_lb_edge_name,
+                      "pool_name": $router_nsx_lb_pool_name,
+                      "security_group": $router_nsx_lb_security_group,
+                      "port": $router_nsx_lb_port
+                    }
+                  ]
+                }
+              else
+                .
+              end
+
+              +
+
+              if $diego_brain_nsx_lb_edge_name != "" then
+                .diego_brain |= . + {
+                  "nsx_security_groups": [$diego_brain_nsx_security_group],
+                  "nsx_lbs": [
+                    {
+                      "edge_name": $diego_brain_nsx_lb_edge_name,
+                      "pool_name": $diego_brain_nsx_lb_pool_name,
+                      "security_group": $diego_brain_nsx_lb_security_group,
+                      "port": $diego_brain_nsx_lb_port
+                    }
+                  ]
+                }
+              else
+                .
+              end
+              '
+          )
+
+          om-linux \
+            -t https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+            -u $OPS_MGR_USR \
+            -p $OPS_MGR_PWD \
+            --skip-ssl-validation \
+            configure-product \
+            --product-name cf \
+            --product-properties "$cf_properties" \
+            --product-network "$cf_network" \
+            --product-resources "$cf_resources"
+
+
+
+          ERT_ERRANDS=$(cat <<-EOF
+          {"errands":[
+            {"name":"smoke_tests","post_deploy":"when-changed"},
+            {"name":"push-usage-service","post_deploy":"when-changed"},
+            {"name":"push-apps-manager","post_deploy":"when-changed"},
+            {"name":"deploy-notifications","post_deploy":"when-changed"},
+            {"name":"deploy-notifications-ui","post_deploy":"when-changed"},
+            {"name":"push-pivotal-account","post_deploy":"when-changed"},
+            {"name":"deploy-autoscaler","post_deploy":"when-changed"},
+            {"name":"test-autoscaling","post_deploy":"when-changed"},
+            {"name":"nfsbrokerpush","post_deploy":"when-changed"}
+          ]}
+          EOF
+          )
+
+          om-linux \
+                -t https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+                -u $OPS_MGR_USR \
+                -p $OPS_MGR_PWD \
+                -k curl -p "/api/v0/staged/products/$PRODUCT_GUID/errands" \
+                -x PUT -d "$ERT_ERRANDS"
+          EO_SH
+
+          chmod +x task.sh
+          ./task.sh
+    params:
+      IAAS: vsphere
+      OPSMAN_DOMAIN_OR_IP_ADDRESS: {{opsman_domain_or_ip_address}}
+      OPS_MGR_USR: {{opsman_admin_username}}
+      OPS_MGR_PWD: {{opsman_admin_password}}
+      ERT_SINGLETON_JOB_AZ: {{ert_singleton_job_az}}
+      DEPLOYMENT_NW_AZS: {{deployment_nw_azs}}
+      NETWORK_NAME: {{deployment_network_name}}
+      ENABLE_SECURITY_EVENT_LOGGING: {{enable_security_event_logging}}
+      SYSLOG_HOST: {{syslog_address}}
+      SYSLOG_ADDRESS: {{syslog_address}}
+      SYSLOG_PORT: {{syslog_port}}
+      SYSLOG_TRANSPORT_PROTOCOL: {{syslog_transport_protocol}}
+      SYSLOG_DRAIN_BUFFER_SIZE: {{syslog_drain_buffer_size}}
+      COMPANY_NAME: {{company_name}}
+      AUTHENTICATION_MODE: {{authentication_mode}}
+      LOGGREGATOR_ENDPOINT_PORT: {{loggregator_endpoint_port}}
+      SSL_CERT: {{ssl_cert}}
+      SSL_PRIVATE_KEY: {{ssl_private_key}}
+      SAML_SSL_CERT: {{saml_ssl_cert}}
+      SAML_SSL_PRIVATE_KEY: {{saml_ssl_private_key}}
+      HAPROXY_FORWARD_TLS: {{haproxy_forward_tls}}
+      HAPROXY_BACKEND_CA: {{haproxy_backend_ca}}
+      ROUTER_TLS_CIPHERS: {{router_tls_ciphers}}
+      HAPROXY_TLS_CIPHERS: {{haproxy_tls_ciphers}}
+      DISABLE_HTTP_PROXY: {{disable_http_proxy}}
+      TCP_ROUTING: {{tcp_routing}}
+      TCP_ROUTING_PORTS: {{tcp_routing_ports}}
+      ROUTE_SERVICES: {{route_services}}
+      IGNORE_SSL_CERT: {{ignore_ssl_cert_verification}}
+      SMTP_FROM: {{smtp_from}}
+      SMTP_ADDRESS: {{smtp_address}}
+      SMTP_PORT: {{smtp_port}}
+      SMTP_USER: {{smtp_user}}
+      SMTP_PWD: {{smtp_pwd}}
+      SMTP_ENABLE_STARTTLS_AUTO: {{smtp_enable_starttls_auto}}
+      SMTP_AUTH_MECHANISM: {{smtp_auth_mechanism}}
+      LDAP_URL: {{ldap_url}}
+      LDAP_USER: {{ldap_user}}
+      LDAP_PWD: {{ldap_pwd}}
+      SEARCH_BASE: {{search_base}}
+      SEARCH_FILTER: {{search_filter}}
+      GROUP_SEARCH_BASE: {{group_search_base}}
+      GROUP_SEARCH_FILTER: {{group_search_filter}}
+      MAIL_ATTR_NAME: {{mail_attribute_name}}
+      FIRST_NAME_ATTR: {{first_name_attribute}}
+      LAST_NAME_ATTR: {{last_name_attribute}}
+      SECURITY_ACKNOWLEDGEMENT: {{security_acknowledgement}}
+      SYSTEM_DOMAIN: {{system_domain}}
+      APPS_DOMAIN: {{apps_domain}}
+      DEFAULT_QUOTA_MEMORY_LIMIT_IN_MB: {{default_quota_memory_limit_mb}}
+      DEFAULT_QUOTA_MAX_SERVICES_COUNT: {{default_quota_max_number_services}}
+      HA_PROXY_IPS: {{ha_proxy_ips}}
+      SKIP_CERT_VERIFY: {{skip_cert_verify}}
+      DISABLE_INSECURE_COOKIES: {{disable_insecure_cookies}}
+      ROUTER_STATIC_IPS: {{router_static_ips}}
+      ROUTER_REQUEST_TIMEOUT_IN_SEC: {{router_request_timeout_in_seconds}}
+      GARDEN_NETWORK_POOL_CIDR: {{garden_network_pool_cidr}}
+      GARDEN_NETWORK_MTU: {{garden_network_mtu}}
+      MYSQL_MONITOR_EMAIL: {{mysql_monitor_email}}
+      MYSQL_BACKUPS: {{mysql_backups}}
+      MYSQL_BACKUPS_SCP_SERVER: {{mysql_backups_scp_server}}
+      MYSQL_BACKUPS_SCP_PORT: {{mysql_backups_scp_port}}
+      MYSQL_BACKUPS_SCP_USER: {{mysql_backups_scp_user}}
+      MYSQL_BACKUPS_SCP_KEY: {{mysql_backups_scp_key}}
+      MYSQL_BACKUPS_SCP_DESTINATION: {{mysql_backups_scp_destination}}
+      MYSQL_BACKUPS_SCP_CRON_SCHEDULE: {{mysql_backups_scp_cron_schedule}}
+      MYSQL_BACKUPS_S3_ENDPOINT_URL: {{mysql_backups_s3_endpoint_url}}
+      MYSQL_BACKUPS_S3_BUCKET_NAME: {{mysql_backups_s3_bucket_name}}
+      MYSQL_BACKUPS_S3_BUCKET_PATH: {{mysql_backups_s3_bucket_path}}
+      MYSQL_BACKUPS_S3_ACCESS_KEY_ID: {{mysql_backups_s3_access_key_id}}
+      MYSQL_BACKUPS_S3_SECRET_ACCESS_KEY: {{mysql_backups_s3_secret_access_key}}
+      MYSQL_BACKUPS_S3_CRON_SCHEDULE: {{mysql_backups_s3_cron_schedule}}
+      ALLOW_APP_SSH_ACCESS: {{allow_app_ssh_access}}
+      TCP_ROUTER_STATIC_IPS: {{tcp_router_static_ips}}
+      SSH_STATIC_IPS: {{ssh_static_ips}}
+      MYSQL_STATIC_IPS: {{mysql_static_ips}}
+      CONSUL_SERVER_INSTANCES: {{consul_server_instances}}
+      NATS_INSTANCES: {{nats_instances}}
+      NFS_SERVER_INSTANCES: {{nfs_server_instances}}
+      MYSQL_PROXY_INSTANCES: {{mysql_proxy_instances}}
+      MYSQL_INSTANCES: {{mysql_instances}}
+      BACKUP_PREPARE_INSTANCES: {{backup_prepare_instances}}
+      UAA_INSTANCES: {{uaa_instances}}
+      CLOUD_CONTROLLER_INSTANCES: {{cloud_controller_instances}}
+      HA_PROXY_INSTANCES: {{ha_proxy_instances}}
+      ROUTER_INSTANCES: {{router_instances}}
+      MYSQL_MONITOR_INSTANCES: {{mysql_monitor_instances}}
+      CLOCK_GLOBAL_INSTANCES: {{clock_global_instances}}
+      CLOUD_CONTROLLER_WORKER_INSTANCES: {{cloud_controller_worker_instances}}
+      DIEGO_DATABASE_INSTANCES: {{diego_database_instances}}
+      DIEGO_BRAIN_INSTANCES: {{diego_brain_instances}}
+      DIEGO_CELL_INSTANCES: {{diego_cell_instances}}
+      DOPPLER_INSTANCES: {{doppler_instances}}
+      LOGGREGATOR_TRAFFICCONTROLLER_INSTANCES: {{loggregator_trafficcontroller_instances}}
+      TCP_ROUTER_INSTANCES: {{tcp_router_instances}}
+      SYSLOG_ADAPTER_INSTANCES: {{syslog_adapter_instances}}
+      SYSLOG_SCHEDULER_INSTANCES: {{syslog_scheduler_instances}}
+      CREDHUB_INSTANCES: {{credhub_instances}}
+      INTERNET_CONNECTED: {{internet_connected}}
+      CONTAINER_NETWORKING_NW_CIDR: {{container_networking_nw_cidr}}
+      TCP_ROUTER_NSX_SECURITY_GROUP: {{tcp_router_nsx_security_group}}
+      TCP_ROUTER_NSX_LB_EDGE_NAME: {{tcp_router_nsx_lb_edge_name}}
+      TCP_ROUTER_NSX_LB_POOL_NAME: {{tcp_router_nsx_lb_pool_name}}
+      TCP_ROUTER_NSX_LB_SECURITY_GROUP: {{tcp_router_nsx_lb_security_group}}
+      TCP_ROUTER_NSX_LB_PORT: {{tcp_router_nsx_lb_port}}
+      ROUTER_NSX_SECURITY_GROUP: {{router_nsx_security_group}}
+      ROUTER_NSX_LB_EDGE_NAME: {{router_nsx_lb_edge_name}}
+      ROUTER_NSX_LB_POOL_NAME: {{router_nsx_lb_pool_name}}
+      ROUTER_NSX_LB_SECURITY_GROUP: {{router_nsx_lb_security_group}}
+      ROUTER_NSX_LB_PORT: {{router_nsx_lb_port}}
+      DIEGO_BRAIN_NSX_SECURITY_GROUP: {{diego_brain_nsx_security_group}}
+      DIEGO_BRAIN_NSX_LB_EDGE_NAME: {{diego_brain_nsx_lb_edge_name}}
+      DIEGO_BRAIN_NSX_LB_POOL_NAME: {{diego_brain_nsx_lb_pool_name}}
+      DIEGO_BRAIN_NSX_LB_SECURITY_GROUP: {{diego_brain_nsx_lb_security_group}}
+      DIEGO_BRAIN_NSX_LB_PORT: {{diego_brain_nsx_lb_port}}
+      MYSQL_NSX_SECURITY_GROUP: {{mysql_nsx_security_group}}
+      MYSQL_NSX_LB_EDGE_NAME: {{mysql_nsx_lb_edge_name}}
+      MYSQL_NSX_LB_POOL_NAME: {{mysql_nsx_lb_pool_name}}
+      MYSQL_NSX_LB_SECURITY_GROUP: {{mysql_nsx_lb_security_group}}
+      MYSQL_NSX_LB_PORT: {{mysql_nsx_lb_port}}
+      ROUTING_TLS_TERMINATION: {{routing_tls_termination}}
+      ROUTING_CUSTOM_CA_CERTIFICATES: {{routing_custom_ca_certificates}}
+      CONTAINER_NETWORKING_INTERFACE_PLUGIN: {{container_networking_interface_plugin}}
+      CREDHUB_PASSWORD: {{credhub_password}}
+      BLOBSTORE_INTERNAL_ACCESS_SUBNET: {{blobstore_internal_access_subnet}}
+      ENABLE_GROOTFS: {{enable_grootfs}}
+      HA_PROXY_LB_NAME: ""
+      HAPROXY_FLOATING_IPS: ""
+      OPSMAN_CLIENT_ID: ""
+      OPSMAN_CLIENT_SECRET: ""
+  - task: configure-errands
+    config:
+      platform: linux
+      image_resource:
+        type: s3
+        source:
+          access_key_id: {{s3_access_key_id}}
+          bucket: {{s3_bucket}}
+          endpoint: {{s3_endpoint}}
+          regexp: pcfnorm-rootfs/pcfnorm-rootfs-(.*).tgz
+          secret_access_key: {{s3_secret_access_key}}
+          skip_ssl_verification: true
+        params:
+          unpack: true
+      params:
+        ERRANDS_TO_RUN_ON_CHANGE: ""
+        OPSMAN_DOMAIN_OR_IP_ADDRESS: ""
+        OPSMAN_PASSWORD: ""
+        OPSMAN_USERNAME: ""
+        PRODUCT_NAME: ""
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+
+          set -eu
+
+          enabled_errands=$(
+            om-linux \
+              --target "https://${OPSMAN_DOMAIN_OR_IP_ADDRESS}" \
+              --skip-ssl-validation \
+              --username "$OPSMAN_USERNAME" \
+              --password "$OPSMAN_PASSWORD" \
+              errands \
+              --product-name "$PRODUCT_NAME" |
+            tail -n+4 | head -n-1 | grep -v false | cut -d'|' -f2 | tr -d ' '
+          )
+
+          if [[ "$ERRANDS_TO_RUN_ON_CHANGE" == "all" ]]; then
+            errands_to_run_on_change="${enabled_errands[@]}"
+          else
+            errands_to_run_on_change=$(echo "$ERRANDS_TO_RUN_ON_CHANGE" | tr ',' '\n')
+          fi
+
+          will_run_on_change=$(
+            echo $enabled_errands |
+            jq \
+              --arg run_on_change "${errands_to_run_on_change[@]}" \
+              --raw-input \
+              --raw-output \
+              'split(" ")
+              | reduce .[] as $errand ([];
+                 if $run_on_change | contains($errand) then
+                   . + [$errand]
+                 else
+                   .
+                 end)
+              | join("\n")'
+          )
+
+          if [ -z "$will_run_on_change" ]; then
+            echo Nothing to do.
+            exit 0
+          fi
+
+          while read errand; do
+            echo -n Setting $errand to When Changed...
+            om-linux \
+              --target "https://${OPSMAN_DOMAIN_OR_IP_ADDRESS}" \
+              --skip-ssl-validation \
+              --username "$OPSMAN_USERNAME" \
+              --password "$OPSMAN_PASSWORD" \
+              set-errand-state \
+              --product-name "$PRODUCT_NAME" \
+              --errand-name $errand \
+              --post-deploy-state "when-changed"
+            echo done
+          done < <(echo "$will_run_on_change")
+
+          EO_SH
+
+          chmod +x task.sh
+          ./task.sh
+    params:
+      ERRANDS_TO_RUN_ON_CHANGE: {{ert_errands_to_run_on_change}}
+      OPSMAN_DOMAIN_OR_IP_ADDRESS: {{opsman_domain_or_ip_address}}
+      OPSMAN_PASSWORD: {{opsman_admin_password}}
+      OPSMAN_USERNAME: {{opsman_admin_username}}
+      PRODUCT_NAME: cf
+
+- name: upload-NSX-tile
+  plan:
+  - aggregate:
+    # - get: pcf-pipelines
+    - get: pivnet-product
+      resource: nsx-t-tile
+      params: {globs: ["*.pivotal"]}
+    - get: pcf-ops-manager
+      params: {globs: []}
+      passed: [deploy-director]
+      trigger: true
+  - do:
+    - task: upload-tile
+      config:
+        platform: linux
+        image_resource:
+          type: s3
+          source:
+            access_key_id: {{s3_access_key_id}}
+            bucket: {{s3_bucket}}
+            endpoint: {{s3_endpoint}}
+            regexp: pcfnorm-rootfs/pcfnorm-rootfs-(.*).tgz
+            secret_access_key: {{s3_secret_access_key}}
+            skip_ssl_verification: true
+          params:
+            unpack: true
+        params:
+          IAAS: "vsphere"
+          OPS_MGR_DOMAIN: {{opsman_domain_or_ip_address}}
+          OPS_MGR_PASSWORD: {{opsman_admin_password}}
+          OPS_MGR_USERNAME: {{opsman_admin_username}}
+          OPSMAN_DOMAIN_OR_IP_ADDRESS: {{opsman_domain_or_ip_address}}
+          OPS_MGR_USR: {{opsman_admin_username}}
+          OPS_MGR_PWD: {{opsman_admin_password}}
+          OM_IP: {{om_ip}}
+        run:
+          path: bash
+          args:
+          - -c
+          - |
+            set -eu
+
+            FILE_PATH=`find ./pivnet-product -name *.pivotal | sort | head -1`
+            # echo $file_path
+            # echo $file_path > filepath
+            om-linux \
+            --target https://$OPS_MGR_DOMAIN \
+            --username "$OPS_MGR_USERNAME" \
+            --password "$OPS_MGR_PASSWORD" \
+            --request-timeout 3600 \
+            --skip-ssl-validation \
+            upload-product \
+            --product $FILE_PATH
+
+            # FILE_PATH=`find ./pivnet-product -name *.pivotal | sort | head -1`
+            # unzip $FILE_PATH metadata/*
+
+            # PRODUCT_NAME="$(cat metadata/*.yml | grep '^name' | cut -d' ' -f 2)"
+
+            # Figure out which products are unstaged.
+            # UNSTAGED_ALL=$(jq -n --argjson available "$AVAILABLE" --argjson staged "$STAGED" \
+            #  '$available - ($staged | map({"name": .type, "product_version": .product_version}))')
+
+            # full_version=$(echo "$UNSTAGED_ALL" | jq -r '.[].product_version')
+            TILE_RELEASE=$(om-linux -t https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+            -u $OPS_MGR_USERNAME \
+            -p $OPS_MGR_PASSWORD \
+            -k available-products \
+            | grep -e "nsx-cf-cni\|VMware-NSX-T")
+
+            PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
+            PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
+
+            om-linux \
+            --target "https://$OPS_MGR_DOMAIN" \
+            --skip-ssl-validation \
+            --username "${OPS_MGR_USERNAME}" \
+            --password "${OPS_MGR_PASSWORD}" \
+            stage-product \
+            --product-name "${PRODUCT_NAME}" \
+            --product-version "${PRODUCT_VERSION}"
+
+        inputs:
+        - name: pivnet-product
+          path: ""
+
+
+- name: configure-nsx
+  plan:
+  - aggregate:
+    - get: pcf-ops-manager
+      params: {globs: []}
+      passed: [upload-NSX-tile,configure-ert]
+      trigger: true
+    - get: pivnet-product
+      resource: nsx-t-tile
+      params: {globs: ["*.pivotal"]}
+
+  - task: configure-nsx
+    config:
+      platform: linux
+      image_resource:
+        type: s3
+        source:
+          access_key_id: {{s3_access_key_id}}
+          bucket: {{s3_bucket}}
+          endpoint: {{s3_endpoint}}
+          regexp: pcfnorm-rootfs/pcfnorm-rootfs-(.*).tgz
+          secret_access_key: {{s3_secret_access_key}}
+          skip_ssl_verification: true
+        params:
+          unpack: true
+      params:
+        OPSMAN_DOMAIN_OR_IP_ADDRESS: ""
+        OPSMAN_USERNAME: ""
+        OPSMAN_PASSWORD: ""
+        NSX_API_MANAGERS: ""
+        NSX_API_USER: ""
+        NSX_API_PASSWORD: ""
+        NSX_API_CA_CERT: ""
+        NSX_SUBNET_PREFIX: ""
+        NSX_EXTERNAL_SUBNET_PREFIX: ""
+        NSX_LOG_DROPPED_TRAFFIC: ""
+        NSX_ENABLE_SNAT: ""
+        NSX_PRODUCT_TILE_NAME: ""
+        NSX_FOUNDATION_NAME: ""
+        NSX_NCP_DEBUG_LOG: ""
+        NSX_AUTH_TYPE: ""
+        NSX_CLIENT_CERT_CERT: ""
+        NSX_CLIENT_CERT_PRIVATE_KEY: ""
+        OVERLAY_TZ: ""
+        TIER0_ROUTER: ""
+        CONTAINER_IP_BLOCKS_NAME: ""
+        EXTERNAL_IP_POOLS_NAME: ""
+
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+
+          set -eu
+
+          #get IP address for FQDN, required as of NCP 1.2.1
+          NSX_API_MANAGERS=$(
+            getent hosts $NSX_API_MANAGERS | awk '{ print $1 }'
+          )
+
+          openssl s_client  -servername $NSX_API_MANAGERS \
+                            -connect ${NSX_API_MANAGERS}:443 \
+                            </dev/null 2>/dev/null \
+                            | openssl x509 -text \
+                            >  /tmp/complete_nsx_manager_cert.log
+
+          NSX_MANAGER_CERT_ADDRESS=`cat /tmp/complete_nsx_manager_cert.log \
+                                  | grep Subject | grep "CN=" \
+                                  | awk '{print $NF}' \
+                                  | sed -e 's/CN=//g' `
+
+          echo "Fully qualified domain name for NSX Manager: $NSX_API_MANAGERS"
+          echo "Host name associated with NSX Manager cert: $NSX_MANAGER_CERT_ADDRESS"
+
+          # Get all certs from the nsx manager
+          openssl s_client -host $NSX_API_MANAGERS \
+                           -port 443 -prexit -showcerts \
+                           </dev/null 2>/dev/null  \
+                           >  /tmp/nsx_manager_all_certs.log
+
+          # Get the very last CA cert from the showcerts result
+          cat /tmp/nsx_manager_all_certs.log \
+                            |  awk '/BEGIN /,/END / {print }' \
+                            | tail -30                        \
+                            |  awk '/BEGIN /,/END / {print }' \
+                            >  /tmp/nsx_manager_cacert.log
+
+          # Strip newlines and replace them with \r\n
+          cat /tmp/nsx_manager_cacert.log | tr '\n' '#'| sed -e 's/#/\r\n/g'   > /tmp/nsx_manager_edited_cacert.log
+          export NSX_API_CA_CERT=$(cat /tmp/nsx_manager_edited_cacert.log)
+
+          if [ "$NSX_PRODUCT_TILE_NAME" == "" ]; then
+            export NSX_PRODUCT_TILE_NAME="nsx-cf-cni"
+          fi
+
+          nsx_t_properties=$(
+            jq -n \
+              --arg nsx_api_managers "$NSX_API_MANAGERS" \
+              --arg nsx_api_user "$NSX_API_USER" \
+              --arg nsx_api_password "$NSX_API_PASSWORD" \
+              --arg nsx_api_ca_cert "$NSX_API_CA_CERT" \
+              --arg subnet_prefix "$NSX_SUBNET_PREFIX" \
+              --arg external_subnet_prefix "$NSX_EXTERNAL_SUBNET_PREFIX" \
+              --arg log_dropped_traffic "$NSX_LOG_DROPPED_TRAFFIC" \
+              --arg enable_snat "$NSX_ENABLE_SNAT" \
+              --arg foundation_name "$NSX_FOUNDATION_NAME" \
+              --arg ncp_debug_log "$NSX_NCP_DEBUG_LOG" \
+              --arg nsx_auth "$NSX_AUTH_TYPE" \
+              --arg nsx_client_cert_cert "$NSX_CLIENT_CERT_CERT" \
+              --arg nsx_client_cert_private_key "$NSX_CLIENT_CERT_PRIVATE_KEY" \
+              --arg overlay_tz "$OVERLAY_TZ" \
+              --arg tier0_router "$TIER0_ROUTER" \
+              --arg container_ip_blocks_name "$CONTAINER_IP_BLOCKS_NAME" \
+              --arg external_ip_pools_name "$EXTERNAL_IP_POOLS_NAME" \
+              '
+              {
+                ".properties.nsx_api_managers": {
+                  "value": $nsx_api_managers
+                },
+                ".properties.nsx_api_ca_cert": {
+                  "value": $nsx_api_ca_cert
+                },
+                ".properties.foundation_name": {
+                  "value": $foundation_name
+                },
+                ".properties.subnet_prefix": {
+                  "value": $subnet_prefix
+                },
+                ".properties.log_dropped_traffic": {
+                  "value": $log_dropped_traffic
+                },
+                ".properties.enable_snat": {
+                  "value": $enable_snat
+                },
+                ".properties.ncp_debug_log": {
+                  "value": $ncp_debug_log
+                },
+                ".properties.overlay_tz": {
+                  "value": $overlay_tz
+                },
+                ".properties.tier0_router": {
+                  "value": $tier0_router
+                },
+                ".properties.container_ip_blocks": {
+                  "value": [
+                    {
+                      "name": $container_ip_blocks_name
+                    }
+                  ]
+                },
+                ".properties.external_ip_pools": {
+                  "value": [
+                    {
+                      "name": $external_ip_pools_name
+                    }
+                  ]
+                }
+              }
+
+              +
+
+
+              if $nsx_auth == "simple" then
+              {
+                ".properties.nsx_auth": {
+                  "value" : "simple"
+                },
+                ".properties.nsx_auth.simple.nsx_api_user":  {
+                  "value": $nsx_api_user
+                },
+                ".properties.nsx_auth.simple.nsx_api_password":  {
+                  "value": {
+                    "secret": $nsx_api_password
+                  }
+                }
+              }
+              else
+              {
+                ".properties.nsx_auth": {
+                  "value": "client_cert"
+                },
+                ".properties.nsx_auth.client_cert.nsx_api_client_cert": {
+                  "value": {
+                    "cert_pem": $nsx_client_cert_cert,
+                    "private_key_pem": $nsx_client_cert_private_key
+                  }
+                }
+              }
+              end
+              '
+          )
+
+
+          TILE_RELEASE=$(om-linux -t https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+                                    -u $OPSMAN_USERNAME \
+                                    -p $OPSMAN_PASSWORD \
+                                    -k available-products \
+                                    | grep -e "nsx-cf-cni\|VMware-NSX-T")
+
+          PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
+          PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
+
+          # om-linux -t https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+                # -u $OPSMAN_USERNAME \
+                # -p $OPSMAN_PASSWORD \
+                # -k stage-product \
+                # -p $PRODUCT_NAME \
+                # -v $PRODUCT_VERSION
+
+
+          om-linux \
+            --target https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+            --username $OPSMAN_USERNAME \
+            --password $OPSMAN_PASSWORD \
+            --skip-ssl-validation \
+            configure-product \
+            --product-name $PRODUCT_NAME \
+            --product-properties "$nsx_t_properties"
+
+
+
+          EO_SH
+
+          chmod +x task.sh
+          ./task.sh
+    params:
+      OPSMAN_DOMAIN_OR_IP_ADDRESS: {{opsman_domain_or_ip_address}}
+      OPSMAN_USERNAME: {{opsman_admin_username}}
+      OPSMAN_PASSWORD: {{opsman_admin_password}}
+      NSX_API_MANAGERS: {{nsx_address}}
+      NSX_API_USER: {{nsx_username}}
+      NSX_API_PASSWORD: {{nsx_password}}
+      NSX_API_CA_CERT: {{nsx_ca_certificate}}
+      NSX_FOUNDATION_NAME: {{nsx_foundation_name}}
+      NSX_NCP_DEBUG_LOG: {{nsx_ncp_debug_log}}
+      NSX_SUBNET_PREFIX: {{nsx_subnet_prefix}}
+      NSX_LOG_DROPPED_TRAFFIC: {{nsx_log_dropped_traffic}}
+      NSX_ENABLE_SNAT: {{nsx_enable_snat}}
+      NSX_EXTERNAL_SUBNET_PREFIX: {{nsx_external_subnet_prefix}}
+      NSX_PRODUCT_TILE_NAME: {{nsx_product_tile_name}}
+      NSX_AUTH_TYPE: {{nsx_auth_type}}
+      NSX_CLIENT_CERT_CERT: {{nsx_client_cert_cert}}
+      NSX_CLIENT_CERT_PRIVATE_KEY: {{nsx_client_cert_private_key}}
+      OVERLAY_TZ: {{overlay_tz}}
+      TIER0_ROUTER: {{tier0_router}}
+      CONTAINER_IP_BLOCKS_NAME: {{container_ip_blocks_name}}
+      EXTERNAL_IP_POOLS_NAME: {{external_ip_pools_name}}
+
+
+
+- name: deploy
+  plan:
+  - aggregate:
+    - get: pcf-ops-manager
+      passed: [configure-ert]
+      trigger: false
+      params: {globs: []}
+    - get: pivnet-product
+      passed: [configure-nsx]
+      resource: nsx-t-tile
+      params: {globs: ["*.pivotal"]}
+  - task: deploy
+    config:
+      platform: linux
+      image_resource:
+        type: s3
+        source:
+          access_key_id: {{s3_access_key_id}}
+          bucket: {{s3_bucket}}
+          endpoint: {{s3_endpoint}}
+          regexp: pcfnorm-rootfs/pcfnorm-rootfs-(.*).tgz
+          secret_access_key: {{s3_secret_access_key}}
+          skip_ssl_verification: true
+        params:
+          unpack: true
+      params:
+        OPSMAN_DOMAIN_OR_IP_ADDRESS: ""
+        OPSMAN_PASSWORD: ""
+        OPSMAN_USERNAME: ""
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+
+          set -eu
+
+          # Copyright 2017-Present Pivotal Software, Inc. All rights reserved.
+          #
+          # Licensed under the Apache License, Version 2.0 (the "License");
+          # you may not use this file except in compliance with the License.
+          # You may obtain a copy of the License at
+          #
+          #  http://www.apache.org/licenses/LICENSE-2.0
+          #
+          # Unless required by applicable law or agreed to in writing, software
+          # distributed under the License is distributed on an "AS IS" BASIS,
+          # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+          # See the License for the specific language governing permissions and
+          # limitations under the License.
+
+          echo "Applying changes on Ops Manager @ ${OPSMAN_DOMAIN_OR_IP_ADDRESS}"
+
+           om-linux \
+            --target "https://${OPSMAN_DOMAIN_OR_IP_ADDRESS}" \
+            --skip-ssl-validation \
+            --username "${OPSMAN_USERNAME}" \
+            --password "${OPSMAN_PASSWORD}" \
+            apply-changes \
+            --ignore-warnings
+
+          EO_SH
+
+          chmod +x task.sh
+          ./task.sh
+    params:
+      OPSMAN_DOMAIN_OR_IP_ADDRESS: {{opsman_domain_or_ip_address}}
+      OPSMAN_PASSWORD: {{opsman_admin_password}}
+      OPSMAN_USERNAME: {{opsman_admin_username}}
+
+
+
+- name: wipe-env
+  plan:
+  - aggregate:
+    - do: []
+  - task: wipe
+    config:
+      platform: linux
+      image_resource:
+        type: s3
+        source:
+          access_key_id: {{s3_access_key_id}}
+          bucket: {{s3_bucket}}
+          endpoint: {{s3_endpoint}}
+          regexp: pcfnorm-rootfs/pcfnorm-rootfs-(.*).tgz
+          secret_access_key: {{s3_secret_access_key}}
+          skip_ssl_verification: true
+        params:
+          unpack: true
+      params:
+        GOVC_CA_CERT: ""
+        GOVC_DATACENTER: ""
+        GOVC_DATASTORE: ""
+        GOVC_HOST: ""
+        GOVC_INSECURE: ""
+        GOVC_NETWORK: ""
+        GOVC_PASSWORD: ""
+        GOVC_RESOURCE_POOL: ""
+        GOVC_URL: ""
+        GOVC_USERNAME: ""
+        OPSMAN_DOMAIN_OR_IP_ADDRESS: ""
+        OPSMAN_IP: ""
+        OPSMAN_PASSWORD: ""
+        OPSMAN_USERNAME: ""
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+          set -eu
+
+          root=$(pwd)
+
+          export GOVC_TLS_CA_CERTS=/tmp/vcenter-ca.pem
+          echo "$GOVC_CA_CERT" > $GOVC_TLS_CA_CERTS
+
+          function check_opsman_available {
+            local opsman_domain=$1
+
+            if [[ -z $(dig +short $opsman_domain) ]]; then
+              echo "unavailable"
+              return
+            fi
+
+            status_code=$(curl -L -s -o /dev/null -w "%{http_code}" -k "https://${opsman_domain}/login/ensure_availability")
+            if [[ $status_code != 200 ]]; then
+              echo "unavailable"
+              return
+            fi
+
+            echo "available"
+          }
+
+          opsman_available=$(check_opsman_available $OPSMAN_DOMAIN_OR_IP_ADDRESS)
+          if [[ $opsman_available == "available" ]]; then
+            om-linux \
+              --target "https://${OPSMAN_DOMAIN_OR_IP_ADDRESS}" \
+              --skip-ssl-validation \
+              --username "$OPSMAN_USERNAME" \
+              --password "$OPSMAN_PASSWORD" \
+              delete-installation
+          fi
+
+          # Delete Active OpsMan
+          possible_opsmans=$(govc find ${GOVC_RESOURCE_POOL} -type m -guest.ipAddress ${OPSMAN_IP} -runtime.powerState poweredOn)
+
+          for opsman in ${possible_opsmans}; do
+            network="$(govc vm.info -r=true -json ${opsman} | jq -r '.VirtualMachines[0].Guest.Net[0].Network')"
+            if [[ ${network} == ${GOVC_NETWORK} ]]; then
+              echo "Powering off and removing ${opsman}..."
+              set +e
+              govc vm.power -vm.ipath=${opsman} -off
+              set -e
+              govc vm.destroy -vm.ipath=${opsman}
+            fi
+          done
+
+          EO_SH
+
+          chmod +x task.sh
+          ./task.sh
+    params:
+      GOVC_CA_CERT: {{vcenter_ca_cert}}
+      GOVC_DATACENTER: {{vcenter_datacenter}}
+      GOVC_DATASTORE: {{vcenter_datastore}}
+      GOVC_HOST: {{om_vm_host}}
+      GOVC_INSECURE: {{vcenter_insecure}}
+      GOVC_NETWORK: {{om_vm_network}}
+      GOVC_PASSWORD: {{vcenter_pwd}}
+      GOVC_RESOURCE_POOL: {{om_resource_pool}}
+      GOVC_URL: {{vcenter_host}}
+      GOVC_USERNAME: {{vcenter_usr}}
+      OPSMAN_DOMAIN_OR_IP_ADDRESS: {{opsman_domain_or_ip_address}}
+      OPSMAN_IP: {{om_ip}}
+      OPSMAN_PASSWORD: {{opsman_admin_password}}
+      OPSMAN_USERNAME: {{opsman_admin_username}}

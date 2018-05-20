@@ -1,0 +1,128 @@
+internal_dns: |
+  - 192.13.1.10
+internal_ntp: #FQDN of NTP Server
+director_name: boshdir
+internal_cidr: #ex: CIDR of network BOSH DIrector will use
+internal_gw: #ex: Gateway for network BOSH Director will use
+internal_ip: #IP Address to assign to BOSH director>
+network_name: #vSphere vSwitch Port Group
+vcenter_dc: #vSphere Datacenter
+vcenter_ds: #vSphere Datastore
+vcenter_ip: #FQDN or IP address of vCenter Server
+vcenter_user: #username for connecting to vCenter Server
+vcenter_password: #password for that account
+vcenter_templates: #location for templates ex:/BOSH/templates
+vcenter_vms: #location for VM.  ex:/BOSH/vms
+vcenter_disks: #folder on datastore for bosh disks.  ex:bosh-1-disks
+vcenter_cluster:  #vCenter Cluster Name ex: AZ1
+vcenter_rp: #Resource Pool Name
+s3_access_key_id: #Access Key for S3
+s3_secret_access_key: #Secret Key for S3
+s3_endpoint: #S3 endpoint ex: http://minio.domain.local:9000
+s3_bucket: #S3 bucket to store binaries in ex: binaries
+
+#Concourse Params
+concourse_deployment_name: concourse
+concourse_web_ip: #IP to assign to Web Server; Must be in the Static range for a network in the cloud config
+concourse_web_port: 8080 #Default is 8080
+concourse_url: http://concourse.domain.local  #Don't append the port
+concourse_network_name: default # must match a network name in the cloud config
+concourse_web_vm_type: concourse_web # must match a VM type in the cloud config
+concourse_db_vm_type: concourse_db # must match a VM type in the cloud config
+concourse_worker_vm_type: concourse_worker # must match a VM type in the cloud config
+concourse_db_persistent_disk_type: db # must match a disk type in the cloud config
+concource_worker_instances: 2 #Scale as needed, suggest minimum of 2
+concource_web_instances: 1 #keep this at 1 unless you have a load-balancer for the web servers
+concourse_basicauth_username: CHANGEME
+concourse_basicauth_password: CHANGEME
+
+#Cloud Config for BOSH4
+cloud_config: |
+ azs:
+ - name: z1
+   cloud_properties:
+     datacenters:
+     - name: CHANGEME
+     - clusters: 
+       - AZ1: {resource_pool: "CHANGEME"}
+ vm_types:
+ - name: default
+   cloud_properties:
+     cpu: 2
+     ram: 2048
+     disk: 8192
+ - name: medium
+   cloud_properties:
+     cpu: 2
+     ram: 4096
+     disk: 16384
+ - name: large
+   cloud_properties:
+     cpu: 2
+     ram: 8192
+     disk: 32768
+ - name: concourse_web
+   cloud_properties:
+     cpu: 2
+     ram: 4096
+     disk: 8192
+ - name: concourse_db
+   cloud_properties:
+     cpu: 2
+     ram: 4096
+     disk: 16384
+ - name: concourse_worker
+   cloud_properties:
+     cpu: 2
+     ram: 4096
+     disk: 32768
+ 
+ disk_types:
+ - name: default
+   disk_size: 16384
+   cloud_properties:
+     type: thin
+ - name: db
+   disk_size: 32768
+   cloud_properties:
+     type: thin
+ - name: large
+   disk_size: 32768
+   cloud_properties:
+     type: thin
+ 
+ networks:
+ - name: default
+   type: manual
+   subnets:
+   - range: 192.13.1.0/24
+     reserved: [192.13.1.1-192.13.1.211]
+     static: [192.13.1.212-192.13.1.215] #These are consumed by concourse
+     gateway: 192.13.1.1
+     az: z1
+     dns: [192.13.1.10]
+     cloud_properties:
+       name: CHANGEME
+ 
+ compilation:
+   workers: 5
+   reuse_compilation_vms: true
+   az: z1
+   vm_type: default
+   network: default
+   
+#runtime config to enable syslog on each BOSH-deployed VM   
+runtime_config: |
+ releases:
+ - name: syslog
+   version: 11.1.1
+ addons:
+ - name: logs
+   jobs:
+   - name: syslog_forwarder
+     release: syslog
+   properties:
+     syslog:
+       address: CHANGEME
+       transport: tcp
+       port: 514   
