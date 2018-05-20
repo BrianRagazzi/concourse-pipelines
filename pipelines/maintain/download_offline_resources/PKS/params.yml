@@ -1,0 +1,9 @@
+pivnet_token: CHANGEME
+opsman_major_minor_version: 2.0
+pks_major_minor_version: 1.*\d+
+s3_access_key_id: CHANGEME
+s3_secret_access_key: CHANGEME
+s3_endpoint: http://bootstrapminio.domain.local:9000
+s3_bucket: binaries
+dockerhub_username: CHANGEME
+dockerhub_password: CHANGEME

@@ -1,0 +1,47 @@
+# Pipeline resource configuration
+pivnet_token: CHANGEME
+github_token: CHANGEME # [R] Your github token
+github_repo: https://github.com/BrianRagazzi/concourse-pipelines # [R] Pipelines github repo
+github_branch: master
+github_username: CHANGEME # [R] Your github username
+
+iaas_type: vsphere
+debug: false
+foundation_name: CHANGEME
+opsman_major_minor_version: ^2\.1\..*$   # PCF Ops Manager minor version to track
+opsman_timeout_seconds: 3600 # time to wait for new OM VM to come up
+om_decryption_pwd: CHANGEME  # Decryption password for Ops Manager exported settings
+om_dns_servers: CHANGEME # Comma separated list of DNS servers used by Ops Manager
+om_gateway: CHANGEME # Gateway for Ops Manager network
+om_ip: CHANGEME  # IP to assign to Ops Manager VM
+om_netmask: CHANGEME # Netmask for Ops Manager network
+om_ntp_servers: CHANGEME # Comma-separated list of NTP Servers
+# vCenter Cluster or Resource Pool to use to deploy Ops Manager.
+# Possible formats:
+#   cluster:       /<Data Center Name>/host/<Cluster Name>
+#   resource pool: /<Data Center Name>/host/<Cluster Name>/Resources/<Resource Pool Name>
+om_resource_pool: /CHANGEME/host/CHANGEME/Resources/CHANGEME
+om_vm_folder: CHANGEME # Optional - vCenter folder to put Ops Manager in
+om_vm_host: # Optional - vCenter host to deploy Ops Manager in
+om_vm_name: CHANGEME # Name to use for Ops Manager VM
+om_vm_network: CHANGEME  # vCenter network name to use to deploy Ops Manager in
+om_vm_power_state: true # Whether to power on Ops Manager VM after creation
+ops_mgr_usr: CHANGEME       # Username for Ops Manager admin account
+ops_mgr_pwd: CHANGEME       # Password for Ops Manager admin account
+ops_mgr_host: CHANGEME #fqdn to Ops Manager
+opsman_disk_type: "thin" # Disk type for Ops Manager VM (thick|thin)
+om_ssh_pwd: CHANGEME # SSH password for Ops Manager (ssh user is ubuntu)
+# vCenter configuration
+vcenter_ca_cert: CHANGEME          # vCenter CA cert at the API endpoint; enter a value if `vcenter_insecure: 0`
+vcenter_host: CHANGEME       # vCenter host or IP
+vcenter_usr: CHANGEME              # vCenter username. If user is tied to a domain, then escape the \, example `domain\\user`
+vcenter_pwd: CHANGEME              # vCenter password
+vcenter_data_center: CHANGEME       # vCenter datacenter
+vcenter_insecure: 1         # vCenter skip TLS cert validation; enter `1` to disable cert verification, `0` to enable verification
+om_data_store: CHANGEME           # vCenter datastore name to deploy Ops Manager in
+s3_region: us-east-1
+s3_access_key_id: CHANGEME
+s3_secret_access_key: CHANGEME
+s3_endpoint: CHANGEME
+s3_bucket: CHANGEME
+skip-ssl-validation: true

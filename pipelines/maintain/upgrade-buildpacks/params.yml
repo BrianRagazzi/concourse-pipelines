@@ -1,0 +1,11 @@
+pivnet_token: CHANGEME
+
+# Cloud Controller url and credentials - should have admin privileges
+cf_api_uri: CHANGEME
+cf_user: CHANGEME
+cf_password: CHANGEME
+
+github_token: CHANGEME # [R] Your github token
+github_repo: https://github.com/BrianRagazzi/concourse-pipelines # [R] Pipelines github repo
+github_branch: master
+github_username: CHANGEME # [R] Your github username

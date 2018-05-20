@@ -1,0 +1,20 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source: {repository: pcfnorm/rootfs}
+
+inputs:
+- name: pipelines-repo
+
+params:
+  PRODUCT_NAME:
+  OPS_MGR_HOST:
+  OPS_MGR_USR:
+  OPS_MGR_PWD:
+  ERRANDS_TO_RUN_ON_CHANGE:
+  ERRANDS_TO_DISABLE:
+
+run:
+  path: pipelines-repo/tasks/config-errands/task.sh

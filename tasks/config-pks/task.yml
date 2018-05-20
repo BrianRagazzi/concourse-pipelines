@@ -1,0 +1,45 @@
+---
+
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: pcfnorm/rootfs
+
+inputs:
+  - name: pipelines-repo
+
+run:
+  path: pipelines-repo/tasks/configure-pks/task.sh
+
+params:
+   INFRA_NETWORK_NAME:
+   SERVICES_NETWORK_NAME:
+   AZ_1_NAME:
+   VCENTER_HOST:
+   VCENTER_USR:
+   VCENTER_PWD:
+   VCENTER_USR_WORKER:
+   VCENTER_PWD_WORKER:
+   VCENER_DATA_CENTER:
+   OM_DATA_STORE:
+   BHOSH_VM_FOLDER:
+   UAA_URL:
+   OPS_MGR_USR:
+   OPS_MGR_PWD:
+   OPS_MGR_HOST:
+   SYSTEM_DOMAIN:
+   UAA_DOMAIN:
+   NSX_ADDRESS:
+   NSX_USERNAME:
+   NSX_PASSWORD:
+   NSXT_T0_ROUTERID:
+   NSXT_IP_BLOCK_ID:
+   NSXT_FLOATING_IP_POOL_ID:
+   SYSLOG_ADDRESS:
+   SYSLOG_PORT:
+   SYSLOG_TLS_ENABLED:
+   SYSLOG_ENABLED:
+   SYSLOG_SSL_CA_CERTIFICATE:
+   SYSLOG_TRANSPORT_PROTOCOL:

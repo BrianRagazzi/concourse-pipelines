@@ -1,0 +1,26 @@
+---
+
+platform: linux
+
+image_resource:
+  type: docker-image
+  source: {repository: pcfnorm/rootfs}
+
+params:
+  DEBUG:
+  OPS_MGR_HOST:
+  OPS_MGR_USR:
+  OPS_MGR_PWD:
+  PIVNET_API_TOKEN:
+  REPLICATOR_NAME:
+
+inputs:
+  - name: pipelines-repo
+  - name: pivnet-product
+  - name: replicator
+
+outputs:
+  - name: replicator-tile
+
+run:
+  path: pipelines-repo/tasks/replicate-and-upload-tile/task.sh

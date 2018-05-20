@@ -1,0 +1,24 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: pcfnorm/rootfs
+inputs:
+  - name: pipelines-repo
+params:
+  OPSMAN_IP:
+  GOVC_INSECURE:
+  GOVC_CA_CERT:
+  GOVC_URL:
+  GOVC_USERNAME:
+  GOVC_PASSWORD:
+  GOVC_DATACENTER:
+  GOVC_DATASTORE:
+  GOVC_NETWORK:
+  GOVC_RESOURCE_POOL:
+  GOVC_HOST:
+
+run:
+  path: pipelines-repo/tasks/shutdown-and-rename-opsman/task.sh

@@ -1,0 +1,187 @@
+# Pipeline resource configuration
+pivnet_token: CHANGEME
+github_token: CHANGEME # [R] Your github token
+github_repo: https://github.com/BrianRagazzi/concourse-pipelines # [R] Pipelines github repo
+github_branch: master
+github_username: CHANGEME # [R] Your github username
+
+iaas_type: vsphere
+
+# opsman_admin_username/opsman_admin_password needs to be specified
+ops_mgr_usr: CHANGEME       # Username for Ops Manager admin account
+ops_mgr_pwd: CHANGEME       # Password for Ops Manager admin account
+ops_mgr_host: CHANGEME      #FQDN of Ops Manager
+
+debug: false
+
+#Compatible with PAS 2.1
+healthwatch_major_minor_version: ^1\.2\..*$
+isoseg_major_minor_version: ^2\.1\..*$
+mysql_major_minor_version: ^1\.10\..*$
+
+singleton_jobs_az: CHANGEME # [R] Place singleton jobs in an AZ
+other_azs: CHANGEME        # [R] Balance other jobs in AZ's (comma-separated)
+network_name: SERVICES     # [R] Tile network name
+service_network_name: DYNAMIC-SERVICES # [R] dynamic services network for healthwatch
+
+
+#Healthwatch Section
+healthwatch_errands_to_disable:
+healthwatch_errands_to_run_on_change: all
+healthwatch_forwarder_boshhealth_instance_count: 1
+healthwatch_forwarder_boshtasks_instance_count: 2
+healthwatch_forwarder_canary_instance_count: 2
+healthwatch_forwarder_cli_instance_count: 2
+healthwatch_forwarder_foundation_name: 'CHANGEME'
+healthwatch_forwarder_health_check_az: 'CHANGEME'
+healthwatch_forwarder_health_check_vm_type: nano
+healthwatch_forwarder_ingestor_instance_count: 4
+healthwatch_forwarder_opsman_instance_count: 2
+healthwatch_mysql_skip_name_resolve: true
+healthwatch_opsman: enable
+healthwatch_opsman_enable_url: 'CHANGEME'
+healthwatch_mysql_persistent_disk_mb: 102400
+healthwatch_mysql_instances: 1 # must be 1
+healthwatch_mysql_instance_type: 2xlarge
+healthwatch_redis_instances: 1 # must be 1
+healthwatch_redis_instance_type: medium.disk
+healthwatch_forwarder_persistent_disk_mb: 102400
+healthwatch_forwarder_instances: 2 # must be 2
+healthwatch_forwarder_instance_type: xlarge
+
+#Isolation Segment Section
+isoseg_errands_to_disable:
+isoseg_errands_to_run_on_change: all
+isoseg_replicator_name: "" # [O] Replicated Tile Name, ex: abc
+isoseg_isolation_segment_domains: "[\"*.cfis.example.com\",\"*.cfis.example1.com\"]"
+isoseg_enable_grootfs: true # true|false
+isoseg_garden_disk_cleanup: "threshold" # never|routine|threshold
+isoseg_gorouter_ssl_ciphers: "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384"
+isoseg_haproxy_forward_tls: disable # enable|disable
+isoseg_backend_ca: ""
+isoseg_haproxy_max_buffer_size: 16384
+isoseg_haproxy_ssl_ciphers: "DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384"
+isoseg_networking_poe_ssl_name: ""
+isoseg_networking_poe_ssl_cert_pem: ""
+isoseg_networking_poe_ssl_cert_private_key_pem: ""
+isoseg_nfs_volume_driver: disable # enable|disable
+isoseg_ldap_server_host: ""
+isoseg_ldap_server_port: ""
+isoseg_ldap_service_account_password: ""
+isoseg_ldap_service_account_user: ""
+isoseg_ldap_user_fqdn: ""
+isoseg_router_backend_max_conn: 500
+isoseg_router_client_cert_validation: request # none|request|require
+isoseg_routing_custom_ca_certificates: ""
+isoseg_routing_disable_http: false # true|false
+isoseg_routing_minimum_tls_version: tls_v1_2 # tls_v1_0|tls_v1_1|tls_v1_2
+isoseg_routing_table_sharding_mode: isolation_segment_only # isolation_segment_only|no_isolation_segment
+isoseg_routing_tls_termination: load_balancer # load_balancer|ha_proxy|router
+isoseg_skip_cert_verify: true # true|false
+isoseg_system_logging: disabled # enabled|disabled
+isoseg_syslog_host: ""
+isoseg_syslog_port: ""
+isoseg_syslog_protocol: ""
+isoseg_syslog_rule: ""
+isoseg_syslog_tls_ca_cert: ""
+isoseg_syslog_tls_enabled: false # true|false
+isoseg_syslog_tls_permitted_peer: ""
+isoseg_syslog_use_tcp_for_file_forwarding_local_transport: false # true|false
+isoseg_ha_proxy_static_ips: ""
+isoseg_internal_only_domains: ""
+isoseg_trusted_domain_cidrs: ""
+isoseg_router_static_ips: ""
+isoseg_disable_insecure_cookies: false # true|false
+isoseg_enable_zipkin: true # true|false
+isoseg_enable_write_access_logs: true # true|false
+isoseg_request_timeout_in_seconds: 900
+isoseg_extra_headers_to_log: ""
+isoseg_drain_wait: 20
+isoseg_lb_healthy_threshold: 20
+isoseg_executor_disk_capacity: ""
+isoseg_executor_memory_capacity: ""
+isoseg_insecure_docker_registry_list: ""
+isoseg_placement_tag: CHANGEME
+isoseg_isolated_ha_proxy_instances: 3
+isoseg_isolated_router_instances: 3
+isoseg_isolated_diego_cell_instances: 3
+
+#MySQL Section
+mysql_broker_allow_table_locks: true
+mysql_broker_bind_hostname: ''
+mysql_broker_quota_enforcer_pause: 30
+mysql_allow_local_infile: true
+mysql_allow_remote_admin_access: false
+mysql_binlog_expire_days: 7
+mysql_cli_history: true
+mysql_cluster_name: 'cf-mariadb-galera-cluster'
+mysql_cluster_probe_timeout: 10
+mysql_innodb_large_prefix_enabled: true
+mysql_innodb_strict_mode: true
+mysql_max_connections: 1500
+mysql_metrics_polling_frequency: 30
+mysql_mysql_start_timeout: 60
+mysql_roadmin_password: ''
+mysql_skip_name_resolve: true
+mysql_table_definition_cache: 8192
+mysql_table_open_cache: 2000
+mysql_tmp_table_size: 33554432
+mysql_backup_options: disable # enable|disable
+mysql_backup_options_enable_backup_all_masters: false
+mysql_backup_options_enable_cron_schedule: ''
+mysql_backups: disable # disable|enable|azure|gcs|scp (enable is for AWS S3)
+mysql_backups_azure_base_url: ''
+mysql_backups_azure_container: ''
+mysql_backups_azure_container_path: ''
+mysql_backups_azure_storage_access_key: ''
+mysql_backups_azure_storage_account: ''
+mysql_backups_enable_access_key_id: ''
+mysql_backups_enable_bucket_name: ''
+mysql_backups_enable_bucket_path: ''
+mysql_backups_enable_endpoint_url: ''
+mysql_backups_enable_region: ''
+mysql_backups_enable_secret_access_key: ''
+mysql_backups_gcs_bucket_name: ''
+mysql_backups_gcs_project_id: ''
+mysql_backups_gcs_service_account_json: '{}'
+mysql_backups_scp_destination: ''
+mysql_backups_scp_port: 22
+mysql_backups_scp_scp_key: ''
+mysql_backups_scp_server: ''
+mysql_backups_scp_user: ''
+mysql_buffer_pool_size: percent # percent|bytes
+mysql_buffer_pool_size_bytes_buffer_pool_size_bytes: 1
+mysql_buffer_pool_size_percent_buffer_pool_size_percent: 50
+mysql_innodb_flush_log_at_trx_commit: one
+mysql_optional_protections: enable # enable|disable
+mysql_optional_protections_enable_canary_poll_frequency: 30
+mysql_optional_protections_enable_canary_write_read_delay: 20
+mysql_optional_protections_enable_notify_only: false
+mysql_optional_protections_enable_prevent_auto_rejoin: false
+mysql_optional_protections_enable_recipient_email: 'CHANGEME@domain.local' # [R]
+mysql_optional_protections_enable_replication_canary: true
+mysql_plan_collection: '{"name":"100mb","description":"100MB_default","max_storage_mb":"100","max_user_connections":"10","private":false}'
+mysql_server_activity_logging: disable # enable|disable
+mysql_server_activity_logging_enable_audit_logging_events: 'connect,query'
+mysql_server_activity_logging_enable_server_audit_excluded_users_csv: ''
+mysql_syslog: enabled # enabled|disabled
+mysql_syslog_enabled_address: 'CHANGEME'
+mysql_syslog_enabled_port: '514'
+mysql_syslog_enabled_protocol: tcp # tcp|udp|relp
+mysql_proxy_shutdown_delay: 0
+mysql_proxy_startup_delay: 0
+mysql_proxy_static_ips: ''
+mysql_instances: 3
+mysql_instance_type: "large.disk"
+mysql_persistent_disk_mb: 51200
+mysql_backup_prepare_instances: 1
+mysql_backup_prepare_instance_type: "large.cpu"
+mysql_backup_prepare_persistent_disk_mb: 204800
+mysql_proxy_instances: 2
+mysql_proxy_instance_type: "small.disk"
+mysql_monitoring_instances: 1
+mysql_monitoring_instance_type: "micro"
+mysql_broker_instances: 2
+mysql_broker_instance_type: "small.disk"
+mysql_errands_to_disable: "broker-registrar,smoke-tests"
+mysql_errands_to_run_on_change: all

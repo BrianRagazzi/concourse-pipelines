@@ -1,0 +1,172 @@
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tag: latest-final
+
+resources:
+
+- name: pivnet-cli
+  type: github-release
+  source:
+    user: pivotal-cf
+    repository: pivnet-cli
+    access_token: ((github_token)) ## Optional: Removing this will cause you to hit the rate limit
+
+- name: pipelines-repo
+  type: git
+  check_every: 1m
+  source:
+    uri: ((github_repo))
+    branch: ((github_branch))
+    username: ((github_username))
+    password: ((github_token))
+
+- name: pivnet-harbor
+  type: pivnet
+  source:
+    api_token: ((pivnet_token))
+    product_slug: harbor-container-registry
+    product_version: ((harbor_major_minor_version))
+
+jobs:
+- name: upload-harbor
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-harbor
+      params:
+        globs:
+        - "*.pivotal"
+      trigger: true
+    - get: pivnet-cli
+      params:
+        globs:
+        - "*linux-amd64*"
+
+  - task: upload-tile
+    file: pipelines-repo/tasks/upload-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+
+  - task: stage-tile
+    file: pipelines-repo/tasks/stage-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_IDENTIFIER: harbor-container-registry
+
+  - task: upload-stemcell
+    file: pipelines-repo/tasks/stemcell-uploader/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+      IAAS_TYPE: ((iaas_type))
+      PRODUCT_IDENTIFIER: harbor-container-registry
+
+- name: config-harbor
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [stage-harbor]
+    - get: pivnet-product
+      resource: pivnet-harbor
+      params:
+        globs: []
+      passed: [upload-harbor]
+      trigger: true
+
+  - task: config-tile
+    file: pipelines-repo/tasks/config-harbor-container-registry/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      NETWORK_NAME: ((network_name))
+      OTHER_AZS: ((other_azs))
+      SINGLETON_JOBS_AZ: ((singleton_jobs_az))
+      PRODUCT_NAME: harbor-container-registry
+      AUTH_MODE: ((harbor_auth_mode))
+      HARBOR_HOSTNAME: ((harbor_hostname))
+      HARBOR_DOMAIN: ((harbor_domain))
+      HARBOR_ADMIN_PASSWORD: ((harbor_admin_password))
+      HARBOR_USE_CLAIR: ((harbor_use_clair))
+      HARBOR_USE_NOTARY: ((harbor_use_notary))
+      HARBOR_REGISTRY_STORAGE: ((harbor_registry_storage))
+      HARBOR_LDAP_AUTH_URL: ((harbor_ldap_auth_
+      HARBOR_LDAP_AUTH_VERIFY_CERT: ((harbor_ldap_auth_verify_cert))
+      HARBOR_LDAP_AUTH_SEARCHDN: ((harbor_ldap_auth_searchdn))
+      HARBOR_LDAP_AUTH_SEARCHPWD:  ((harbor_ldap_auth_searchpwd))
+      HARBOR_LDAP_AUTH_BASEDN: ((harbor_ldap_auth_basedn))
+      HARBOR_LDAP_AUTH_UID: ((harbor_ldap_auth_uid))
+      HARBOR_LDAP_AUTH_FILTER: ((harbor_ldap_auth_filter))
+      HARBOR_LDAP_AUTH_SCOPE: ((harbor_ldap_auth_scope))
+      HARBOR_LDAP_AUTH_TIMEOUT: ((harbor_ldap_auth_timeout))
+      HARBOR_S3_REGISTRY_STORAGE_ACCESS_KEY: ((harbor_s3_registry_storage_access_key))
+      HARBOR_S3_REGISTRY_STORAGE_SECRET_KEY: ((harbor_s3_registry_storage_secret_key))
+      HARBOR_S3_REGISTRY_STORAGE_REGION: ((harbor_s3_registry_storage_region))
+      HARBOR_S3_REGISTRY_STORAGE_ENDPOINT_URL: ((harbor_s3_registry_storage_endpoint_url))
+      HARBOR_S3_REGISTRY_STORAGE_BUCKET: ((harbor_s3_registry_storage_bucket))
+      HARBOR_S3_REGISTRY_STORAGE_ROOT_DIRECTORY: ((harbor_s3_registry_storage_root_directory))
+      HARBOR_CERT_PEM: ((harbor_cert_pem))
+      HARBOR_PRIVATE_KEY_PEM: ((harbor_private_key_pem))
+      HARBOR_SERVER_CERT_CA_PEM: ((harbor_server_cert_ca_pem))
+
+- name: disable-harbor-errands
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [config-harbor]
+    - get: pivnet-product
+      resource: pivnet-harbor
+      params:
+        globs: []
+      passed: [config-harbor]
+      trigger: false
+
+  - task: config-harbor-errands
+    file: pipelines-repo/tasks/config-errands/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_NAME: harbor-container-registry
+      ERRANDS_TO_DISABLE: ((harbor_errands_to_disable))
+      ERRANDS_TO_RUN_ON_CHANGE: ((harbor_errands_to_run_on_change))
+
+  - task: add-opsmgr-rootca-to-director
+    file: pipelines-repo/tasks/add-opsmgr-root-ca-to-director/task.yml
+    params:
+        OPS_MGR_HOST: ((ops_mgr_host))
+        OPS_MGR_USR: ((ops_mgr_usr))
+        OPS_MGR_PWD: ((ops_mgr_pwd))
+        TRUSTED_CERTIFICATES: ((trusted_certificates))
+
+
+- name: apply-changes
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [disable-harbor-errands]
+      trigger: false
+
+  - task: apply-changes
+    file: pipelines-repo/tasks/apply-changes/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))

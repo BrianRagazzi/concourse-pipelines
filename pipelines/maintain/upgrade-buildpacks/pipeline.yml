@@ -1,0 +1,467 @@
+# Copyright 2017-Present Pivotal Software, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tag: latest-final
+
+resources:
+- name: pipelines-repo
+  type: git
+  source:
+    uri: ((github_repo))
+    branch: ((github_branch))
+    username: ((github_username))
+    password: ((github_token))
+
+- name: binary-buildpack
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: buildpacks
+    product_version: Binary*
+
+- name: dotnet-core-buildpack
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: buildpacks
+    product_version: .NET*
+
+- name: go-buildpack
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: buildpacks
+    product_version: Go*
+
+- name: java-buildpack
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: buildpacks
+    product_version: Java*
+
+- name: nodejs-buildpack
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: buildpacks
+    product_version: NodeJS*
+
+- name: php-buildpack
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: buildpacks
+    product_version: PHP*
+
+- name: python-buildpack
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: buildpacks
+    product_version: Python*
+
+- name: ruby-buildpack
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: buildpacks
+    product_version: Ruby*
+
+- name: staticfile-buildpack
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: buildpacks
+    product_version: Staticfile*
+
+- name: tc-buildpack
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: buildpacks
+    product_version: "tc Server*"
+
+- name: schedule
+  type: time
+  source:
+    interval: 30m
+    start: "12:00 AM"
+    stop: "2:00 AM"
+    location: America/Chicago
+    days: [Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday]
+
+jobs:
+- name: regulator
+  plan:
+  - aggregate:
+    - get: schedule
+      trigger: true
+    - get: binary-buildpack
+      params: { globs: [] }
+    - get: dotnet-core-buildpack
+      params: { globs: [] }
+    - get: go-buildpack
+      params: { globs: [] }
+    - get: java-buildpack
+      params: { globs: [] }
+    - get: nodejs-buildpack
+      params: { globs: [] }
+    - get: php-buildpack
+      params: { globs: [] }
+    - get: python-buildpack
+      params: { globs: [] }
+    - get: ruby-buildpack
+      params: { globs: [] }
+    - get: staticfile-buildpack
+      params: { globs: [] }
+    - get: tc-buildpack
+      params: { globs: [] }
+
+- name: stage-binary-buildpack
+  serial_groups: [cc-api]
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: buildpack
+      resource: binary-buildpack
+      trigger: true
+      passed: [regulator]
+
+  - task: stage
+    file: pipelines-repo/tasks/stage-buildpack/task.yml
+    params:
+      <<: *cf_api_params
+      BUILDPACK_NAME: binary_buildpack_latest
+
+- name: promote-binary-buildpack
+  serial_groups: [cc-api]
+  plan:
+  - aggregate:
+    - get: binary-buildpack
+      trigger: true
+      passed: [stage-binary-buildpack]
+      params: {globs: []}
+    - get: pipelines-repo
+  - task: promote
+    file: pipelines-repo/tasks/promote-buildpack/task.yml
+    params:
+      <<: *cf_api_params
+      SOURCE_BUILDPACK_NAME: binary_buildpack_latest
+      TARGET_BUILDPACK_NAME: binary_buildpack
+
+- name: stage-dotnet-buildpack
+  serial_groups: [cc-api]
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: buildpack
+      resource: dotnet-core-buildpack
+      passed: [regulator]
+      trigger: true
+
+  - task: stage
+    file: pipelines-repo/tasks/stage-buildpack/task.yml
+    params:
+      <<: *cf_api_params
+      BUILDPACK_NAME: dotnet_core_buildpack_offline_latest
+
+- name: promote-dotnet-buildpack
+  serial_groups: [cc-api]
+  plan:
+  - aggregate:
+    - get: dotnet-core-buildpack
+      trigger: true
+      passed: [stage-dotnet-buildpack]
+      params: {globs: []}
+    - get: pipelines-repo
+  - task: promote
+    file: pipelines-repo/tasks/promote-buildpack/task.yml
+    params:
+      <<: *cf_api_params
+      SOURCE_BUILDPACK_NAME: dotnet_core_buildpack_offline_latest
+      TARGET_BUILDPACK_NAME: dotnet_core_buildpack_offline
+
+- name: stage-go-buildpack
+  serial_groups: [cc-api]
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: buildpack
+      resource: go-buildpack
+      passed: [regulator]
+      trigger: true
+
+  - task: stage
+    file: pipelines-repo/tasks/stage-buildpack/task.yml
+    params:
+      <<: *cf_api_params
+      BUILDPACK_NAME: go_buildpack_latest
+
+- name: promote-go-buildpack
+  serial_groups: [cc-api]
+  plan:
+  - aggregate:
+    - get: go-buildpack
+      passed: [stage-go-buildpack]
+      trigger: true
+      params: {globs: []}
+    - get: pipelines-repo
+  - task: promote
+    file: pipelines-repo/tasks/promote-buildpack/task.yml
+    params:
+      <<: *cf_api_params
+      SOURCE_BUILDPACK_NAME: go_buildpack_latest
+      TARGET_BUILDPACK_NAME: go_buildpack
+
+- name: stage-java-buildpack
+  serial_groups: [cc-api]
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: buildpack
+      passed: [regulator]
+      resource: java-buildpack
+      trigger: true
+      params:
+        globs:
+        - "*offline*"
+
+  - task: stage
+    file: pipelines-repo/tasks/stage-buildpack/task.yml
+    params:
+      <<: *cf_api_params
+      BUILDPACK_NAME: java_buildpack_offline_latest
+
+- name: promote-java-buildpack
+  serial_groups: [cc-api]
+  plan:
+  - aggregate:
+    - get: java-buildpack
+      passed: [stage-java-buildpack]
+      trigger: true
+      params: {globs: []}
+    - get: pipelines-repo
+  - task: promote
+    file: pipelines-repo/tasks/promote-buildpack/task.yml
+    params:
+      <<: *cf_api_params
+      SOURCE_BUILDPACK_NAME: java_buildpack_offline_latest
+      TARGET_BUILDPACK_NAME: java_buildpack_offline
+
+- name: stage-nodejs-buildpack
+  serial_groups: [cc-api]
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: buildpack
+      passed: [regulator]
+      resource: nodejs-buildpack
+      trigger: true
+
+  - task: stage
+    file: pipelines-repo/tasks/stage-buildpack/task.yml
+    params:
+      <<: *cf_api_params
+      BUILDPACK_NAME: nodejs_buildpack_latest
+
+- name: promote-nodejs-buildpack
+  serial_groups: [cc-api]
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: nodejs-buildpack
+      passed: [stage-nodejs-buildpack]
+      trigger: true
+      params: {globs: []}
+  - task: promote
+    file: pipelines-repo/tasks/promote-buildpack/task.yml
+    params:
+      <<: *cf_api_params
+      SOURCE_BUILDPACK_NAME: nodejs_buildpack_latest
+      TARGET_BUILDPACK_NAME: nodejs_buildpack
+
+- name: stage-php-buildpack
+  serial_groups: [cc-api]
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: buildpack
+      passed: [regulator]
+      resource: php-buildpack
+      trigger: true
+
+  - task: stage
+    file: pipelines-repo/tasks/stage-buildpack/task.yml
+    params:
+      <<: *cf_api_params
+      BUILDPACK_NAME: php_buildpack_latest
+
+- name: promote-php-buildpack
+  serial_groups: [cc-api]
+  plan:
+  - aggregate:
+    - get: php-buildpack
+      passed: [stage-php-buildpack]
+      trigger: true
+      params: {globs: []}
+    - get: pipelines-repo
+  - task: promote
+    file: pipelines-repo/tasks/promote-buildpack/task.yml
+    params:
+      <<: *cf_api_params
+      SOURCE_BUILDPACK_NAME: php_buildpack_latest
+      TARGET_BUILDPACK_NAME: php_buildpack
+
+- name: stage-python-buildpack
+  serial_groups: [cc-api]
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: buildpack
+      passed: [regulator]
+      resource: python-buildpack
+      trigger: true
+
+  - task: stage
+    file: pipelines-repo/tasks/stage-buildpack/task.yml
+    params:
+      <<: *cf_api_params
+      BUILDPACK_NAME: python_buildpack_latest
+
+- name: promote-python-buildpack
+  serial_groups: [cc-api]
+  plan:
+  - aggregate:
+    - get: python-buildpack
+      passed: [stage-python-buildpack]
+      trigger: true
+      params: {globs: []}
+    - get: pipelines-repo
+  - task: promote
+    file: pipelines-repo/tasks/promote-buildpack/task.yml
+    params:
+      <<: *cf_api_params
+      SOURCE_BUILDPACK_NAME: python_buildpack_latest
+      TARGET_BUILDPACK_NAME: python_buildpack
+
+- name: stage-ruby-buildpack
+  serial_groups: [cc-api]
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: buildpack
+      passed: [regulator]
+      resource: ruby-buildpack
+      trigger: true
+
+  - task: stage
+    file: pipelines-repo/tasks/stage-buildpack/task.yml
+    params:
+      <<: *cf_api_params
+      BUILDPACK_NAME: ruby_buildpack_latest
+
+- name: promote-ruby-buildpack
+  serial_groups: [cc-api]
+  plan:
+  - aggregate:
+    - get: ruby-buildpack
+      passed: [stage-ruby-buildpack]
+      trigger: true
+      params: {globs: []}
+    - get: pipelines-repo
+  - task: promote
+    file: pipelines-repo/tasks/promote-buildpack/task.yml
+    params:
+      <<: *cf_api_params
+      SOURCE_BUILDPACK_NAME: ruby_buildpack_latest
+      TARGET_BUILDPACK_NAME: ruby_buildpack
+
+- name: stage-staticfile-buildpack
+  serial_groups: [cc-api]
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: buildpack
+      passed: [regulator]
+      resource: staticfile-buildpack
+      trigger: true
+
+  - task: stage
+    file: pipelines-repo/tasks/stage-buildpack/task.yml
+    params:
+      <<: *cf_api_params
+      BUILDPACK_NAME: staticfile_buildpack_latest
+
+- name: promote-staticfile-buildpack
+  serial_groups: [cc-api]
+  plan:
+  - aggregate:
+    - get: staticfile-buildpack
+      passed: [stage-staticfile-buildpack]
+      trigger: true
+      params: {globs: []}
+    - get: pipelines-repo
+  - task: promote
+    file: pipelines-repo/tasks/promote-buildpack/task.yml
+    params:
+      <<: *cf_api_params
+      SOURCE_BUILDPACK_NAME: staticfile_buildpack_latest
+      TARGET_BUILDPACK_NAME: staticfile_buildpack
+
+- name: stage-tcserver-buildpack
+  serial_groups: [cc-api]
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: buildpack
+      passed: [regulator]
+      resource: tc-buildpack
+      trigger: true
+      params:
+        globs:
+        - "*offline*"
+
+  - task: stage
+    file: pipelines-repo/tasks/stage-buildpack/task.yml
+    params:
+      <<: *cf_api_params
+      BUILDPACK_NAME: tc_buildpack_latest
+
+- name: promote-tcserver-buildpack
+  serial_groups: [cc-api]
+  plan:
+  - aggregate:
+    - get: tc-buildpack
+      passed: [stage-tcserver-buildpack]
+      trigger: true
+      params: {globs: []}
+    - get: pipelines-repo
+
+  - task: promote
+    file: pipelines-repo/tasks/promote-buildpack/task.yml
+    params:
+      <<: *cf_api_params
+      SOURCE_BUILDPACK_NAME: tc_buildpack_latest
+      TARGET_BUILDPACK_NAME: tc_buildpack
+
+cf_api_params: &cf_api_params
+  CF_API_URI: {{cf_api_uri}}
+  CF_USERNAME: {{cf_user}}
+  CF_PASSWORD: {{cf_password}}

@@ -1,0 +1,248 @@
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tag: latest-final
+
+resources:
+
+- name: om-cli
+  type: github-release
+  source:
+    user: pivotal-cf
+    repository: om
+    access_token: ((github_token)) ## Optional: Removing this will cause you to hit the rate limit
+
+- name: pivnet-cli
+  type: github-release
+  source:
+    user: pivotal-cf
+    repository: pivnet-cli
+    access_token: ((github_token)) ## Optional: Removing this will cause you to hit the rate limit
+
+- name: jq
+  type: github-release
+  source:
+    user: stedolan
+    repository: jq
+    access_token: ((github_token)) ## Optional: Removing this will cause you to hit the rate limit
+
+- name: pipelines-repo
+  type: git
+  source:
+    uri: ((github_repo))
+    branch: ((github_branch))
+    username: ((github_username))
+    password: ((github_token))
+
+- name: pivnet-product
+  type: pivnet
+  source:
+    api_token: ((pivnet_token))
+    product_slug: ((product_name))
+    product_version: ((product_version))
+
+jobs:
+
+- name: upload-product
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-product
+      params:
+        globs:
+        - "*.pivotal"
+      trigger: true
+    - get: om-cli
+      params:
+        globs:
+        - "*-linux"
+    - get: pivnet-cli
+      params:
+        globs:
+        - "*linux-amd64*"
+
+  - task: upload-tile
+    file: pipelines-repo/tasks/upload-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+
+  - task: upload-stemcell
+    file: pipelines-repo/tasks/stemcell-uploader/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+      IAAS_TYPE: ((iaas_type))
+
+- name: stage-product
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [upload-product]
+    - get: pivnet-product
+      resource: pivnet-product
+      params:
+        globs:
+        - "*.pivotal"
+      passed: [upload-product]
+      trigger: true
+    - get: om-cli
+      params:
+        globs:
+        - "*-linux"
+      passed: [upload-product]
+
+  - task: stage-tile
+    file: pipelines-repo/tasks/stage-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_IDENTIFIER: ((product_identifier))
+
+- name: config-product
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [stage-product]
+    - get: pivnet-product
+      resource: pivnet-product
+      params:
+        globs: []
+      passed: [stage-product]
+      trigger: true
+    - get: om-cli
+      params:
+        globs:
+        - "*-linux"
+      passed: [stage-product]
+    - get: jq
+      params:
+        globs:
+        - "*linux64*"
+
+  - task: config-tile
+    file: pipelines-repo/tasks/config-p-healthwatch/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      NETWORK_NAME: ((network_name))
+      SERVICE_NETWORK_NAME: ((service_network_name))
+      OTHER_AZS: ((other_azs))
+      SINGLETON_JOBS_AZ: ((singleton_jobs_az))
+      PRODUCT_NAME: ((product_name))
+      HEALTHWATCH_FORWARDER_BOSHHEALTH_INSTANCE_COUNT: ((healthwatch_forwarder_boshhealth_instance_count))
+      HEALTHWATCH_FORWARDER_BOSHTASKS_INSTANCE_COUNT: ((healthwatch_forwarder_boshtasks_instance_count))
+      HEALTHWATCH_FORWARDER_CANARY_INSTANCE_COUNT: ((healthwatch_forwarder_canary_instance_count))
+      HEALTHWATCH_FORWARDER_CLI_INSTANCE_COUNT: ((healthwatch_forwarder_cli_instance_count))
+      HEALTHWATCH_FORWARDER_FOUNDATION_NAME: ((healthwatch_forwarder_foundation_name))
+      HEALTHWATCH_FORWARDER_HEALTH_CHECK_AZ: ((healthwatch_forwarder_health_check_az))
+      HEALTHWATCH_FORWARDER_HEALTH_CHECK_VM_TYPE: ((healthwatch_forwarder_health_check_vm_type))
+      HEALTHWATCH_FORWARDER_INGESTOR_INSTANCE_COUNT: ((healthwatch_forwarder_ingestor_instance_count))
+      HEALTHWATCH_FORWARDER_OPSMAN_INSTANCE_COUNT: ((healthwatch_forwarder_opsman_instance_count))
+      MYSQL_SKIP_NAME_RESOLVE: ((mysql_skip_name_resolve))
+      OPSMAN: ((opsman))
+      OPSMAN_ENABLE_URL: ((opsman_enable_url))
+      MYSQL_PERSISTENT_DISK_MB: ((mysql_persistent_disk_mb))
+      MYSQL_INSTANCES: ((mysql_instances))
+      MYSQL_INSTANCE_TYPE: ((mysql_instance_type))
+      PROXY_INSTANCES: ((proxy_instances))
+      PROXY_INSTANCE_TYPE: ((proxy_instance_type))
+      HEALTHWATCH_FORWARDER_PERSISTENT_DISK_MB: ((healthwatch_forwarder_persistent_disk_mb))
+      HEALTHWATCH_FORWARDER_INSTANCES: ((healthwatch_forwarder_instances))
+      HEALTHWATCH_FORWARDER_INSTANCE_TYPE: ((healthwatch_forwarder_instance_type))
+
+- name: disable-errands
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [config-product]
+    - get: pivnet-product
+      resource: pivnet-product
+      params:
+        globs: []
+      passed: [config-product]
+      trigger: true
+    - get: om-cli
+      params:
+        globs:
+        - "*om-linux*"
+      passed: [config-product]
+    - get: jq
+      params:
+        globs:
+        - "*linux64*"
+      passed: [config-product]
+
+  - task: disable-errands
+    file: pipelines-repo/tasks/disable-errands/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_IDENTIFIER: ((product_identifier))
+      ERRANDS: ((errands_to_disable))
+
+- name: apply-changes
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [disable-errands]
+    - get: pivnet-product
+      resource: pivnet-product
+      params:
+        globs: []
+      passed: [disable-errands]
+      trigger: true
+    - get: om-cli
+      params:
+        globs:
+        - "*-linux"
+      passed: [disable-errands]
+
+  - task: apply-changes
+    file: pipelines-repo/tasks/apply-changes/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+
+- name: set-upgrade-pipeline
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [apply-changes]
+    - get: pivnet-product
+      resource: pivnet-product
+      params:
+        globs: []
+      passed: [apply-changes]
+      trigger: true
+
+  - task: set-upgrade-pipeline
+    file: pipelines-repo/tasks/set-upgrade-pipeline/task.yml
+    params:
+      DEBUG: ((debug))
+      CONCOURSE_USERNAME: ((concourse_user))
+      CONCOURSE_PASSWD: ((concourse_pwd))
+      CONCOURSE_URL: ((concourse_url))
+      BUILD_PIPELINE_NAME: ((pipeline-name))
+      BUILD_TEAM_NAME: ((team-name))
+      UPGRADE_PIPELINE_NAME: ((upgrade-pipeline-name))
+      PRODUCT_NAME: ((product_name))
+      PRODUCT_IDENTIFIER: ((product_identifier))
+      PRODUCT_VERSION: ((product_version))

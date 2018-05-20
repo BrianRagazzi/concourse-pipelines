@@ -1,0 +1,911 @@
+groups: []
+
+resources:
+- name: bosh-cli
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    bucket: {{s3_bucket}}
+    endpoint: {{s3_endpoint}}
+    regexp: BOSH/bosh-cli-(.*)-linux-amd64
+    secret_access_key: {{s3_secret_access_key}}
+    skip_ssl_verification: true
+
+- name: bosh-manifests-bosh
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    bucket: {{s3_bucket}}
+    endpoint: {{s3_endpoint}}
+    regexp: BOSH/manifests/bosh-deployment-(.*).tgz
+    secret_access_key: {{s3_secret_access_key}}
+    skip_ssl_verification: true
+
+- name: bosh-manifests-concourse
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    bucket: {{s3_bucket}}
+    endpoint: {{s3_endpoint}}
+    regexp: BOSH/manifests/concourse-deployment-(.*).tgz
+    secret_access_key: {{s3_secret_access_key}}
+    skip_ssl_verification: true
+
+- name: bosh-releases-bosh
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: BOSH/releases/bosh-(\d*.\d*.\d*).tgz
+    skip_ssl_verification: true
+
+- name: bosh-vsphere-cpi
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: BOSH/releases/bosh-vsphere-cpi-release-(.*).tgz
+    skip_ssl_verification: true
+
+- name: stemcell
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: BOSH/stemcells/bosh-stemcell-(.*)-vsphere-esxi-ubuntu-trusty-go_agent.tgz
+    skip_ssl_verification: true
+
+- name: bosh-releases-garden-runc
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: BOSH/releases/garden-runc-(.*).tgz
+    skip_ssl_verification: true
+
+- name: bosh-releases-syslog
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: BOSH/releases/syslog-release-(.*).tgz
+    skip_ssl_verification: true
+
+- name: bosh-releases-concourse
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: BOSH/releases/concourse-(.*).tgz
+    skip_ssl_verification: true
+
+- name: bosh-releases-postgres
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: BOSH/releases/postgres-release-(.*).tgz
+    skip_ssl_verification: true
+
+- name: bosh-config-creds
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "BOSH/config/creds-(.*).yml"
+    skip_ssl_verification: true
+
+- name: bosh-config-state
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "BOSH/config/state-(.*).json"
+    skip_ssl_verification: true
+
+- name: bosh-config-concourse-cluster-creds
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "BOSH/config/concourse-cluster-creds-(.*).yml"
+    skip_ssl_verification: true
+
+- name: bosh-config-cloud-config
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "BOSH/config/cloud-config-(.*).cfg"
+    skip_ssl_verification: true
+
+- name: bosh-config-runtime-config
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "BOSH/config/runtime-config-(.*).cfg"
+    skip_ssl_verification: true
+
+resource_types: []
+jobs:
+- name: deploy-director
+  plan:
+  - aggregate:
+     - get: bosh-cli
+       params: {globs: []}
+     - get: bosh-releases-bosh
+     - get: bosh-vsphere-cpi
+     - get: stemcell
+     - get: bosh-deployment
+       trigger: true
+       resource: bosh-manifests-bosh
+       params:
+         unpack: true
+         globs:
+         - bosh-deployment*.tgz
+  - task: deploy
+    config:
+      platform: linux
+      image_resource:
+        type: s3
+        source:
+          access_key_id: {{s3_access_key_id}}
+          bucket: {{s3_bucket}}
+          endpoint: {{s3_endpoint}}
+          regexp: pcfnorm-rootfs/pcfnorm-rootfs-(.*).tgz
+          secret_access_key: {{s3_secret_access_key}}
+          skip_ssl_verification: true
+        params:
+          unpack: true
+      params:
+        INTERNAL_DNS: ""
+        INTERNAL_NTP: ""
+        DIRECTOR_NAME: ""
+        INTERNAL_CIDR: ""
+        INTERNAL_GW: ""
+        INTERNAL_IP: ""
+        NETWORK_NAME: ""
+        VCENTER_DC: ""
+        VCENTER_DS: ""
+        VCENTER_IP: ""
+        VCENTER_USER: ""
+        VCENTER_PASSWORD: ""
+        VCENTER_TEMPLATES: ""
+        VCENTER_VMS: ""
+        VCENTER_DISKS: ""
+        VCENTER_CLUSTER: ""
+        VCENTER_RP: ""
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          cat > ntp.yml <<'EOYML'
+          - type: replace
+            path: /instance_groups/name=bosh/properties/agent/env?/bosh/ntp
+            value: ((\internal_ntp))
+          EOYML
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+
+          set -eu
+
+          boshclipath=`find ./bosh-cli/ -name bosh-cli-*`
+          #cd ./bosh-cli
+          #ls -al
+          echo $boshclipath
+          chmod +x $boshclipath
+          ln -s $boshclipath bosh
+
+          # move to working directory so that the paths to the releases are relative
+          cd ./bosh-deployment
+          # /bosh-deployment-master
+
+
+          boshtarpath=`find ../bosh-releases-bosh/ -name bosh-*.tgz`
+          boshcpipath=`find ../bosh-vsphere-cpi/ -name bosh-vsphere-cpi-release-*.tgz`
+          stemcellpath=`find ../stemcell/ -name bosh-stemcell-*.tgz`
+
+          echo "BOSH TARBALL: $boshtarpath"
+          echo "BOSH VSPHERE CPI: $boshcpipath"
+          echo "STEMCELL: $stemcellpath"
+
+          cd ../
+
+          echo "Kicking off BOSH create-env..."
+          ./bosh create-env ./bosh-deployment/bosh.yml \
+          --state=state.json \
+          --vars-store=creds.yml \
+          -o ntp.yml \
+          -o bosh-deployment/vsphere/cpi.yml \
+          -o bosh-deployment/vsphere/resource-pool.yml \
+          -o bosh-deployment/misc/dns.yml \
+          -o bosh-deployment/local-bosh-release-tarball.yml \
+          -o bosh-deployment/misc/no-internet-access/vsphere-cpi.yml \
+          -o bosh-deployment/misc/no-internet-access/stemcell.yml \
+          -v internal_dns="$INTERNAL_DNS" \
+          -v internal_ntp="$INTERNAL_NTP" \
+          -v director_name="DIRECTOR_NAME" \
+          -v internal_cidr="$INTERNAL_CIDR" \
+          -v internal_gw="$INTERNAL_GW" \
+          -v internal_ip="$INTERNAL_IP" \
+          -v network_name="$NETWORK_NAME" \
+          -v vcenter_dc="$VCENTER_DC" \
+          -v vcenter_ds="$VCENTER_DS" \
+          -v vcenter_ip="$VCENTER_IP" \
+          -v vcenter_user="$VCENTER_USER" \
+          -v vcenter_password="$VCENTER_PASSWORD" \
+          -v vcenter_templates="$VCENTER_TEMPLATES" \
+          -v vcenter_vms="$VCENTER_VMS" \
+          -v vcenter_disks="$VCENTER_DISKS" \
+          -v vcenter_cluster="$VCENTER_CLUSTER" \
+          -v vcenter_rp="$VCENTER_RP" \
+          -v local_vsphere_cpi="$boshcpipath" \
+          -v local_bosh_release="$boshtarpath" \
+          -v local_stemcell="$stemcellpath" \
+
+          EO_SH
+
+          chmod +x task.sh
+          ./task.sh
+
+          cat ./task.sh
+          datever=$(date +"%y%m%d%H%M%S")
+          cp ./creds.yml ./out/creds-${datever}.yml
+          cp ./state.json ./out/state-${datever}.json
+      inputs:
+      - name: bosh-cli
+        path: ""
+      - name: bosh-deployment
+        path: ""
+      - name: bosh-releases-bosh
+        path: ""
+      - name: bosh-vsphere-cpi
+        path: ""
+      - name: stemcell
+        path: ""
+      outputs:
+      - name: out
+    params:
+      INTERNAL_DNS: {{internal_dns}}
+      INTERNAL_NTP: {{internal_ntp}}
+      DIRECTOR_NAME: {{director_name}}
+      INTERNAL_CIDR: {{internal_cidr}}
+      INTERNAL_GW: {{internal_gw}}
+      INTERNAL_IP: {{internal_ip}}
+      NETWORK_NAME: {{network_name}}
+      VCENTER_DC: {{vcenter_dc}}
+      VCENTER_DS: {{vcenter_ds}}
+      VCENTER_IP: {{vcenter_ip}}
+      VCENTER_USER: {{vcenter_user}}
+      VCENTER_PASSWORD: {{vcenter_password}}
+      VCENTER_TEMPLATES: {{vcenter_templates}}
+      VCENTER_VMS: {{vcenter_vms}}
+      VCENTER_DISKS: {{vcenter_disks}}
+      VCENTER_CLUSTER: {{vcenter_cluster}}
+      VCENTER_RP: {{vcenter_rp}}
+  - put: bosh-config-creds
+    params:
+      file: ./out/creds-*.yml
+  - put: bosh-config-state
+    params:
+      file: ./out/state-*.json
+
+- name: cloud-config
+  plan:
+  - aggregate:
+    - get: bosh-config-creds
+    # - get: bosh-config-cloud-config
+    - get: bosh-cli
+      params: {globs: []}
+      passed: [deploy-director]
+      trigger: true
+  - task: login_set_config
+    config:
+      platform: linux
+      image_resource:
+        type: s3
+        source:
+          access_key_id: {{s3_access_key_id}}
+          bucket: {{s3_bucket}}
+          endpoint: {{s3_endpoint}}
+          regexp: czero-cflinuxfs2/czero-cflinuxfs2-(.*).tgz
+          secret_access_key: {{s3_secret_access_key}}
+          skip_ssl_verification: true
+        params:
+          unpack: true
+      params:
+        INTERNAL_IP: ""
+        CLOUD_CONFIG: ""
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+
+          set -eu
+          boshclipath=`find ./bosh-cli/ -name bosh-cli-*`
+          echo $boshclipath
+          chmod +x $boshclipath
+          #ln -s $boshclipath bosh
+          mv $boshclipath ./bosh
+
+          credspath=`find ./bosh-config-creds/ -name creds-*.yml`
+          #ccpath=`find ./bosh-config-cloud-config/ -name cloud-config-*.cfg`
+          export ccpath=./cloudconfig.cfg
+          echo "$CLOUD_CONFIG" > $ccpath
+          datever=$(date +"%y%m%d%H%M%S")
+          cp $ccpath ./out/cloud-config-${datever}.cfg
+
+          ./bosh alias-env bosh-1 -e $INTERNAL_IP --ca-cert <(./bosh int $credspath --path /director_ssl/ca)
+          export BOSH_CLIENT=admin
+          export BOSH_CLIENT_SECRET=`./bosh int $credspath --path /admin_password`
+          ./bosh -e bosh-1 env
+
+          echo 'y' | ./bosh -e bosh-1 update-cloud-config $ccpath
+          EO_SH
+
+          chmod +x task.sh
+          ./task.sh
+
+
+      inputs:
+      #- name: bosh-config-cloud-config
+      #  path: ""
+      - name: bosh-cli
+        path: ""
+      - name: bosh-config-creds
+        path: ""
+      outputs:
+      - name: out
+    params:
+      INTERNAL_IP: {{internal_ip}}
+      CLOUD_CONFIG: {{cloud_config}}
+  - put: bosh-config-cloud-config
+    params:
+      file: ./out/cloud-config-*.cfg
+
+- name: runtime-config
+  plan:
+  - aggregate:
+    - get: bosh-config-creds
+    # - get: bosh-config-cloud-config
+    - get: bosh-cli
+      params: {globs: []}
+      passed: [cloud-config]
+      trigger: true
+  - task: login_set_config
+    config:
+      platform: linux
+      image_resource:
+        type: s3
+        source:
+          access_key_id: {{s3_access_key_id}}
+          bucket: {{s3_bucket}}
+          endpoint: {{s3_endpoint}}
+          regexp: czero-cflinuxfs2/czero-cflinuxfs2-(.*).tgz
+          secret_access_key: {{s3_secret_access_key}}
+          skip_ssl_verification: true
+        params:
+          unpack: true
+      params:
+        INTERNAL_IP: ""
+        RUNTIME_CONFIG: ""
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+
+          set -eu
+          boshclipath=`find ./bosh-cli/ -name bosh-cli-*`
+          echo $boshclipath
+          chmod +x $boshclipath
+          #ln -s $boshclipath bosh
+          mv $boshclipath ./bosh
+
+          credspath=`find ./bosh-config-creds/ -name creds-*.yml`
+          #ccpath=`find ./bosh-config-cloud-config/ -name cloud-config-*.cfg`
+          export rcpath=./runtimecfg
+          echo "$RUNTIME_CONFIG" > $rcpath
+          datever=$(date +"%y%m%d%H%M%S")
+          cp $rcpath ./out/runtime-config-${datever}.cfg
+
+          ./bosh alias-env bosh-1 -e $INTERNAL_IP --ca-cert <(./bosh int $credspath --path /director_ssl/ca)
+          export BOSH_CLIENT=admin
+          export BOSH_CLIENT_SECRET=`./bosh int $credspath --path /admin_password`
+          ./bosh -e bosh-1 env
+
+          echo 'y' | ./bosh -e bosh-1 update-runtime-config $rcpath
+          EO_SH
+
+          chmod +x task.sh
+          ./task.sh
+
+
+      inputs:
+      #- name: bosh-config-cloud-config
+      #  path: ""
+      - name: bosh-cli
+        path: ""
+      - name: bosh-config-creds
+        path: ""
+      outputs:
+      - name: out
+    params:
+      INTERNAL_IP: {{internal_ip}}
+      RUNTIME_CONFIG: {{runtime_config}}
+  - put: bosh-config-runtime-config
+    params:
+      file: ./out/runtime-config-*.cfg
+
+- name: stemcell
+  plan:
+  - aggregate:
+    - get: bosh-config-creds
+    - get: stemcell
+      params: {globs: []}
+    - get: bosh-cli
+      params: {globs: []}
+      passed: [cloud-config]
+      trigger: true
+  - task: upload_stemcell
+    config:
+      platform: linux
+      image_resource:
+        type: s3
+        source:
+          access_key_id: {{s3_access_key_id}}
+          bucket: {{s3_bucket}}
+          endpoint: {{s3_endpoint}}
+          regexp: czero-cflinuxfs2/czero-cflinuxfs2-(.*).tgz
+          secret_access_key: {{s3_secret_access_key}}
+          skip_ssl_verification: true
+        params:
+          unpack: true
+      params:
+        INTERNAL_IP: ""
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+
+          set -eu
+          boshclipath=`find ./bosh-cli/ -name bosh-cli-*`
+          echo $boshclipath
+          chmod +x $boshclipath
+          #ln -s $boshclipath bosh
+          mv $boshclipath ./bosh
+
+          credspath=`find ./bosh-config-creds/ -name creds-*.yml`
+          stemcellpath=`find ./stemcell/ -name bosh-stemcell-*.tgz`
+
+          ./bosh alias-env bosh-1 -e $INTERNAL_IP --ca-cert <(./bosh int $credspath --path /director_ssl/ca)
+          export BOSH_CLIENT=admin
+          export BOSH_CLIENT_SECRET=`./bosh int $credspath --path /admin_password`
+          ./bosh -e bosh-1 env
+
+          ./bosh -e bosh-1 upload-stemcell $stemcellpath
+          EO_SH
+
+          chmod +x task.sh
+          ./task.sh
+      inputs:
+      - name: bosh-config-creds
+        path: ""
+      - name: bosh-cli
+        path: ""
+      - name: stemcell
+        path: ""
+    params:
+      INTERNAL_IP: {{internal_ip}}
+
+- name: concourse-release
+  plan:
+  - aggregate:
+     - get: bosh-config-creds
+     - get: bosh-releases-concourse
+       params: {globs: []}
+     - get: bosh-releases-garden-runc
+       params: {globs: []}
+     - get: bosh-releases-postgres
+       params: {globs: []}
+     - get: bosh-releases-syslog
+       params: {globs: []}
+     - get: bosh-cli
+       params: {globs: []}
+       passed: [stemcell]
+       trigger: true
+  - task: upload_concourse_release
+    config:
+      platform: linux
+      image_resource:
+        type: s3
+        source:
+          access_key_id: {{s3_access_key_id}}
+          bucket: {{s3_bucket}}
+          endpoint: {{s3_endpoint}}
+          regexp: czero-cflinuxfs2/czero-cflinuxfs2-(.*).tgz
+          secret_access_key: {{s3_secret_access_key}}
+          skip_ssl_verification: true
+        params:
+          unpack: true
+      params:
+        INTERNAL_IP: ""
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+
+          set -eu
+          boshclipath=`find ./bosh-cli/ -name bosh-cli-*`
+          echo $boshclipath
+          chmod +x $boshclipath
+          #ln -s $boshclipath bosh
+          mv $boshclipath ./bosh
+
+          credspath=`find ./bosh-config-creds/ -name creds-*.yml`
+          concoursepath=`find ./bosh-releases-concourse/ -name concourse-*.tgz`
+          gardenruncpath=`find ./bosh-releases-garden-runc/ -name garden-runc-*.tgz`
+          postgrespath=`find ./bosh-releases-postgres/ -name postgres-release-*.tgz`
+          syslogpath=`find ./bosh-releases-syslog/ -name syslog-release-*.tgz`
+
+          ./bosh alias-env bosh-1 -e $INTERNAL_IP --ca-cert <(./bosh int $credspath --path /director_ssl/ca)
+          export BOSH_CLIENT=admin
+          export BOSH_CLIENT_SECRET=`./bosh int $credspath --path /admin_password`
+          ./bosh -e bosh-1 env
+
+          ./bosh -e bosh-1 upload-release $gardenruncpath
+          ./bosh -e bosh-1 upload-release $concoursepath
+          ./bosh -e bosh-1 upload-release $postgrespath
+          ./bosh -e bosh-1 upload-release $syslogpath
+          EO_SH
+
+          chmod +x task.sh
+          ./task.sh
+      inputs:
+      - name: bosh-config-creds
+        path: ""
+      - name: bosh-cli
+        path: ""
+      - name: bosh-releases-concourse
+        path: ""
+      - name: bosh-releases-garden-runc
+        path: ""
+      - name: bosh-releases-postgres
+        path: ""
+      - name: bosh-releases-syslog
+        path: ""
+    params:
+      INTERNAL_IP: {{internal_ip}}
+
+- name: deploy-concourse
+  plan:
+  - aggregate:
+     - get: bosh-config-creds
+     - get: bosh-manifests-concourse
+       params:
+         unpack: true
+         globs: []
+     - get: bosh-cli
+       params: {globs: []}
+       passed: [concourse-release]
+       trigger: true
+  - task: deploy_concourse_release
+    config:
+      platform: linux
+      image_resource:
+        type: s3
+        source:
+          access_key_id: {{s3_access_key_id}}
+          bucket: {{s3_bucket}}
+          endpoint: {{s3_endpoint}}
+          regexp: czero-cflinuxfs2/czero-cflinuxfs2-(.*).tgz
+          secret_access_key: {{s3_secret_access_key}}
+          skip_ssl_verification: true
+        params:
+          unpack: true
+      params:
+        INTERNAL_IP: ""
+        CONCOURSE_DEPLOYMENT_NAME: ""
+        CONCOURSE_WEB_IP: ""
+        CONCOURSE_WEB_PORT: "8080"
+        CONCOURSE_NETWORK_NAME: ""
+        CONCOURSE_WEB_VM_TYPE: ""
+        CONCOURSE_DB_VM_TYPE: ""
+        CONCOURSE_WORKER_VM_TYPE: ""
+        CONCOURSE_DB_PERSISTENT_DISK: ""
+        CONCOURSE_WORKER_INSTANCES: ""
+        CONCOURSE_WEB_INSTANCES: ""
+        CONCOURSE_BASICAUTH_USERNAME: ""
+        CONCOURSE_BASICAUTH_PASSWORD: ""
+        ATC_TLS_CERTIFICATE: ""
+        ATC_TLS_PRIVATE_KEY: ""
+        CONCOURSE_URL: ""
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          #build in manifest has hard-coded URLs and digests, remove.
+          cat > versionfix.yml <<'EOYML'
+          - type: remove
+            path: /releases/name=postgres/sha1
+          - type: remove
+            path: /releases/name=postgres/url
+          - type: remove
+            path: /releases/name=concourse/sha1
+          - type: remove
+            path: /releases/name=concourse/url
+          - type: remove
+            path: /releases/name=garden-runc/sha1
+          - type: remove
+            path: /releases/name=garden-runc/url
+          EOYML
+
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+
+          set -e
+          #uo pipefail
+          boshclipath=`find ./bosh-cli/ -name bosh-cli-*`
+          echo $boshclipath
+          chmod +x $boshclipath
+          mv $boshclipath ./bosh
+
+          credspath=`find ./bosh-config-creds/ -name creds-*.yml`
+          concoursepath=./bosh-manifests-concourse/cluster
+
+          ./bosh alias-env bosh-1 -e $INTERNAL_IP --ca-cert <(./bosh int $credspath --path /director_ssl/ca)
+          export BOSH_CLIENT=admin
+          export BOSH_CLIENT_SECRET=`./bosh int $credspath --path /admin_password`
+          ./bosh -e bosh-1 env
+
+          #write cert and key out to a file
+          #echo $ATC_TLS_CERTIFICATE > ./cert.pem
+          #echo $ATC_TLS_PRIVATE_KEY > ./private.key
+
+          echo 'y' | ./bosh -e bosh-1 deploy -d concourse $concoursepath/concourse.yml \
+          --vars-store cluster-creds.yml \
+          -o ./versionfix.yml \
+          -o $concoursepath/operations/static-web.yml \
+          -o $concoursepath/operations/basic-auth.yml \
+          -o $concoursepath/operations/scale.yml \
+           --var web_ip=$CONCOURSE_WEB_IP \
+           --var external_url=$CONCOURSE_URL:$CONCOURSE_WEB_PORT \
+           --var network_name=$CONCOURSE_NETWORK_NAME \
+           --var web_vm_type=$CONCOURSE_WEB_VM_TYPE \
+           --var db_vm_type=$CONCOURSE_DB_VM_TYPE \
+           --var db_persistent_disk_type=$CONCOURSE_DB_PERSISTENT_DISK \
+           --var worker_vm_type=$CONCOURSE_WORKER_VM_TYPE \
+           --var deployment_name=$CONCOURSE_DEPLOYMENT_NAME \
+           --var atc_basic_auth.username=$CONCOURSE_BASICAUTH_USERNAME \
+           --var atc_basic_auth.password=$CONCOURSE_BASICAUTH_PASSWORD \
+           --var worker_instances=$CONCOURSE_WORKER_INSTANCES \
+           --var web_instances=$CONCOURSE_WEB_INSTANCES \
+           --var concourse_version=latest \
+           --var garden_runc_version=latest \
+           --var postgres_version=latest
+
+
+          #-o $concoursepath/operations/tls.yml \
+          #-o $concoursepath/operations/privileged-https.yml \
+          #-o $concoursepath/operations/privileged-http.yml \
+          # --var atc_tls.certificate="$ATC_TLS_CERTIFICATE" \
+          # --var atc_tls.private_key="$ATC_TLS_PRIVATE_KEY"
+          EO_SH
+
+          chmod +x task.sh
+          ./task.sh
+
+          datever=$(date +"%y%m%d%H%M%S")
+          cp ./cluster-creds.yml ./out/concourse-cluster-creds-${datever}.yml
+      inputs:
+      - name: bosh-config-creds
+        path: ""
+      - name: bosh-cli
+        path: ""
+      - name: bosh-manifests-concourse
+        path: ""
+      outputs:
+      - name: out
+    params:
+      INTERNAL_IP: {{internal_ip}}
+      CONCOURSE_DEPLOYMENT_NAME: {{concourse_deployment_name}}
+      CONCOURSE_WEB_IP: {{concourse_web_ip}}
+      CONCOURSE_WEB_PORT: {{concourse_web_port}}
+      CONCOURSE_NETWORK_NAME: {{concourse_network_name}}
+      CONCOURSE_WEB_VM_TYPE: {{concourse_web_vm_type}}
+      CONCOURSE_DB_VM_TYPE: {{concourse_db_vm_type}}
+      CONCOURSE_WORKER_VM_TYPE: {{concourse_worker_vm_type}}
+      CONCOURSE_DB_PERSISTENT_DISK: {{concourse_db_persistent_disk_type}}
+      CONCOURSE_WORKER_INSTANCES: {{concource_worker_instances}}
+      CONCOURSE_WEB_INSTANCES: {{concource_web_instances}}
+      CONCOURSE_BASICAUTH_USERNAME: {{concourse_basicauth_username}}
+      CONCOURSE_BASICAUTH_PASSWORD: {{concourse_basicauth_password}}
+      ATC_TLS_CERTIFICATE: {{atc_tls_certificate}}
+      ATC_TLS_PRIVATE_KEY: {{atc_tls_private_key}}
+      CONCOURSE_URL: {{concourse_url}}
+  - put: bosh-config-concourse-cluster-creds
+    params:
+      file: ./out/concourse-cluster-creds-*.yml
+
+- name: teardown
+  plan:
+  - aggregate:
+    - get: bosh-cli
+      params: {globs: []}
+    - get: bosh-config-creds
+    - get: bosh-config-state
+    - get: bosh-deployment
+      resource: bosh-manifests-bosh
+      params:
+        unpack: true
+  - task: removebosh
+    params:
+      VCENTER_RP: {{vcenter_rp}}
+      INTERNAL_IP: {{internal_ip}}
+      NETWORK_NAME: {{network_name}}
+    config:
+      platform: linux
+      image_resource:
+        type: s3
+        source:
+          access_key_id: {{s3_access_key_id}}
+          bucket: {{s3_bucket}}
+          endpoint: {{s3_endpoint}}
+          regexp: czero-cflinuxfs2/czero-cflinuxfs2-(.*).tgz
+          secret_access_key: {{s3_secret_access_key}}
+          skip_ssl_verification: true
+        params:
+          unpack: true
+      params:
+        DIRECTOR_NAME: ""
+        INTERNAL_CIDR: ""
+        INTERNAL_GW: ""
+        INTERNAL_IP: ""
+        NETWORK_NAME: ""
+        VCENTER_DC: ""
+        VCENTER_DS: ""
+        VCENTER_IP: ""
+        VCENTER_USER: ""
+        VCENTER_PASSWORD: ""
+        VCENTER_CLUSTER: ""
+        VCENTER_RP: ""
+        VCENTER_TEMPLATES: ""
+        VCENTER_VMS: ""
+        VCENTER_DISKS: ""
+      inputs:
+      - name: bosh-cli
+        path: ""
+      - name: bosh-config-creds
+        path: ""
+      - name: bosh-deployment
+        path: ""
+      - name: bosh-config-state
+        path: ""
+
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+          set -eu
+
+          boshclipath=`find ./bosh-cli/ -name bosh-cli-*`
+          #cd ./bosh-cli
+          #ls -al
+          #echo $boshclipath
+          chmod +x $boshclipath
+          ln -s $boshclipath bosh
+
+          credspath=`find ./bosh-config-creds/ -name creds-*.yml`
+          statepath=`find ./bosh-config-state/ -name state-*.json`
+
+          ./bosh alias-env bosh-1 -e $INTERNAL_IP --ca-cert <(./bosh int $credspath --path /director_ssl/ca)
+          export BOSH_CLIENT=admin
+          export BOSH_CLIENT_SECRET=`./bosh int $credspath --path /admin_password`
+          ./bosh -e bosh-1 env
+
+          #remove concourse deployment
+          echo "Removing Concourse Deployment"
+          echo 'y' | ./bosh -e bosh-1 delete-deployment -d concourse
+
+          #remove all stemcells
+          echo "Removing Stemcells"
+          ./bosh -e bosh-1 stemcells > sstest
+          ssversion=$(awk '{print $1"/"$2;}' ./sstest)
+          for ss in $ssversion
+          do
+            echo 'y' | ./bosh -e bosh-1 delete-stemcell $ssversion
+          done
+
+          #remove all releases
+          echo "Removing Releases"
+          ./bosh -e bosh-1 releases > reltest
+          releases=$(awk '{print $1"/"$2;}' ./reltest)
+          for rel in $releases
+          do
+            echo 'y' |./bosh -e bosh-1 delete-release ${rel}
+          done
+
+          #"Kicking off BOSH delete-env..."
+          echo "Removing director"
+          ./bosh delete-env ./bosh-deployment/bosh.yml \
+          --state="$statepath" \
+          --vars-store="$credspath" \
+          -o bosh-deployment/vsphere/cpi.yml \
+          -o bosh-deployment/vsphere/resource-pool.yml \
+          -v director_name="DIRECTOR_NAME" \
+          -v internal_cidr="$INTERNAL_CIDR" \
+          -v internal_gw="$INTERNAL_GW" \
+          -v internal_ip="$INTERNAL_IP" \
+          -v network_name="$NETWORK_NAME" \
+          -v vcenter_dc="$VCENTER_DC" \
+          -v vcenter_ds="$VCENTER_DS" \
+          -v vcenter_ip="$VCENTER_IP" \
+          -v vcenter_templates="$VCENTER_TEMPLATES" \
+          -v vcenter_vms="$VCENTER_VMS" \
+          -v vcenter_disks="$VCENTER_DISKS" \
+          -v vcenter_user="$VCENTER_USER" \
+          -v vcenter_password="$VCENTER_PASSWORD" \
+          -v vcenter_cluster="$VCENTER_CLUSTER" \
+          -v vcenter_rp="$VCENTER_RP" \
+
+          EO_SH
+
+          chmod +x task.sh
+          ./task.sh
+    params:
+      DIRECTOR_NAME: {{director_name}}
+      INTERNAL_CIDR: {{internal_cidr}}
+      INTERNAL_GW: {{internal_gw}}
+      INTERNAL_IP: {{internal_ip}}
+      NETWORK_NAME: {{network_name}}
+      VCENTER_DC: {{vcenter_dc}}
+      VCENTER_DS: {{vcenter_ds}}
+      VCENTER_IP: {{vcenter_ip}}
+      VCENTER_USER: {{vcenter_user}}
+      VCENTER_PASSWORD: {{vcenter_password}}
+      VCENTER_CLUSTER: {{vcenter_cluster}}
+      VCENTER_RP: {{vcenter_rp}}
+      VCENTER_TEMPLATES: {{vcenter_templates}}
+      VCENTER_VMS: {{vcenter_vms}}
+      VCENTER_DISKS: {{vcenter_disks}}

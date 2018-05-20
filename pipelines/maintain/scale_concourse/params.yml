@@ -1,0 +1,6 @@
+s3_endpoint: CHANGEME          #ex:https://minio.domain.local:9000    
+s3_bucket: CHANGEME            #binaries 
+s3_access_key_id: CHANGEME
+s3_secret_access_key: CHANGEME
+
+internal_ip: CHANGEME          #IP Address of BOSH DIrector
