@@ -227,7 +227,7 @@ jobs:
     - get: pcf-ops-manager
       params: {globs: []}
       passed: [configure-director]
-      trigger: true
+      trigger: false
 
   - task: apply-changes
     file: pipelines-repo/tasks/apply-changes/task.yml
