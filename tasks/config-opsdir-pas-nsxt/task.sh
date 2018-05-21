@@ -185,17 +185,17 @@ security_configuration=$(
     '
     {
       "trusted_certificates": $trusted_certificates,
-      "vm_password_type": "generate"
+      "vm_password_type": "generate",
       "syslog_configuration.enabled": $syslog_enabled
     }
     +
     if $syslog_enabled == "true" then
     {
-      "syslog_configuration.address": $syslog_address
-      "syslog_configuration.tls_enabled": $syslog_tls_enabled
-      "syslog_configuration.port": $syslog_port
-      "syslog_configuration.ssl_ca_certificate": $syslog_ssl_ca_certificate
-      "syslog_configuration.permitted_peer": $syslog_permitted_peer
+      "syslog_configuration.address": $syslog_address,
+      "syslog_configuration.tls_enabled": $syslog_tls_enabled,
+      "syslog_configuration.port": $syslog_port,
+      "syslog_configuration.ssl_ca_certificate": $syslog_ssl_ca_certificate,
+      "syslog_configuration.permitted_peer": $syslog_permitted_peer,
       "syslog_configuration.transport_protocol": $syslog_transport_protocol
     }
   else .
