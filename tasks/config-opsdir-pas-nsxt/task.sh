@@ -187,42 +187,38 @@ syslog_configuration=$(
   --arg  syslog_enabled "$SYSLOG_ENABLED" \
   --arg  syslog_address "$SYSLOG_ADDRESS" \
   --arg  syslog_port "$SYSLOG_PORT" \
-  --arg  syslog_tls_enabled "$SYSLOG_TLS_ENABLED" \
+  --arg  syslog_tls_enabled $SYSLOG_TLS_ENABLED \
   --arg  syslog_permitted_peer "$SYSLOG_PERMITTED_PEER" \
   --arg  syslog_ssl_ca_certificate "$SYSLOG_SSL_CA_CERTIFICATE" \
   --arg  syslog_transport_protocol "$SYSLOG_TRANSPORT_PROTOCOL" \
   '
-  {
-    "syslog_configuration.enabled": {
-      "value": $syslog_enabled
-    }
-  }
-  +
   if $syslog_enabled == "true" then
     {
-    "syslog_configuration.address": {
-      "value": $syslog_address
-    },
-    "syslog_configuration.tls_enabled": {
-      "value": $syslog_tls_enabled
-    },
-    "syslog_configuration.port": {
-      "value": $syslog_port
-    },
-    "syslog_configuration.ssl_ca_certificate": {
-      "value": $syslog_ssl_ca_certificate
-    },
-    "syslog_configuration.permitted_peer": {
-        "value": $syslog_permitted_peer
-    },
-    "syslog_configuration.transport_protocol": {
-      "value": $syslog_transport_protocol
+    "enabled": true,
+    "address": $syslog_address,
+    "transport_protocol": $syslog_transport_protocol,
+    "port": $syslog_port
     }
-  }
-  else .
+  else
+    {
+    "enabled": false
+    }
+  end
+  +
+  if $syslog_tls_enabled == "true" then
+    {
+    "tls_enabled": true,
+    "ssl_ca_certificate": $syslog_ssl_ca_certificate,
+    "permitted_peer": $syslog_permitted_peer
+    }
+  else
+    {
+    "tls_enabled": false
+    }
   end
   '
 )
+
 
 network_assignment=$(
 jq -n \
@@ -238,8 +234,7 @@ jq -n \
   }
   }'
 )
-
-echo $yslog_configuration
+# echo $syslog_configuration
 
 echo "Configuring IaaS, AZ and Director..."
 om-linux \
@@ -262,4 +257,4 @@ om-linux \
   --networks-configuration "$network_configuration" \
   --network-assignment "$network_assignment" \
   --security-configuration "$security_configuration" \
-  --syslog_configuration "$syslog_configuration"
+  --syslog-configuration "$syslog_configuration"
