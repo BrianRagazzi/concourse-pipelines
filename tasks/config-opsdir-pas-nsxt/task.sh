@@ -186,9 +186,10 @@ security_configuration=$(
     {
       "trusted_certificates": $trusted_certificates,
       "vm_password_type": "generate"
+       },
       "syslog_configuration.enabled": {
       "value": $syslog_enabled
-      }
+       }
     }
     +
     if $syslog_enabled == "true" then
@@ -254,4 +255,4 @@ om-linux \
   configure-director \
   --networks-configuration "$network_configuration" \
   --network-assignment "$network_assignment" \
-  --security-configuration "$security_configuration" 
+  --security-configuration "$security_configuration"
