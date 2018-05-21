@@ -186,32 +186,17 @@ security_configuration=$(
     {
       "trusted_certificates": $trusted_certificates,
       "vm_password_type": "generate"
-       },
-      "syslog_configuration.enabled": {
-      "value": $syslog_enabled
-       }
+      "syslog_configuration.enabled": $syslog_enabled
     }
     +
     if $syslog_enabled == "true" then
     {
-      "address": {
-        "value": $syslog_address
-      },
-      "tls_enabled": {
-        "value": $syslog_tls_enabled
-      },
-      "port": {
-        "value": $syslog_port
-      },
-      "ssl_ca_certificate": {
-        "value": $syslog_ssl_ca_certificate
-      },
-      "permitted_peer": {
-        "value": $syslog_permitted_peer
-      },
-      "transport_protocol": {
-        "value": $syslog_transport_protocol
-      }
+      "syslog_configuration.address": $syslog_address
+      "syslog_configuration.tls_enabled": $syslog_tls_enabled
+      "syslog_configuration.port": $syslog_port
+      "syslog_configuration.ssl_ca_certificate": $syslog_ssl_ca_certificate
+      "syslog_configuration.permitted_peer": $syslog_permitted_peer
+      "syslog_configuration.transport_protocol": $syslog_transport_protocol
     }
   else .
   end
