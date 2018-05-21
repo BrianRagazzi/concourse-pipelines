@@ -12,7 +12,7 @@ pks get-credentials ${clustername}
 kubectl config use-context ${clustername}
 kubectl get nodes -o wide
 
-yelbns=$(kubctl get namespace | grep yelb)
+yelbns=$(kubectl get namespace | grep yelb)
 if [ -z $yelbns ]; then
   echo "Creating yelb Namepace"
   kubectl create namespace yelb
