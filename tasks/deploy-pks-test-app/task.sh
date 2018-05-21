@@ -12,14 +12,21 @@ pks get-credentials ${clustername}
 kubectl config use-context ${clustername}
 kubectl get nodes -o wide
 
+yelbns=$(kubctl get namespace | grep yelb)
+if [ -z $yelbns ]; then
+  echo "Creating yelb Namepace"
+  kubectl create namespace yelb
+else
+  echo "yelb namespace already exists"
+fi
+
 set +eu
-# trun off errors because it will throw one if the deployment does not exist
+# turn off errors because it will throw one if the deployment does not exist
 yelbdeploy=$(kubectl get deploy --namespace yelb | grep yelb-ui)
 # echo $yelbdeploy
 set -eu
 
 if [ -z $yelbdeploy ]; then
-  kubectl create namespace yelb
   wget "${YAML_SOURCE}" -O yelb-lb-harbor.yml
   #YELBYML=`cat yelb-lb-harbor-original.yml`
   # echo ${YELBYML//"$VALUE_TO_REPLACE"/"$REPLACEMENT_VALUE"} > yelb-lb-harbor.yml
@@ -30,5 +37,5 @@ if [ -z $yelbdeploy ]; then
   EXT_IP=$(kubectl get services --namespace yelb -o json | jq -r '.items[] | select(.spec.selector.app=="yelb-ui") | .status.loadBalancer.ingress[0].ip')
   echo "Connect a browser to http://${EXT_IP} to load yelb"
 else
-  echo "yelb already exists in ${clustername}"
+  echo "yelb deployment already exists in ${clustername}"
 fi
