@@ -148,7 +148,7 @@ cf_properties=$(
       ".properties.routing_tls_termination": {
         "value": $routing_tls_termination
       },
-      "properties.routing_custom_ca_certificates": {
+      ".properties.routing_custom_ca_certificates": {
         "value": $routing_custom_ca_certificates
       },
       ".properties.system_blobstore": {
