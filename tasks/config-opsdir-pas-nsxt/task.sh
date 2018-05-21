@@ -196,6 +196,7 @@ syslog_configuration=$(
     "syslog_configuration.enabled": {
       "value": "$syslog_enabled"
     }
+  }  
   +
   if $syslog_enabled == "true" then
     {
@@ -247,7 +248,8 @@ om-linux \
   configure-director \
   --iaas-configuration "$iaas_configuration" \
   --director-configuration "$director_config" \
-  --az-configuration "$az_configuration"
+  --az-configuration "$az_configuration" \
+  --syslog-configuration "$syslog_configuration"
 
 echo "Configuring Network and Security..."
 om-linux \
