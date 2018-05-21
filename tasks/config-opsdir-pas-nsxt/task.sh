@@ -218,9 +218,9 @@ syslog_configuration=$(
     "syslog_configuration.transport_protocol": {
       "value": $syslog_transport_protocol
     }
+  }
   else .
   end
-  }
   '
 )
 
