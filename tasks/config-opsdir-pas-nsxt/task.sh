@@ -239,6 +239,8 @@ jq -n \
   }'
 )
 
+echo $syslog_configuration
+
 echo "Configuring IaaS, AZ and Director..."
 om-linux \
   --target https://$OPS_MGR_HOST \
@@ -248,10 +250,9 @@ om-linux \
   configure-director \
   --iaas-configuration "$iaas_configuration" \
   --director-configuration "$director_config" \
-  --az-configuration "$az_configuration" \
-  --syslog-configuration "$syslog_configuration"
+  --az-configuration "$az_configuration"
 
-echo "Configuring Network and Security..."
+echo "Configuring Network, Security and Syslog..."
 om-linux \
   --target https://$OPS_MGR_HOST \
   --skip-ssl-validation \
@@ -260,4 +261,5 @@ om-linux \
   configure-director \
   --networks-configuration "$network_configuration" \
   --network-assignment "$network_assignment" \
-  --security-configuration "$security_configuration"
+  --security-configuration "$security_configuration" \
+  --syslog-configuration "$syslog_configuration"
