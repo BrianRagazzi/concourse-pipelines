@@ -193,29 +193,29 @@ syslog_configuration=$(
   --arg  syslog_transport_protocol "$SYSLOG_TRANSPORT_PROTOCOL" \
   '
   {
-    "syslog_configuration.enabled": {
+    "enabled": {
       "value": $syslog_enabled
     }
   }
   +
   if $syslog_enabled == "true" then
     {
-    "syslog_configuration.address": {
+    "address": {
       "value": $syslog_address
     },
-    "syslog_configuration.tls_enabled": {
+    "tls_enabled": {
       "value": $syslog_tls_enabled
     },
-    "syslog_configuration.port": {
+    "port": {
       "value": $syslog_port
     },
-    "syslog_configuration.ssl_ca_certificate": {
+    "ssl_ca_certificate": {
       "value": $syslog_ssl_ca_certificate
     },
-    "syslog_configuration.permitted_peer": {
+    "permitted_peer": {
         "value": $syslog_permitted_peer
     },
-    "syslog_configuration.transport_protocol": {
+    "transport_protocol": {
       "value": $syslog_transport_protocol
     }
   }
