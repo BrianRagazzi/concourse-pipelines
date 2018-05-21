@@ -13,11 +13,12 @@ kubectl config use-context ${clustername}
 kubectl get nodes -o wide
 
 set +eu
+# trun off errors because it will throw one if the deployment does not exist
 yelbdeploy=$(kubectl get deploy --namespace yelb | grep yelb-ui)
-echo $yelbdeploy
+# echo $yelbdeploy
 set -eu
 
-if [-z $yelbdeploy ]; then
+if [ -z $yelbdeploy ]; then
   kubectl create namespace yelb
   wget "${YAML_SOURCE}" -O yelb-lb-harbor.yml
   #YELBYML=`cat yelb-lb-harbor-original.yml`
