@@ -185,7 +185,7 @@ security_configuration=$(
     '
     {
       "trusted_certificates": $trusted_certificates,
-      "vm_password_type": "generate"
+      "vm_password_type": "generate",
       "syslog_configuration": {
         "enabled": $syslog_enabled
        }
