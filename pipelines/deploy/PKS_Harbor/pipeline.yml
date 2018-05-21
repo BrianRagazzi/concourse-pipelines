@@ -614,7 +614,7 @@ jobs:
   - aggregate:
     - get: pipelines-repo
       trigger: false
-      passed: [copy-yelb-images-to-harbor]
+      # passed: [copy-yelb-images-to-harbor]
 
   - task: deploy-pks-test-app
     file: pipelines-repo/tasks/deploy-pks-test-app/task.yml
