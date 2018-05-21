@@ -139,6 +139,7 @@ cf_properties=$(
     --arg mysql_proxy_shutdown_delay "${MYSQL_PROXY_SHUTDOWN_DELAY}" \
     --arg routing_tls_termination "$ROUTING_TLS_TERMINATION" \
     --arg router_client_cert_validation "$ROUTER_CLIENT_CERT_VALIDATION" \
+    --arg routing_custom_ca_certificates "$ROUTING_CUSTOM_CA_CERTIFICATES"
     '
     {
       ".properties.router_client_cert_validation": {
@@ -146,6 +147,9 @@ cf_properties=$(
       },
       ".properties.routing_tls_termination": {
         "value": $routing_tls_termination
+      },
+      "properties.routing_custom_ca_certificates": {
+        "value": $routing_custom_ca_certificates
       },
       ".properties.system_blobstore": {
         "value": "internal"
