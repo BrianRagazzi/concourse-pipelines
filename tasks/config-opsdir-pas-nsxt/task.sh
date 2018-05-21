@@ -175,50 +175,43 @@ EOF
 security_configuration=$(
   jq -n \
     --arg trusted_certificates "$TRUSTED_CERTIFICATES" \
+    --arg  syslog_enabled "$SYSLOG_ENABLED" \
+    --arg  syslog_address "$SYSLOG_ADDRESS" \
+    --arg  syslog_port "$SYSLOG_PORT" \
+    --arg  syslog_tls_enabled "$SYSLOG_TLS_ENABLED" \
+    --arg  syslog_permitted_peer "$SYSLOG_PERMITTED_PEER" \
+    --arg  syslog_ssl_ca_certificate "$SYSLOG_SSL_CA_CERTIFICATE" \
+    --arg  syslog_transport_protocol "$SYSLOG_TRANSPORT_PROTOCOL" \
     '
     {
       "trusted_certificates": $trusted_certificates,
       "vm_password_type": "generate"
-    }'
-)
-
-syslog_configuration=$(
-  jq -n \
-  --arg  syslog_enabled "$SYSLOG_ENABLED" \
-  --arg  syslog_address "$SYSLOG_ADDRESS" \
-  --arg  syslog_port "$SYSLOG_PORT" \
-  --arg  syslog_tls_enabled "$SYSLOG_TLS_ENABLED" \
-  --arg  syslog_permitted_peer "$SYSLOG_PERMITTED_PEER" \
-  --arg  syslog_ssl_ca_certificate "$SYSLOG_SSL_CA_CERTIFICATE" \
-  --arg  syslog_transport_protocol "$SYSLOG_TRANSPORT_PROTOCOL" \
-  '
-  {
-    "enabled": {
+      "syslog_configuration.enabled": {
       "value": $syslog_enabled
+      }
     }
-  }
-  +
-  if $syslog_enabled == "true" then
+    +
+    if $syslog_enabled == "true" then
     {
-    "address": {
-      "value": $syslog_address
-    },
-    "tls_enabled": {
-      "value": $syslog_tls_enabled
-    },
-    "port": {
-      "value": $syslog_port
-    },
-    "ssl_ca_certificate": {
-      "value": $syslog_ssl_ca_certificate
-    },
-    "permitted_peer": {
+      "address": {
+        "value": $syslog_address
+      },
+      "tls_enabled": {
+        "value": $syslog_tls_enabled
+      },
+      "port": {
+        "value": $syslog_port
+      },
+      "ssl_ca_certificate": {
+        "value": $syslog_ssl_ca_certificate
+      },
+      "permitted_peer": {
         "value": $syslog_permitted_peer
-    },
-    "transport_protocol": {
-      "value": $syslog_transport_protocol
+      },
+      "transport_protocol": {
+        "value": $syslog_transport_protocol
+      }
     }
-  }
   else .
   end
   '
@@ -239,7 +232,7 @@ jq -n \
   }'
 )
 
-echo $syslog_configuration
+echo $security_configuration
 
 echo "Configuring IaaS, AZ and Director..."
 om-linux \
@@ -252,7 +245,7 @@ om-linux \
   --director-configuration "$director_config" \
   --az-configuration "$az_configuration"
 
-echo "Configuring Network, Security and Syslog..."
+echo "Configuring Network and Security..."
 om-linux \
   --target https://$OPS_MGR_HOST \
   --skip-ssl-validation \
@@ -261,5 +254,4 @@ om-linux \
   configure-director \
   --networks-configuration "$network_configuration" \
   --network-assignment "$network_assignment" \
-  --security-configuration "$security_configuration" \
-  --syslog-configuration "$syslog_configuration"
+  --security-configuration "$security_configuration" 
