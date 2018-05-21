@@ -196,11 +196,10 @@ syslog_configuration=$(
     "syslog_configuration.enabled": {
       "value": "$syslog_enabled"
     }
-  }  
+  }
   +
   if $syslog_enabled == "true" then
     {
-     ,
     "syslog_configuration.address": {
       "value": $syslog_address
     },
@@ -219,6 +218,7 @@ syslog_configuration=$(
     "syslog_configuration.transport_protocol": {
       "value": $syslog_transport_protocol
     }
+  else .
   end
   }
   '
