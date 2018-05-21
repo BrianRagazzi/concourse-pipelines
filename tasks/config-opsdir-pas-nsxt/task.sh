@@ -194,7 +194,7 @@ syslog_configuration=$(
   '
   {
     "syslog_configuration.enabled": {
-      "value": "$syslog_enabled"
+      "value": $syslog_enabled
     }
   }
   +
