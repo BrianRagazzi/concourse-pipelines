@@ -185,8 +185,10 @@ security_configuration=$(
     '
     {
       "trusted_certificates": $trusted_certificates,
-      "vm_password_type": "generate",
-      "syslog_configuration.enabled": $syslog_enabled
+      "vm_password_type": "generate"
+      "syslog_configuration": {
+        "enabled": $syslog_enabled
+       }
     }
     +
     if $syslog_enabled == "true" then
