@@ -39,18 +39,21 @@ resources:
     product_slug: harbor-container-registry
     product_version: ((harbor_major_minor_version))
 
-# - name: time-schedule
-#   type: time
-#   source: {interval: 24h}
+- name: schedule
+  type: time
+  source:
+    start: {{schedule_start}}
+    stop: {{schedule_stop}}
+    location: {{schedule_location}}
+    days: [{{schedule_days}}]
 
 jobs:
-# - name: scheduler
-#   plan:
-#   - get: time-schedule
-#     trigger: true
-#   - get: pivnet-product
-#     params:
-#       globs: []
+- name: regulator
+  plan:
+  - get: schedule
+    trigger: true
+  - get: pipelines-repo
+    params: { globs: [] }
 
 - name: upload-pks
   plan:
@@ -60,7 +63,7 @@ jobs:
       resource: pivotal-container-service
       params: {globs: ["*.pivotal"]}
       trigger: true
-      #passed: [scheduler]
+      passed: [regulator]
     - get: pivnet-cli
       params:
         globs:
