@@ -59,11 +59,11 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
+      passed: [regulator]    
     - get: pivnet-product
       resource: pivotal-container-service
       params: {globs: ["*.pivotal"]}
       trigger: true
-      passed: [regulator]
     - get: pivnet-cli
       params:
         globs:
@@ -131,11 +131,11 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
+      passed: [regulator]
     - get: pivnet-product
       resource: pivnet-harbor
       params: {globs: ["*.pivotal"]}
       trigger: true
-      #passed: [scheduler]
     - get: pivnet-cli
       params:
         globs:
