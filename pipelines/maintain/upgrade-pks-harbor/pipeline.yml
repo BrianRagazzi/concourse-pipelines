@@ -181,12 +181,11 @@ jobs:
     - get: pipelines-repo
       passed: [upload-stemcell-harbor]
       trigger: true
-    # - get: pivnet-product
-    #   resource: pivnet-harbor
-    #   params:
-    #     globs: {globs: ["*.pivotal"]}
-    #   passed: [upload-stemcell-harbor]
-    #   trigger: true
+    - get: pivnet-product
+      resource: pivnet-harbor
+      params: {globs: []}
+      passed: [upload-stemcell-harbor]
+      trigger: true
 
 
   - task: stage-tile
