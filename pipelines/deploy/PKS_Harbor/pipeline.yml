@@ -524,7 +524,7 @@ jobs:
     - get: pivnet-harbor
       passed: [configure-harbor]
       params: {globs: ["*.pivotal"]}
-      trigger: false
+      trigger: true
 
   - task: apply-changes
     file: pipelines-repo/tasks/apply-changes/task.yml
