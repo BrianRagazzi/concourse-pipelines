@@ -58,11 +58,10 @@ resources:
 - name: schedule
   type: time
   source:
-    interval: 30m
-    start: "4:00 AM"
-    stop: "5:00 AM"
-    location: America/Chicago
-    days: [Sunday]
+    start: {{schedule_start}}
+    stop: {{schedule_stop}}
+    location: {{schedule_location}}
+    days: [{{schedule_days}}]
 
 jobs:
 - name: regulator
