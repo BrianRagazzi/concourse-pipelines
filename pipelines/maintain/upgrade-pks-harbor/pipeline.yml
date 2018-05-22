@@ -202,7 +202,7 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      trigger: false #rue
+      trigger: true
       passed: [stage-pks, stage-harbor]
 
   - task: apply-changes
