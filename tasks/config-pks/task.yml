@@ -11,7 +11,7 @@ inputs:
   - name: pipelines-repo
 
 run:
-  path: pipelines-repo/tasks/configure-pks/task.sh
+  path: pipelines-repo/tasks/config-pks/task.sh
 
 params:
    INFRA_NETWORK_NAME:

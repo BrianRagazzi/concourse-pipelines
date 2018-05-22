@@ -349,7 +349,7 @@ jobs:
       trigger: true
 
   - task: configure-pks
-    file: pipelines-repo/tasks/configure-pks/task.yml
+    file: pipelines-repo/tasks/config-pks/task.yml
     params:
       INFRA_NETWORK_NAME: ((infra_network_name))
       SERVICES_NETWORK_NAME: ((main_network_name))
