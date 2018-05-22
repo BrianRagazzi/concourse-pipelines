@@ -120,7 +120,6 @@ director_config=$(cat <<-EOF
 EOF
 )
 
-echo "Trusted_certs: $TRUSTED_CERTIFICATES"
 security_configuration=$(
   jq -n \
     --arg trusted_certificates "$TRUSTED_CERTIFICATES" \
