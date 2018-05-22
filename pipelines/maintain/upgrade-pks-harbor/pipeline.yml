@@ -18,8 +18,6 @@ resources:
   source:
     uri: ((github_repo))
     branch: ((github_branch))
-    username: ((github_username))
-    password: ((github_token))
 
 - name: pivotal-container-service
   type: pivnet
@@ -59,7 +57,7 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      passed: [regulator]    
+      passed: [regulator]
     - get: pivnet-product
       resource: pivotal-container-service
       params: {globs: ["*.pivotal"]}
