@@ -1,0 +1,186 @@
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tag: latest-final
+
+resources:
+- name: pivnet-cli
+  type: github-release
+  source:
+    user: pivotal-cf
+    repository: pivnet-cli
+    access_token: ((github_token)) ## Optional: Removing this will cause you to hit the rate limit
+
+- name: pipelines-repo
+  type: git
+  source:
+    uri: ((github_repo))
+    branch: ((github_branch))
+
+- name: elastic-runtime
+  type: pivnet
+  source:
+    api_token: ((pivnet_token))
+    product_slug: elastic-runtime
+    product_version: ((ert_major_minor_version))
+    sort_by: semver
+    copy_metadata: true
+
+
+- name: nsx-t-add-on-tile
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: vmware-nsx-t
+    product_version: {{nsxt_major_minor_version}}
+    sort_by: semver
+
+- name: schedule
+  type: time
+  source:
+    start: {{schedule_start}}
+    stop: {{schedule_stop}}
+    location: {{schedule_location}}
+    days: [{{schedule_days}}]
+
+jobs:
+- name: regulator
+  plan:
+  - get: schedule
+    trigger: true
+  - get: pipelines-repo
+    params: { globs: [] }
+
+- name: upload-ert
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [regulator]
+    - get: pivnet-product
+      resource: elastic-runtime
+      params: {globs: ["cf*.pivotal"]}
+      trigger: true
+    - get: pivnet-cli
+      params:
+        globs:
+        - "*linux-amd64*"
+
+  - task: upload-ert
+    file: pipelines-repo/tasks/upload-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+
+- name: upload-stemcell-ert
+  plan:
+  - aggregate:
+    - get: pivnet-cli
+      params:
+        globs:
+        - "*linux-amd64*"
+      passed: [upload-ert]
+    - get: pipelines-repo
+      passed: [upload-ert]
+    - get: pivnet-product
+      resource: elastic-runtime
+      params: {globs: []}
+      passed: [upload-ert]
+      trigger: true
+
+
+  - task: upload-stemcell
+    file: pipelines-repo/tasks/stemcell-uploader/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+      IAAS_TYPE: ((iaas_type))
+      PRODUCT_IDENTIFIER: cf
+
+- name: stage-ert
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [upload-stemcell-ert]
+    - get: pivnet-product
+      resource: elastic-runtime
+      params: {globs: []}
+      passed: [upload-stemcell-ert]
+      trigger: true
+
+
+  - task: stage-tile
+    file: pipelines-repo/tasks/stage-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_IDENTIFIER: cf
+
+- name: upload-nsxt
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [regulator]
+    - get: pivnet-product
+      resource: nsx-t-add-on-tile
+      params: {globs: ["*.pivotal"]}
+      trigger: true
+    - get: pivnet-cli
+      params:
+        globs:
+        - "*linux-amd64*"
+
+  - task: upload-nsxt
+    file: pipelines-repo/tasks/upload-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+
+- name: stage-nsxt
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [upload-nsxt]
+      trigger: true
+    - get: pivnet-product
+      resource: nsx-t-add-on-tile
+      params: {globs: []}
+      passed: [upload-nsxt]
+      trigger: true
+
+
+  - task: stage-tile
+    file: pipelines-repo/tasks/stage-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_IDENTIFIER: VMware-NSX-T
+
+- name: apply-changes
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      trigger: true
+      passed: [stage-ert, stage-nsxt]
+
+  - task: apply-changes
+    file: pipelines-repo/tasks/apply-changes/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
