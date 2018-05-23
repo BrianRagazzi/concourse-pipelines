@@ -9,3 +9,9 @@ github_token: CHANGEME # [R] Your github token
 github_repo: https://github.com/BrianRagazzi/concourse-pipelines # [R] Pipelines github repo
 github_branch: master
 github_username: CHANGEME # [R] Your github username
+
+#schedule
+schedule_start: "4:00 AM" #"5:00 AM" or 0500 or 5AM
+schedule_stop: "5:00 AM" #"5:00 AM" or 0500 or 5AM
+schedule_location: "America/Chicago" #America/Chicago
+schedule_days: Sunday  #Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday
