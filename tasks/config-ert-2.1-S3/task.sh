@@ -744,7 +744,7 @@ cf_resources=$(
     '
 )
 
-echo $cf_properties
+# echo $cf_properties
 
 om-linux \
   -t https://$OPS_MGR_HOST \
