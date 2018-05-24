@@ -147,4 +147,4 @@ inputs:
   - name: pipelines-repo
 
 run:
-  path: pipelines-repo/tasks/config-ert-2.1/task.sh
+  path: pipelines-repo/tasks/config-ert-2.1-S3/task.sh
