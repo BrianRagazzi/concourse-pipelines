@@ -11,9 +11,9 @@ inputs:
   - name: pipelines-repo
 
 params:
-  OPSMAN_USERNAME:
-  OPSMAN_PASSWORD:
-  OPSMAN_DOMAIN_OR_IP_ADDRESS:
+  OPS_MGR_USERNAME:
+  OPS_MGR_PASSWORD:
+  OPS_MGR_HOST:
 
 run:
   path: pipelines-repo/tasks/wait-opsman-clear/task.sh
