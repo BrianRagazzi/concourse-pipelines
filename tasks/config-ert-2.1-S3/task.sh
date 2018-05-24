@@ -305,7 +305,7 @@ cf_properties=$(
         ".properties.system_blobstore.external.resources_bucket": { "value": $ert_blobstore_bucket_resources },
         ".properties.system_blobstore.external.access_key": { "value": $ert_blobstore_access_key },
         ".properties.system_blobstore.external.secret_key": { "value": { "secret": $ert_blobstore_secret_key } },
-        ".properties.system_blobstore.external.signature_version.value": { "value": $ert_blobstore_sig_version },
+        ".properties.system_blobstore.external.signature_version": { "value": $ert_blobstore_sig_version },
         ".properties.system_blobstore.external.region": { "value": $ert_blobstore_s3_region },
         ".properties.system_blobstore.external.endpoint": { "value": $ert_blobstore_s3_endpoint }
       }
