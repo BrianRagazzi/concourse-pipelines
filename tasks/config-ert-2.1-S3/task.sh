@@ -149,7 +149,7 @@ cf_properties=$(
     --arg ert_blobstore_secret_key "$ERT_BLOBSTORE_SECRET_KEY" \
     --arg ert_blobstore_sig_version "$ERT_BLOBSTORE_SIG_VERSION" \
     --arg ert_blobstore_s3_region "$ERT_BLOBSTORE_S3_REGION" \
-    --arg ert_blobstore_s3_endpoint  "$ERT_BLOBSTORE_S3_ENDPOINT" \
+    --arg ert_blobstore_s3_endpoint "$ERT_BLOBSTORE_S3_ENDPOINT" \
     '
     {
       ".properties.router_client_cert_validation": {
@@ -743,6 +743,8 @@ cf_resources=$(
     end
     '
 )
+
+echo $cf_properties
 
 om-linux \
   -t https://$OPS_MGR_HOST \
