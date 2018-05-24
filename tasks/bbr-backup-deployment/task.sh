@@ -24,7 +24,7 @@ BBR_PASS=$(
   jq -r '.[] | .value.password' )
 
 
-if [ -z $BOSH_ADDRESS ]; then
+if [ -z $BOSH_ADDRESS ] && [ $BOSH_ADDRESS != "null" ]; then
   echo "Getting address of BOSH Director from Ops Manager"
   BOSH_ADDRESS=$(jq -r '.jobs[] | select(.name == "bosh") | .properties.director.address' director_manifest.json)
 else
