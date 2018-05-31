@@ -114,7 +114,7 @@ resources:
     stop: {{schedule_stop}}
     location: {{schedule_location}}
     days: [{{schedule_days}}]
-    
+
 jobs:
 - name: regulator
   plan:
