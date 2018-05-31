@@ -161,9 +161,6 @@ cf_properties=$(
 #      ".properties.routing_custom_ca_certificates": {
 #        "value": $routing_custom_ca_certificates
 #      },
-      ".properties.system_blobstore": {
-        "value": "internal"
-      },
       ".properties.logger_endpoint_port": {
         "value": $loggregator_endpoint_port
       },
@@ -310,7 +307,9 @@ cf_properties=$(
         ".properties.system_blobstore.external.endpoint": { "value": $ert_blobstore_s3_endpoint }
       }
     else
-      .
+      {
+        ".properties.system_blobstore": { "value": "internal" }
+      }
     end
 
     +
