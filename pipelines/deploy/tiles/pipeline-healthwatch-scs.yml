@@ -96,7 +96,6 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      passed: [upload-healthwatch]
     - get: pivnet-product
       resource: pivnet-healthwatch
       params:
@@ -118,7 +117,6 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      passed: [stage-healthwatch]
     - get: pivnet-product
       resource: pivnet-healthwatch
       params:
@@ -163,7 +161,6 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      passed: [config-healthwatch]
     - get: pivnet-product
       resource: pivnet-healthwatch
       params:
@@ -220,7 +217,6 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      passed: [upload-mysql]
     - get: pivnet-product
       resource: pivnet-mysql
       params:
@@ -397,7 +393,6 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      passed: [upload-rabbitmq]
     - get: pivnet-product
       resource: pivnet-rabbitmq
       params:
