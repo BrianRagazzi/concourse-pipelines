@@ -192,9 +192,9 @@ director_config=$(
           {
             "endpoint": $s3_blobstore_endpoint,
             "bucket_name": $s3_blobstore_bucket,
-            "signature_version": $s3_blobstore_sig_version
-            "region": $s3_blobstore_region
-            "access_key": $s3_blobstore_access_key
+            "signature_version": $s3_blobstore_sig_version,
+            "region": $s3_blobstore_region,
+            "access_key": $s3_blobstore_access_key,
             "secret_key": $s3_blobstore_secret_key
           }
       }
