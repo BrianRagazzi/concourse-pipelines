@@ -6,13 +6,13 @@ else
   set -e
 fi
 
-chmod +x om-cli/om-linux
-OM_CMD=./om-cli/om-linux
+# chmod +x om-cli/om-linux
+# OM_CMD=./om-cli/om-linux
+#
+# chmod +x ./jq/jq-linux64
+# JQ_CMD=./jq/jq-linux64
 
-chmod +x ./jq/jq-linux64
-JQ_CMD=./jq/jq-linux64
-
-properties_config=$($JQ_CMD -n \
+properties_config=$(jq -n \
   --arg deploy_service_broker_broker_max_instances ${DEPLOY_SERVICE_BROKER_BROKER_MAX_INSTANCES:-100} \
   --arg deploy_service_broker_buildpack ${DEPLOY_SERVICE_BROKER_BUILDPACK:-''} \
   --arg deploy_service_broker_disable_cert_check ${DEPLOY_SERVICE_BROKER_DISABLE_CERT_CHECK:-false} \
@@ -57,7 +57,7 @@ properties_config=$($JQ_CMD -n \
 }'
 )
 
-network_config=$($JQ_CMD -n \
+network_config=$(jq -n \
   --arg network_name "$NETWORK_NAME" \
   --arg other_azs "$OTHER_AZS" \
   --arg singleton_az "$SINGLETON_JOBS_AZ" \
@@ -74,7 +74,7 @@ network_config=$($JQ_CMD -n \
 '
 )
 
-$OM_CMD \
+om-linux \
   --target https://$OPS_MGR_HOST \
   --username "$OPS_MGR_USR" \
   --password "$OPS_MGR_PWD" \
