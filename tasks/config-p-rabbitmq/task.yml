@@ -5,16 +5,17 @@ platform: linux
 image_resource:
   type: docker-image
   source:
-    repository: czero/cflinuxfs2
+    repository: pcfnorm/rootfs
 
 params:
-  OPSMAN_DOMAIN_OR_IP_ADDRESS:
-  OPSMAN_USERNAME:
-  OPSMAN_PASSWORD:
+  DEBUG:
+  OPS_MGR_HOST:
+  OPS_MGR_USR:
+  OPS_MGR_PWD:
   NETWORK_NAME:
   SERVICE_NETWORK_NAME:
-  TILE_RABBIT_SINGLETON_JOB_AZ:
-  DEPLOYMENT_NW_AZS:
+  SINGLETON_JOB_AZ:
+  OTHER_AZS:
   TILE_RABBIT_STATIC_IPS:
   TILE_RABBIT_ADMIN_USER:
   TILE_RABBIT_ADMIN_PASSWD:
@@ -24,8 +25,11 @@ params:
   TILE_RABBIT_LBR_IP:
   TILE_RABBIT_ON_DEMAND_PLAN_1_VM_TYPE:
   TILE_RABBIT_ON_DEMAND_PLAN_1_PERSISTENT_DISK_TYPE:
+  SYSLOG_SELECTOR:
+  SYSLOG_PROTOCOL:
+  SYSLOG_HOST:
+  SYSLOG_PORT: 
 inputs:
-  - name: nsx-t-ci-pipeline
-
+  - name: pipelines-repo
 run:
-  path: nsx-t-ci-pipeline/tasks/config-rabbitmq/task.sh
+  path: pipelines-repo/tasks/config-p-rabbitmq/task.sh
