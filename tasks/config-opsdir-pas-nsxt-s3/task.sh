@@ -263,7 +263,7 @@ jq -n \
   }
   }'
 )
-echo $director_config
+echo DIRECTOTR-CONFIG: $director_config
 
 echo "Configuring IaaS, AZ and Director..."
 om-linux \
