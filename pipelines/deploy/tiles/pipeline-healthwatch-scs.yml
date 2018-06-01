@@ -341,7 +341,6 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      passed: [disable-healthwatch-errands]
     - get: pivnet-product
       resource: pivnet-mysql
       params:
@@ -451,7 +450,7 @@ jobs:
       SYSLOG_ENABLED_PORT: ((syslog_enabled_port))
       SYSLOG_ENABLED_PROTOCOL: ((syslog_enabled_protocol))
 
-- name: disable-rabbitmql-errands
+- name: disable-rabbitmq-errands
   plan:
   - aggregate:
     - get: pipelines-repo
@@ -511,7 +510,6 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      passed: [upload-scs]
     - get: pivnet-product
       resource: pivnet-scs
       params:
@@ -589,7 +587,7 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      passed: [disable-mysql-errands]
+      passed: [disable-mysql-errands, disable-healthwatch-errands, disable-rabbitmq-errands, disable-scs-errands]
       trigger: false
 
   - task: apply-changes
