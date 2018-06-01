@@ -159,18 +159,47 @@ network_configuration=$(
     }'
 )
 
-director_config=$(cat <<-EOF
-{
-  "ntp_servers_string": "$NTP_SERVERS",
-  "resurrector_enabled": $ENABLE_VM_RESURRECTOR,
-  "post_deploy_enabled": true,
-  "max_threads": $MAX_THREADS,
-  "database_type": "internal",
-  "blobstore_type": "local",
-  "director_hostname": "$OPS_DIR_HOSTNAME"
-}
-EOF
+
+director_config=$(
+  jq -n \
+    --arg ntp_servers_string "$NTP_SERVERS" \
+    --arg resurrector_enabled "$ENABLE_VM_RESURRECTOR" \
+    --arg post_deploy_enabled "true" \
+    --arg max_threads "$MAX_THREADS" \
+    --arg database_type "internal" \,
+    --arg blobstore_type "$BLOBSTORE_TYPE" \
+    --arg director_hostname "$OPS_DIR_HOSTNAME" \
+    --arg s3_blobstore_endpoint "$S3_BLOBSTORE_ENDPOINT" \
+    --arg s3_blobstore_bucket "$S3_BLOBSTORE_BUCKET" \
+    --arg s3_blobstore_sig_version "$S3_BLOBSTORE_SIG_VERSION" \
+    --arg s3_blobstore_region "$S3_BLOBSTORE_REGION" \
+    '
+    {
+      "ntp_servers_string": $ntp_servers_string,
+      "resurrector_enabled": $resurrector_enabled,
+      "post_deploy_enabled": $post_deploy_enabled,
+      "max_threads": $max_threads,
+      "database_type": $database_type,
+      "blobstore_type": $blobstore_type,
+      "director_hostname": $director_hostname
+    }
+    +
+    if blobstore_type == "s3" then
+      {
+        "s3_blobstore_options":
+          {
+            "endpoint": $s3_blobstore_endpoint,
+            "bucket_name":"pcf6-bosh",
+            "signature_version":"2",
+            "region":null
+          }
+      }
+    else
+      .
+    end
+    '
 )
+
 
 security_configuration=$(
   jq -n \
