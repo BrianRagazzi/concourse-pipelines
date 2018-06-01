@@ -166,7 +166,7 @@ director_config=$(
     --arg resurrector_enabled "$ENABLE_VM_RESURRECTOR" \
     --arg post_deploy_enabled "true" \
     --arg max_threads "$MAX_THREADS" \
-    --arg database_type "internal" \,
+    --arg database_type "internal" \
     --arg blobstore_type "$BLOBSTORE_TYPE" \
     --arg director_hostname "$OPS_DIR_HOSTNAME" \
     --arg s3_blobstore_endpoint "$S3_BLOBSTORE_ENDPOINT" \
