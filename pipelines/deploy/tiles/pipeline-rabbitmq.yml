@@ -1,0 +1,165 @@
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tag: latest-final
+
+resources:
+- name: pivnet-cli
+  type: github-release
+  source:
+    user: pivotal-cf
+    repository: pivnet-cli
+    access_token: ((github_token)) ## Optional: Removing this will cause you to hit the rate limit
+
+- name: pipelines-repo
+  type: git
+  source:
+    uri: ((github_repo))
+    branch: ((github_branch))
+    username: ((github_username))
+    password: ((github_token))
+
+- name: pivnet-rabbitmq
+  type: pivnet
+  source:
+    api_token: ((pivnet_token))
+    product_slug: p-rabbitmq
+    product_version: ((rabbitmq_major_minor_version))
+
+# - name: replicator
+#   type: github-release
+#   source:
+#     user: pivotal-cf
+#     repository: replicator
+#     access_token: ((github_token)) ## Optional: Removing this will cause you to hit the rate limit
+
+
+jobs:
+- name: upload-rabbitmq
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-rabbitmq
+      params:
+        globs:
+        - "*.pivotal"
+      trigger: true
+    - get: pivnet-cli
+      params:
+        globs:
+        - "*linux-amd64*"
+
+  - task: upload
+    file: pipelines-repo/tasks/upload-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+
+  - task: upload-stemcell
+    file: pipelines-repo/tasks/stemcell-uploader/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+      IAAS_TYPE: ((iaas_type))
+
+- name: stage-rabbitmq
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-rabbitmq
+      params:
+        globs:
+        - "*.pivotal"
+      passed: [upload-rabbitmq]
+      trigger: true
+
+  - task: stage
+    file: pipelines-repo/tasks/stage-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_IDENTIFIER: p-rabbitmq
+
+- name: config-rabbitmq
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-rabbitmq
+      params:
+        globs: []
+      passed: [stage-rabbitmq]
+      trigger: true
+  - task: config-tile
+    file: pipelines-repo/tasks/config-mysql/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      NETWORK_NAME: ((network_name))
+      SERVICE_NETWORK_NAME: ((service_network_name))
+      SINGLETON_JOBS_AZ: ((singleton_jobs_az))
+      OTHER_AZS: ((other_azs))
+      TILE_RABBIT_STATIC_IPS: ((rabbitmq_static_ips))
+      TILE_RABBIT_ADMIN_USER: ((rabbitmq_admin_user))
+      TILE_RABBIT_ADMIN_PASSWD: ((rabbitmq_admin_ass))
+      TILE_RABBIT_PROXY_INSTANCES: ((rabbitmq_proxy_instances))
+      TILE_RABBIT_SERVER_INSTANCES: ((rabbitmq_proxy_servers))
+      TILE_RABBIT_ON_DEMAND_PLAN_1_INSTANCE_QUOTA: ((rabbitmq_plan1_instance_quota))
+      TILE_RABBIT_LBR_IP:  ((rabbitmq_lbr_ip))
+      TILE_RABBIT_ON_DEMAND_PLAN_1_VM_TYPE:  ((rabbitmq_plan1_vm_type))
+      TILE_RABBIT_ON_DEMAND_PLAN_1_PERSISTENT_DISK_TYPE: ((rabbitmq_plan1_persdisk_type))
+      SYSLOG_SELECTOR: ((syslog_enabled))
+      SYSLOG_ENABLED_ADDRESS: ((syslog_enabled_address))
+      SYSLOG_ENABLED_PORT: ((syslog_enabled_port))
+      SYSLOG_ENABLED_PROTOCOL: ((syslog_enabled_protocol))
+
+- name: disable-rabbitmq-errands
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-rabbitmq
+      params:
+        globs: []
+      passed: [config-rabbitmq]
+      trigger: true
+
+  - task: disable-errands
+    file: pipelines-repo/tasks/disable-errands/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_IDENTIFIER: p-rabbitmq
+      ERRANDS_TO_DISABLE: ((rabbitmq_errands_to_disable))
+      ERRANDS_TO_RUN_ON_CHANGE: ((rabbitmq_errands_to_run_on_change))
+
+- name: apply-changes
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [disable-rabbitmq-errands]
+      trigger: false
+
+  - task: apply-changes
+    file: pipelines-repo/tasks/apply-changes/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))

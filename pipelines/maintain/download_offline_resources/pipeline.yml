@@ -99,6 +99,14 @@ resources:
     product_slug: harbor-container-registry
     sort_by: semver
 
+- name: rabbitmq-pivnet
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: p-rabbitmq
+    sort_by: semver
+
+
 - name: ops-manager-s3
   type: s3
   source:
@@ -243,6 +251,16 @@ resources:
     disable_ssl: false
     skip_ssl_verification: true
 
+- name: rabbitmq-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "PCF/Tiles/p-rabbitmq-(.*).pivotal"
+    disable_ssl: false
+    skip_ssl_verification: true
 
 - name: nsxt-s3
   type: s3
@@ -270,6 +288,7 @@ groups:
     - redis
     - nsxt
     - healthwatch
+    - rabbitmq
 - name: pks
   jobs:
     - pks
@@ -348,6 +367,18 @@ jobs:
   - put: healthwatch-s3
     params:
       file: "healthwatch-pivnet/p-healthwatch-*.pivotal"
+
+- name: rabbitmq
+  build_logs_to_retain: 7
+  plan:
+  - get: wee-hours
+    trigger: true
+  - get: rabbitmq-pivnet
+    params:
+      globs: ["*.pivotal"]
+  - put: rabbitmq-s3
+    params:
+      file: "rabbitmq-pivnet/p-rabbitmq-*.pivotal"
 
 - name: mysql
   build_logs_to_retain: 7
