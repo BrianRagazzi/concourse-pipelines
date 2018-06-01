@@ -233,7 +233,7 @@ jobs:
     - get: pcf-ops-manager
       params: {globs: []}
       passed: [configure-director]
-      trigger: false #true
+      trigger: true #true
 
   - task: apply-changes
     file: pipelines-repo/tasks/apply-changes/task.yml
@@ -511,7 +511,7 @@ jobs:
     - get: pcf-ops-manager
       params: {globs: []}
       passed: [configure-ert, configure-nsx]
-      trigger: false #true
+      trigger: true #true
 
   - task: deploy-ert
     file: pipelines-repo/tasks/apply-changes/task.yml
