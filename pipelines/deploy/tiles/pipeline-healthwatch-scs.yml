@@ -529,6 +529,62 @@ jobs:
       OPS_MGR_PWD: ((ops_mgr_pwd))
       PRODUCT_IDENTIFIER: p-spring-cloud-services
 
+- name: config-scs
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-scs
+      params:
+        globs: []
+      passed: [stage-scs]
+      trigger: true
+  - task: config-tile
+    file: pipelines-repo/tasks/config-p-spring-cloud-services/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      NETWORK_NAME: ((network_name))
+      SERVICE_NETWORK_NAME: ((service_network_name))
+      SINGLETON_JOBS_AZ: ((singleton_jobs_az))
+      OTHER_AZS: ((other_azs))
+      DEPLOY_SERVICE_BROKER_BROKER_MAX_INSTANCES:
+      DEPLOY_SERVICE_BROKER_BUILDPACK:
+      DEPLOY_SERVICE_BROKER_DISABLE_CERT_CHECK:
+      DEPLOY_SERVICE_BROKER_INSTANCES_APP_PUSH_TIMEOUT:
+      #DEPLOY_SERVICE_BROKER_MESSAGE_BUS_SERVICE:
+      DEPLOY_SERVICE_BROKER_MESSAGE_BUS_SERVICE_PLAN:
+      #DEPLOY_SERVICE_BROKER_PERSISTENCE_STORE_SERVICE:
+      DEPLOY_SERVICE_BROKER_PERSISTENCE_STORE_SERVICE_PLAN:
+      DEPLOY_SERVICE_BROKER_SECURE_CREDENTIALS:
+      REGISTER_SERVICE_BROKER_ENABLE_GLOBAL_ACCESS:
+
+- name: disable-scs-errands
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-scs
+      params:
+        globs: []
+      passed: [config-scs]
+      trigger: true
+
+  - task: disable-errands
+    file: pipelines-repo/tasks/disable-errands/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_IDENTIFIER: p-spring-cloud-services
+      ERRANDS_TO_DISABLE: ((scs_errands_to_disable))
+      ERRANDS_TO_RUN_ON_CHANGE: ((scs_errands_to_run_on_change))
+
+
+
 - name: apply-changes
   plan:
   - aggregate:
