@@ -114,11 +114,11 @@ params:
   S3_BLOBSTORE_ENDPOINT:
   S3_BLOBSTORE_BUCKET:
   S3_BLOBSTORE_REGION:
-  S3_BLOBSTORE_SIG_VERSION:        
+  S3_BLOBSTORE_SIG_VERSION:
 
 
 inputs:
   - name: pipelines-repo
 
 run:
-  path: pipelines-repo/tasks/config-opsdir-pas-nsxt/task.sh
+  path: pipelines-repo/tasks/config-opsdir-pas-nsxt-s3/task.sh
