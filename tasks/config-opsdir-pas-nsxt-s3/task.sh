@@ -173,6 +173,8 @@ director_config=$(
     --arg s3_blobstore_bucket "$S3_BLOBSTORE_BUCKET" \
     --arg s3_blobstore_sig_version "$S3_BLOBSTORE_SIG_VERSION" \
     --arg s3_blobstore_region "$S3_BLOBSTORE_REGION" \
+    --arg s3_blobstore_access_key "$S3_BLOBSTORE_ACCESS_KEY" \
+    --arg s3_blobstore_secret_key "$S3_BLOBSTORE_SECRET_KEY" \
     '
     {
       "ntp_servers_string": $ntp_servers_string,
@@ -184,14 +186,16 @@ director_config=$(
       "director_hostname": $director_hostname
     }
     +
-    if blobstore_type == "s3" then
+    if $blobstore_type == "s3" then
       {
         "s3_blobstore_options":
           {
             "endpoint": $s3_blobstore_endpoint,
-            "bucket_name":"pcf6-bosh",
-            "signature_version":"2",
-            "region":null
+            "bucket_name": $s3_blobstore_bucket,
+            "signature_version": $s3_blobstore_sig_version
+            "region": $s3_blobstore_region
+            "access_key": $s3_blobstore_access_key
+            "secret_key": $s3_blobstore_secret_key
           }
       }
     else
@@ -263,7 +267,7 @@ jq -n \
   }
   }'
 )
-echo DIRECTOTR-CONFIG: $director_config
+#echo DIRECTOTR-CONFIG: $director_config
 
 echo "Configuring IaaS, AZ and Director..."
 om-linux \

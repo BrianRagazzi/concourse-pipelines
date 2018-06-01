@@ -223,6 +223,8 @@ jobs:
       S3_BLOBSTORE_BUCKET: {{s3_blobstore_bucket}}
       S3_BLOBSTORE_REGION: {{s3_blobstore_region}}
       S3_BLOBSTORE_SIG_VERSION: {{s3_blobstore_sig_version}}
+      S3_BLOBSTORE_ACCESS_KEY: {{s3_blobstore_access_key}}
+      S3_BLOBSTORE_SECRET_KEY: {{s3_blobstore_secret_key}}
 
 - name: deploy-director
   plan:
