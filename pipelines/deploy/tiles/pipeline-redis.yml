@@ -69,7 +69,6 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      passed: [upload-redis]
     - get: pivnet-product
       resource: pivnet-redis
       params:
@@ -100,7 +99,7 @@ jobs:
       trigger: true
 
   - task: config-tile
-    file: pipelines-repo/tasks/config-redis/task.yml
+    file: pipelines-repo/tasks/config-p-redis/task.yml
     params:
       DEBUG: ((debug))
       OPS_MGR_HOST: ((ops_mgr_host))
@@ -110,7 +109,7 @@ jobs:
       SERVICE_NETWORK_NAME: ((service_network_name))
       OTHER_AZS: ((other_azs))
       SINGLETON_JOBS_AZ: ((singleton_jobs_az))
-      PRODUCT_NAME: ((product_name))
+      PRODUCT_NAME: p-redis
       CF_REDIS_BROKER_REDIS_MAXMEMORY: ((cf_redis_broker_redis_maxmemory))
       CF_REDIS_BROKER_SERVICE_INSTANCE_LIMIT: ((cf_redis_broker_service_instance_limit))
       BACKUPS_SELECTOR: ((backups_selector))
@@ -203,7 +202,6 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      passed: [config-redis]
     - get: pivnet-product
       resource: pivnet-redis
       params:
@@ -226,7 +224,6 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      passed: [disable-errands]
     - get: pivnet-product
       resource: pivnet-redis
       params:
