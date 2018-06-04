@@ -82,7 +82,8 @@ prod_properties=$(
       ".rabbitmq-broker.dns_host": {
         "value": $tile_rabbit_lbr_ip
       }
-      '
+    }
+    '
 )
 
 
