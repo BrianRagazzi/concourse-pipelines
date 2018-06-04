@@ -119,9 +119,9 @@ jobs:
       TILE_RABBIT_SERVER_INSTANCES: ((rabbitmq_server_instances))
       TILE_RABBIT_ON_DEMAND_PLAN_1_INSTANCE_QUOTA: ((rabbitmq_plan1_instance_quota))
       SYSLOG_SELECTOR: ((syslog_enabled))
-      SYSLOG_ENABLED_ADDRESS: ((syslog_enabled_address))
-      SYSLOG_ENABLED_PORT: ((syslog_enabled_port))
-      SYSLOG_ENABLED_PROTOCOL: ((syslog_enabled_protocol))
+      SYSLOG_ADDRESS: ((syslog_enabled_address))
+      SYSLOG_PORT: ((syslog_enabled_port))
+      SYSLOG_PROTOCOL: ((syslog_enabled_protocol))
 
 - name: disable-rabbitmq-errands
   plan:

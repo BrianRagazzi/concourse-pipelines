@@ -86,13 +86,13 @@ prod_properties=$(
         "value": "enabled"
       },
       ".properties.syslog_selector.enabled.syslog_transport": {
-        "value": "$SYSLOG_PROTOCOL"
+        "value": $syslog_protocol
       },
       ".properties.syslog_selector.enabled.address": {
-        "value": "$SYSLOG_HOST"
+        "value": $syslog_host
       },
       ".properties.syslog_selector.enabled.port": {
-        "value": $SYSLOG_PORT
+        "value": $syslog_port
       }
     }
     else
@@ -101,6 +101,7 @@ prod_properties=$(
         "value": "No"
       }
     }
+    end
     '
 )
 
