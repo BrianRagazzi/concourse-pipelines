@@ -51,6 +51,10 @@ prod_properties=$(
     --arg tile_rabbit_admin_passwd "$TILE_RABBIT_ADMIN_PASSWD" \
     --arg tile_rabbit_on_demand_plan_1_instance_quota "$TILE_RABBIT_ON_DEMAND_PLAN_1_INSTANCE_QUOTA" \
     --arg singleton_az "$SINGLETON_JOBS_AZ" \
+    --arg syslog_selector "$SYSLOG_SELECTOR" \
+    --arg syslog_protocol "$SYSLOG_PROTOCOL" \
+    --arg syslog_host "$SYSLOG_HOST" \
+    --arg syslog_port "$SYSLOG_PORT" \
     '
     {
       ".rabbitmq-server.server_admin_credentials": {
@@ -75,40 +79,31 @@ prod_properties=$(
         "value": "mem_relative_1_0"
       }
     }
+    +
+    if $syslog_selector=="true" then
+    {
+      ".properties.syslog_selector": {
+        "value": "enabled"
+      },
+      ".properties.syslog_selector.enabled.syslog_transport": {
+        "value": "$SYSLOG_PROTOCOL"
+      },
+      ".properties.syslog_selector.enabled.address": {
+        "value": "$SYSLOG_HOST"
+      },
+      ".properties.syslog_selector.enabled.port": {
+        "value": $SYSLOG_PORT
+      }
+    }
+    else
+    {
+      ".properties.syslog_selector": {
+        "value": "No"
+      }
+    }
     '
 )
 
-
-
-if [[ "$SYSLOG_SELECTOR" == "true" ]]; then
-SYSLOG_PROPS=$(cat <<-EOF
-{
-    ".properties.syslog_selector": {
-      "value": "enabled"
-    },
-    ".properties.syslog_selector.enabled.syslog_transport": {
-      "value": "$SYSLOG_PROTOCOL"
-    },
-    ".properties.syslog_selector.enabled.address": {
-      "value": "$SYSLOG_HOST"
-    },
-    ".properties.syslog_selector.enabled.port": {
-      "value": $SYSLOG_PORT
-    }
-}
-EOF
-)
-
-else
-SYSLOG_PROPS=$(cat <<-EOF
-{
-    ".properties.syslog_selector": {
-      "value": "No"
-    }
-}
-EOF
-)
-fi
 
 
 prod_resources=$(cat <<-EOF
@@ -138,10 +133,3 @@ om-linux -t https://$OPS_MGR_HOST \
   -k configure-product \
   -n $PRODUCT_NAME \
   -p "$prod_properties" \
-
-  om-linux -t https://$OPS_MGR_HOST \
-    -u $OPS_MGR_USR \
-    -p $OPS_MGR_PWD \
-    -k configure-product \
-    -n $PRODUCT_NAME \
-    -p "$SYSLOG_PROPS"
