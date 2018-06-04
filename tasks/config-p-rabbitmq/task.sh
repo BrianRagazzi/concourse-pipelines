@@ -4,7 +4,7 @@ set -eu
 
 export ROOT_DIR=`pwd`
 source $ROOT_DIR/pipelines-repo/functions/copy_binaries.sh
-source $ROOT_DIR/pipelines-repofunctions/check_versions.sh
+source $ROOT_DIR/pipelines-repo/functions/check_versions.sh
 
 check_bosh_version
 check_available_product_version "p-rabbitmq"
