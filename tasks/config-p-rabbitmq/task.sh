@@ -53,7 +53,7 @@ prod_properties=$(
     --arg singleton_az "$SINGLETON_JOBS_AZ" \
     --arg syslog_selector "$SYSLOG_SELECTOR" \
     --arg syslog_protocol "$SYSLOG_PROTOCOL" \
-    --arg syslog_host "$SYSLOG_HOST" \
+    --arg syslog_address "$SYSLOG_ADDRESS" \
     --arg syslog_port "$SYSLOG_PORT" \
     '
     {
@@ -89,7 +89,7 @@ prod_properties=$(
         "value": $syslog_protocol
       },
       ".properties.syslog_selector.enabled.address": {
-        "value": $syslog_host
+        "value": $syslog_address
       },
       ".properties.syslog_selector.enabled.port": {
         "value": $syslog_port
