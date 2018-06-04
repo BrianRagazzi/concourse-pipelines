@@ -6,13 +6,8 @@ else
   set -e
 fi
 
-chmod +x om-cli/om-linux
-OM_CMD=./om-cli/om-linux
 
-chmod +x ./jq/jq-linux64
-JQ_CMD=./jq/jq-linux64
-
-properties_config=$($JQ_CMD -n \
+properties_config=$(jq -n \
   --arg cf_redis_broker_redis_maxmemory "${CF_REDIS_BROKER_REDIS_MAXMEMORY:-"1024MB"}" \
   --arg cf_redis_broker_service_instance_limit "${CF_REDIS_BROKER_SERVICE_INSTANCE_LIMIT:-5}" \
   --arg backups_selector "${BACKUPS_SELECTOR:-"No Backups"}" \
@@ -400,7 +395,7 @@ resources_config="{
   \"dedicated-node\": {\"instances\": ${DEDICATED_NODE_INSTANCES:-5}, \"instance_type\": { \"id\": \"${DEDICATED_NODE_INSTANCE_TYPE:-micro.ram}\"}, \"persistent_disk\": { \"size_mb\": \"${DEDICATED_NODE_PERSISTENT_DISK_MB:-5120}\"}}
 }"
 
-network_config=$($JQ_CMD -n \
+network_config=$(jq -n \
   --arg network_name "$NETWORK_NAME" \
   --arg other_azs "$OTHER_AZS" \
   --arg singleton_az "$SINGLETON_JOBS_AZ" \
@@ -421,7 +416,7 @@ network_config=$($JQ_CMD -n \
 '
 )
 
-$OM_CMD \
+om-linux \
   --target https://$OPS_MGR_HOST \
   --username "$OPS_MGR_USR" \
   --password "$OPS_MGR_PWD" \
@@ -430,7 +425,7 @@ $OM_CMD \
   --product-name p-redis \
   --product-network "$network_config"
 
-$OM_CMD \
+om-linux \
   --target https://$OPS_MGR_HOST \
   --username "$OPS_MGR_USR" \
   --password "$OPS_MGR_PWD" \
