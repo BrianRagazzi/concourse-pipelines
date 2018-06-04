@@ -45,38 +45,47 @@ prod_network=$(
 has_odb_plan_vm_type=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties.on_demand_broker_plan.*rabbitmq_vm_type" | wc -l || true)
 has_odb_plan_disk_type=$(echo $STAGED_PRODUCT_PROPERTIES | jq . |grep ".properties.on_demand_broker_plan.*rabbitmq_persistent_disk_type" | wc -l || true)
 
-
-prod_properties=$(cat <<-EOF
-{
-  ".rabbitmq-haproxy.static_ips": {
-    "value": "$TILE_RABBIT_STATIC_IPS"
-  },
-  ".rabbitmq-server.server_admin_credentials": {
-    "value": {
-      "identity": "$TILE_RABBIT_ADMIN_USER",
-      "password": "$TILE_RABBIT_ADMIN_PASSWD"
-    }
-  },
-  ".properties.on_demand_broker_plan_1_cf_service_access": {
-    "value": "enable"
-  },
-  ".properties.on_demand_broker_plan_1_instance_quota": {
-    "value": $TILE_RABBIT_ON_DEMAND_PLAN_1_INSTANCE_QUOTA
-  },
-  ".properties.on_demand_broker_plan_1_rabbitmq_az_placement": {
-    "value": ["$SINGLETON_JOBS_AZ"]
-  },
-  ".properties.on_demand_broker_plan_1_disk_limit_acknowledgement": {
-    "value": ["acknowledge"]
-  },
-  ".properties.disk_alarm_threshold": {
-    "value": "mem_relative_1_0"
-  },
-  ".rabbitmq-broker.dns_host": {
-    "value": "$TILE_RABBIT_LBR_IP"
-  }
-EOF
+prod_properties=$(
+  jq -n \
+    --arg tile_rabbit_static_ips "$TILE_RABBIT_STATIC_IPS" \
+    --arg tile_rabbit_admin_user "$TILE_RABBIT_ADMIN_USER" \
+    --arg tile_rabbit_admin_passwd "$TILE_RABBIT_ADMIN_PASSWD" \
+    --arg tile_rabbit_on_demand_plan_1_instance_quota "$TILE_RABBIT_ON_DEMAND_PLAN_1_INSTANCE_QUOTA" \
+    --arg singleton_az "$SINGLETON_JOBS_AZ" \
+    --arg tile_rabbit_lbr_ip "$TILE_RABBIT_LBR_IP" \
+    '
+    {
+      ".rabbitmq-haproxy.static_ips": {
+        "value": $tile_rabbit_static_ips
+      },
+      ".rabbitmq-server.server_admin_credentials": {
+        "value": {
+          "identity": $tile_rabbit_admin_user,
+          "password": $tile_rabbit_admin_passwd
+        }
+      },
+      ".properties.on_demand_broker_plan_1_cf_service_access": {
+        "value": "enable"
+      },
+      ".properties.on_demand_broker_plan_1_instance_quota": {
+        "value": $tile_rabbit_on_demand_plan_1_instance_quota
+      },
+      ".properties.on_demand_broker_plan_1_rabbitmq_az_placement": {
+        "value": [$singleton_az]
+      },
+      ".properties.on_demand_broker_plan_1_disk_limit_acknowledgement": {
+        "value": ["acknowledge"]
+      },
+      ".properties.disk_alarm_threshold": {
+        "value": "mem_relative_1_0"
+      },
+      ".rabbitmq-broker.dns_host": {
+        "value": $tile_rabbit_lbr_ip
+      }
+      '
 )
+
+
 
 if [[ "$SYSLOG_SELECTOR" == "true" ]]; then
 SYSLOG_PROPS=$(cat <<-EOF
