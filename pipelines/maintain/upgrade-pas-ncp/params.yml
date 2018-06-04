@@ -11,10 +11,10 @@ ert_major_minor_version: ^2\.1\..*$      # PCF Elastic Runtime minor version to 
 nsxt_major_minor_version: ^2\.1\..*$   # NSX Container Plugin minor version to track
 
 #schedule
-schedule_start: "4:00 AM" #"5:00 AM" or 0500 or 5AM
-schedule_stop: "5:00 AM" #"5:00 AM" or 0500 or 5AM
-schedule_location: "America/Chicago" #America/Chicago
-schedule_days: Friday  #Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday
+#schedule_start: "4:00 AM" #"5:00 AM" or 0500 or 5AM
+#schedule_stop: "5:00 AM" #"5:00 AM" or 0500 or 5AM
+#schedule_location: "America/Chicago" #America/Chicago
+#schedule_days: Friday  #Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday
 
 ## Ops Manager installation meta data
 ops_mgr_host: ((ops_mgr_host)) # [R] Ops Manager FQDN, ex: opsmgr.example.com
