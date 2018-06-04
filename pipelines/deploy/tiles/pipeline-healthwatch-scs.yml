@@ -540,16 +540,16 @@ jobs:
       SERVICE_NETWORK_NAME: ((service_network_name))
       SINGLETON_JOBS_AZ: ((singleton_jobs_az))
       OTHER_AZS: ((other_azs))
-      DEPLOY_SERVICE_BROKER_BROKER_MAX_INSTANCES:
-      DEPLOY_SERVICE_BROKER_BUILDPACK:
-      DEPLOY_SERVICE_BROKER_DISABLE_CERT_CHECK:
-      DEPLOY_SERVICE_BROKER_INSTANCES_APP_PUSH_TIMEOUT:
+      DEPLOY_SERVICE_BROKER_BROKER_MAX_INSTANCES: ((deploy_service_broker_broker_max_instances))
+      DEPLOY_SERVICE_BROKER_BUILDPACK: ((deploy_service_broker_buildpack))
+      DEPLOY_SERVICE_BROKER_DISABLE_CERT_CHECK: ((deploy_service_broker_disable_cert_check))
+      DEPLOY_SERVICE_BROKER_INSTANCES_APP_PUSH_TIMEOUT: ((deploy_service_broker_instances_app_push_timeout))
       #DEPLOY_SERVICE_BROKER_MESSAGE_BUS_SERVICE:
-      DEPLOY_SERVICE_BROKER_MESSAGE_BUS_SERVICE_PLAN:
+      DEPLOY_SERVICE_BROKER_MESSAGE_BUS_SERVICE_PLAN: ((deploy_service_broker_message_bus_service_plan))
       #DEPLOY_SERVICE_BROKER_PERSISTENCE_STORE_SERVICE:
-      DEPLOY_SERVICE_BROKER_PERSISTENCE_STORE_SERVICE_PLAN:
-      DEPLOY_SERVICE_BROKER_SECURE_CREDENTIALS:
-      REGISTER_SERVICE_BROKER_ENABLE_GLOBAL_ACCESS:
+      DEPLOY_SERVICE_BROKER_PERSISTENCE_STORE_SERVICE_PLAN: ((deploy_service_broker_persistence_store_service_plan))
+      DEPLOY_SERVICE_BROKER_SECURE_CREDENTIALS: ((deploy_service_broker_secure_credentials))
+      REGISTER_SERVICE_BROKER_ENABLE_GLOBAL_ACCESS: ((register_service_broker_enable_global_access))
 
 - name: disable-scs-errands
   plan:
