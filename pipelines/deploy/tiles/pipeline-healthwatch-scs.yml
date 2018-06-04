@@ -421,7 +421,7 @@ jobs:
       passed: [stage-rabbitmq]
       trigger: true
   - task: config-tile
-    file: pipelines-repo/tasks/config-rabbitmq/task.yml
+    file: pipelines-repo/tasks/config-p-rabbitmq/task.yml
     params:
       DEBUG: ((debug))
       OPS_MGR_HOST: ((ops_mgr_host))
