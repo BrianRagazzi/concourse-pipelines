@@ -345,13 +345,13 @@ jobs:
       trigger: true
 
   - task: disable-errands
-    file: pipelines-repo/tasks/disable-errands/task.yml
+    file: pipelines-repo/tasks/config-errands/task.yml
     params:
       DEBUG: ((debug))
       OPS_MGR_HOST: ((ops_mgr_host))
       OPS_MGR_USR: ((ops_mgr_usr))
       OPS_MGR_PWD: ((ops_mgr_pwd))
-      PRODUCT_IDENTIFIER: p-mysql
+      PRODUCT_NAME: p-mysql
       ERRANDS_TO_DISABLE: ((mysql_errands_to_disable))
       ERRANDS_TO_RUN_ON_CHANGE: ((mysql_errands_to_run_on_change))
 
@@ -421,7 +421,7 @@ jobs:
       passed: [stage-rabbitmq]
       trigger: true
   - task: config-tile
-    file: pipelines-repo/tasks/config-mysql/task.yml
+    file: pipelines-repo/tasks/config-rabbitmq/task.yml
     params:
       DEBUG: ((debug))
       OPS_MGR_HOST: ((ops_mgr_host))
@@ -431,19 +431,16 @@ jobs:
       SERVICE_NETWORK_NAME: ((service_network_name))
       SINGLETON_JOBS_AZ: ((singleton_jobs_az))
       OTHER_AZS: ((other_azs))
-      TILE_RABBIT_STATIC_IPS: ((rabbitmq_static_ips))
       TILE_RABBIT_ADMIN_USER: ((rabbitmq_admin_user))
       TILE_RABBIT_ADMIN_PASSWD: ((rabbitmq_admin_pass))
       TILE_RABBIT_PROXY_INSTANCES: ((rabbitmq_proxy_instances))
       TILE_RABBIT_SERVER_INSTANCES: ((rabbitmq_server_instances))
       TILE_RABBIT_ON_DEMAND_PLAN_1_INSTANCE_QUOTA: ((rabbitmq_plan1_instance_quota))
-      TILE_RABBIT_LBR_IP:  ((rabbitmq_lbr_ip))
-      TILE_RABBIT_ON_DEMAND_PLAN_1_VM_TYPE:  ((rabbitmq_plan1_vm_type))
-      TILE_RABBIT_ON_DEMAND_PLAN_1_PERSISTENT_DISK_TYPE: ((rabbitmq_plan1_persdisk_type))
+      TILE_RABBIT_ON_DEMAND_PLAN_6_INSTANCE_QUOTA: ((rabbitmq_plan6_instance_quota))
       SYSLOG_SELECTOR: ((syslog_enabled))
-      SYSLOG_ENABLED_ADDRESS: ((syslog_enabled_address))
-      SYSLOG_ENABLED_PORT: ((syslog_enabled_port))
-      SYSLOG_ENABLED_PROTOCOL: ((syslog_enabled_protocol))
+      SYSLOG_ADDRESS: ((syslog_enabled_address))
+      SYSLOG_PORT: ((syslog_enabled_port))
+      SYSLOG_PROTOCOL: ((syslog_enabled_protocol))
 
 - name: disable-rabbitmq-errands
   plan:
@@ -456,14 +453,14 @@ jobs:
       passed: [config-rabbitmq]
       trigger: true
 
-  - task: disable-errands
-    file: pipelines-repo/tasks/disable-errands/task.yml
+  - task: config-errands
+    file: pipelines-repo/tasks/config-errands/task.yml
     params:
       DEBUG: ((debug))
       OPS_MGR_HOST: ((ops_mgr_host))
       OPS_MGR_USR: ((ops_mgr_usr))
       OPS_MGR_PWD: ((ops_mgr_pwd))
-      PRODUCT_IDENTIFIER: p-rabbitmq
+      PRODUCT_NAME: p-rabbitmq
       ERRANDS_TO_DISABLE: ((rabbitmq_errands_to_disable))
       ERRANDS_TO_RUN_ON_CHANGE: ((rabbitmq_errands_to_run_on_change))
 
@@ -565,14 +562,14 @@ jobs:
       passed: [config-scs]
       trigger: true
 
-  - task: disable-errands
-    file: pipelines-repo/tasks/disable-errands/task.yml
+  - task: config-errands
+    file: pipelines-repo/tasks/config-errands/task.yml
     params:
       DEBUG: ((debug))
       OPS_MGR_HOST: ((ops_mgr_host))
       OPS_MGR_USR: ((ops_mgr_usr))
       OPS_MGR_PWD: ((ops_mgr_pwd))
-      PRODUCT_IDENTIFIER: p-spring-cloud-services
+      PRODUCT_NAME: p-spring-cloud-services
       ERRANDS_TO_DISABLE: ((scs_errands_to_disable))
       ERRANDS_TO_RUN_ON_CHANGE: ((scs_errands_to_run_on_change))
 
