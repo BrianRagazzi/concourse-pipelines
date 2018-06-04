@@ -50,6 +50,7 @@ prod_properties=$(
     --arg tile_rabbit_admin_user "$TILE_RABBIT_ADMIN_USER" \
     --arg tile_rabbit_admin_passwd "$TILE_RABBIT_ADMIN_PASSWD" \
     --arg tile_rabbit_on_demand_plan_1_instance_quota "$TILE_RABBIT_ON_DEMAND_PLAN_1_INSTANCE_QUOTA" \
+    --arg tile_rabbit_on_demand_plan_6_instance_quota "$TILE_RABBIT_ON_DEMAND_PLAN_6_INSTANCE_QUOTA" \
     --arg singleton_az "$SINGLETON_JOBS_AZ" \
     --arg syslog_selector "$SYSLOG_SELECTOR" \
     --arg syslog_protocol "$SYSLOG_PROTOCOL" \
@@ -73,6 +74,18 @@ prod_properties=$(
         "value": [$singleton_az]
       },
       ".properties.on_demand_broker_plan_1_disk_limit_acknowledgement": {
+        "value": ["acknowledge"]
+      },
+      ".properties.on_demand_broker_plan_6_cf_service_access": {
+        "value": "enable"
+      },
+      ".properties.on_demand_broker_plan_6_instance_quota": {
+        "value": $tile_rabbit_on_demand_plan_6_instance_quota
+      },
+      ".properties.on_demand_broker_plan_6_rabbitmq_az_placement": {
+        "value": [$singleton_az]
+      },
+      ".properties.on_demand_broker_plan_6_disk_limit_acknowledgement": {
         "value": ["acknowledge"]
       },
       ".properties.disk_alarm_threshold": {
