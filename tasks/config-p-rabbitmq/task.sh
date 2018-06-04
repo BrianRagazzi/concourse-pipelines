@@ -150,11 +150,9 @@ EOF
 prod_resources=$(cat <<-EOF
 {
   "rabbitmq-haproxy": {
-    "instance_type": {"id": "automatic"},
     "instances" : $TILE_RABBIT_PROXY_INSTANCES
   },
   "rabbitmq-server": {
-    "instance_type": {"id": "automatic"},
     "instances" : $TILE_RABBIT_SERVER_INSTANCES
   }
 }
