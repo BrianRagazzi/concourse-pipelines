@@ -103,7 +103,7 @@ jobs:
       passed: [stage-rabbitmq]
       trigger: true
   - task: config-tile
-    file: pipelines-repo/tasks/config-mysql/task.yml
+    file: pipelines-repo/tasks/config-p-rabbitmq/task.yml
     params:
       DEBUG: ((debug))
       OPS_MGR_HOST: ((ops_mgr_host))
@@ -115,9 +115,9 @@ jobs:
       OTHER_AZS: ((other_azs))
       TILE_RABBIT_STATIC_IPS: ((rabbitmq_static_ips))
       TILE_RABBIT_ADMIN_USER: ((rabbitmq_admin_user))
-      TILE_RABBIT_ADMIN_PASSWD: ((rabbitmq_admin_ass))
+      TILE_RABBIT_ADMIN_PASSWD: ((rabbitmq_admin_pass))
       TILE_RABBIT_PROXY_INSTANCES: ((rabbitmq_proxy_instances))
-      TILE_RABBIT_SERVER_INSTANCES: ((rabbitmq_proxy_servers))
+      TILE_RABBIT_SERVER_INSTANCES: ((rabbitmq_server_instances))
       TILE_RABBIT_ON_DEMAND_PLAN_1_INSTANCE_QUOTA: ((rabbitmq_plan1_instance_quota))
       TILE_RABBIT_LBR_IP:  ((rabbitmq_lbr_ip))
       TILE_RABBIT_ON_DEMAND_PLAN_1_VM_TYPE:  ((rabbitmq_plan1_vm_type))
