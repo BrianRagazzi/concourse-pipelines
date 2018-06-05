@@ -62,7 +62,7 @@ jobs:
         globs:
         - ((product_glob))
       trigger: true
-      passed: [scheduler]
+      passed: [regulator]
     - get: om-cli
       params:
         globs:
