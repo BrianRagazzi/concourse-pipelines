@@ -44,6 +44,7 @@ CHK=$(
   uaac users| grep $PAS_ADMIN_USERNAME
 )
 if [ -z "$CHK" ]; then
+  echo "creating new user with email: $PAS_ADMIN_EMAIL"
   uaac user add $PAS_ADMIN_USERNAME -p $PAS_ADMIN_PASSWORD --emails $PAS_ADMIN_EMAIL
 fi
 # uaac member add cloud_controller.admin $PAS_ADMIN_USERNAME
