@@ -44,7 +44,7 @@ CHK=$(
   uaac users| grep $PAS_ADMIN_USERNAME
 )
 if [ -z "$CHK" ]; then
-  uaac user add $PAS_ADMIN_USERNAME -p $PAS_ADMIN_PASSWORD --emails $EMAIL
+  uaac user add $PAS_ADMIN_USERNAME -p $PAS_ADMIN_PASSWORD --emails $PAS_ADMIN_EMAIL
 fi
 # uaac member add cloud_controller.admin $PAS_ADMIN_USERNAME
 # uaac member add uaa.admin $PAS_ADMIN_USERNAME
