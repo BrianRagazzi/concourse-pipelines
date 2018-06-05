@@ -38,7 +38,7 @@ resources:
     secret_access_key: {{s3_secret_access_key}}
     endpoint: {{s3_endpoint}}
     bucket: {{s3_bucket}}
-    regexp: "BOSH/config/concourse-(.*).yml"
+    regexp: "BOSH/config/concourse-creds-(.*)-(.*).yml"
     skip_ssl_verification: true
 
 resource_types: []
@@ -162,7 +162,7 @@ jobs:
           ./task.sh
 
           datever=$(date +"%y%m%d%H%M%S")
-          cp ./cluster-creds.yml ./out/concourse-${CONCOURSE_DEPLOYMENT_NAME}-creds-${datever}.yml
+          cp ./cluster-creds.yml ./out/concourse-creds-${datever}-${CONCOURSE_DEPLOYMENT_NAME}.yml
       inputs:
       - name: bosh-config-creds
         path: ""
@@ -189,4 +189,4 @@ jobs:
       CONCOURSE_URL: {{concourse_url}}
   - put: bosh-config-concourse-cluster-creds
     params:
-      file: ./out/concourse-*.yml
+      file: ./out/concourse-creds-*.yml
