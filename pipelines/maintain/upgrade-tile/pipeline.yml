@@ -36,18 +36,22 @@ resources:
     product_slug: ((product_name))
     product_version: ((product_version))
 
-- name: time-schedule
+- name: schedule
   type: time
-  source: {interval: 24h}
+  source:
+    start: {{schedule_start}}
+    stop: {{schedule_stop}}
+    location: {{schedule_location}}
+    days: [{{schedule_days}}]
 
 jobs:
-- name: scheduler
+- name: regulator
   plan:
-  - get: time-schedule
-    trigger: true
-  - get: pivnet-product
-    params:
-      globs: []
+  - aggregate:
+    - get: schedule
+      trigger: true
+    - get: pivnet-product
+      params: { globs: [] }
 
 - name: upload-product
   plan:
