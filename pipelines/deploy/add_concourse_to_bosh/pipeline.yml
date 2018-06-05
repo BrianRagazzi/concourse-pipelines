@@ -182,8 +182,8 @@ jobs:
       CONCOURSE_DB_VM_TYPE: {{concourse_db_vm_type}}
       CONCOURSE_WORKER_VM_TYPE: {{concourse_worker_vm_type}}
       CONCOURSE_DB_PERSISTENT_DISK: {{concourse_db_persistent_disk_type}}
-      CONCOURSE_WORKER_INSTANCES: {{concource_worker_instances}}
-      CONCOURSE_WEB_INSTANCES: {{concource_web_instances}}
+      CONCOURSE_WORKER_INSTANCES: {{concourse_worker_instances}}
+      CONCOURSE_WEB_INSTANCES: {{concourse_web_instances}}
       CONCOURSE_BASICAUTH_USERNAME: {{concourse_basicauth_username}}
       CONCOURSE_BASICAUTH_PASSWORD: {{concourse_basicauth_password}}
       CONCOURSE_URL: {{concourse_url}}

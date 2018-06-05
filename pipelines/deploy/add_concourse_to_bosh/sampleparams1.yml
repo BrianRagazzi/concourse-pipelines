@@ -16,7 +16,7 @@ concourse_web_vm_type: concourse_web # must match a VM type in the cloud config
 concourse_db_vm_type: concourse_db # must match a VM type in the cloud config
 concourse_worker_vm_type: concourse_worker # must match a VM type in the cloud config
 concourse_db_persistent_disk_type: db # must match a disk type in the cloud config
-concource_worker_instances: 2 #Scale as needed, suggest minimum of 2
-concource_web_instances: 1 #keep this at 1 unless you have a load-balancer for the web servers
+concourse_worker_instances: 2 #Scale as needed, suggest minimum of 2
+concourse_web_instances: 1 #keep this at 1 unless you have a load-balancer for the web servers
 concourse_basicauth_username: CHANGEME
 concourse_basicauth_password: CHANGEME
