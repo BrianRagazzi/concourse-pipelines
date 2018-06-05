@@ -468,6 +468,7 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
+      passed: [apply-changes1]
     - get: pivnet-product
       resource: pivnet-scs
       params:
@@ -575,11 +576,31 @@ jobs:
 
 
 
-- name: apply-changes
+- name: apply-changes1
   plan:
   - aggregate:
     - get: pipelines-repo
-      passed: [disable-mysql-errands, disable-healthwatch-errands, disable-rabbitmq-errands, disable-scs-errands]
+      #passed: [disable-mysql-errands, disable-healthwatch-errands, disable-rabbitmq-errands, disable-scs-errands]
+      #trigger: false
+    #- get: pivnet-scs
+    #  params:
+    #    globs: []
+    #  passed: [disable-scs-errands]
+    #  trigger: false
+    - get: pivnet-rabbitmq
+      params:
+        globs: []
+      passed: [disable-rabbitmq-errands]
+      trigger: false
+    - get: pivnet-mysql
+      params:
+        globs: []
+      passed: [disable-mysql-errands]
+      trigger: false
+    - get: pivnet-healthwatch
+      params:
+        globs: []
+      passed: [disable-healthwatch-errands]
       trigger: false
 
   - task: apply-changes
@@ -590,11 +611,33 @@ jobs:
       OPS_MGR_USR: ((ops_mgr_usr))
       OPS_MGR_PWD: ((ops_mgr_pwd))
 
+- name: apply-changes2
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      #passed: [disable-mysql-errands, disable-healthwatch-errands, disable-rabbitmq-errands, disable-scs-errands]
+      #trigger: false
+    - get: pivnet-scs
+      params:
+        globs: []
+      passed: [disable-scs-errands]
+      trigger: false
+
+
+  - task: apply-changes
+    file: pipelines-repo/tasks/apply-changes/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+
+
 - name: configure-users
   plan:
   - aggregate:
     - get: pipelines-repo
-      passed: [apply-changes]
+      passed: [apply-changes2]
       trigger: true
 
   - task: add-healthwatch-user
