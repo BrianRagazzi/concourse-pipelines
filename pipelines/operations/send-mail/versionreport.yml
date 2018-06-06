@@ -17,9 +17,18 @@ resources:
       from: {{email-from}}
       to: [ {{email-to}} ]
 
+- name: pipelines-repo
+  type: git
+  source:
+    uri: {{github_repo}}
+    branch: {{github_branch}}
+    username: {{github_username}}
+    password: {{github_token}}
+
 jobs:
   - name: send-email
     plan:
+      - get: pipelines-repo
       - task: prep-email
         file: pipelines-repo/tasks/report-tile-versions/task.yml
         params:
