@@ -8,7 +8,7 @@ om-linux \
   --password "$OPS_MGR_PWD" \
   --skip-ssl-validation curl --silent --path "/api/v0/deployed/products" > ./proddata.out
 
-
+pivnet-cli login --api-token="$PIVNET_API_TOKEN"
 PRODUCTS=$(cat ./proddata.out | jq -r '.[]|.type')
 
 for prod in $PRODUCTS

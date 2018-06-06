@@ -18,6 +18,7 @@ params:
   OPS_MGR_USR:
   OPS_MGR_PWD:
   OPS_MGR_HOST:
+  PIVNET_API_TOKEN:
 
 run:
   path: pipelines-repo/tasks/report-tile-versions/task.sh
