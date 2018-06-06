@@ -32,22 +32,37 @@ resources:
       repository: pivnet-cli
       access_token: {{github_token}} ## Optional: Removing this will cause you to hit the rate limit
 
+  - name: schedule
+    type: time
+    source:
+      start: {{schedule_start}}
+      stop: {{schedule_stop}}
+      location: {{schedule_location}}
+      source: {interval: 24h}
+
 jobs:
-  - name: send-email
-    plan:
-      - get: pipelines-repo
-      - get: pivnet-cli
-        params:
-          globs:
-          - "*linux-amd64*"
-      - task: prep-email
-        file: pipelines-repo/tasks/report-tile-versions/task.yml
-        params:
-            OPS_MGR_HOST: {{ops_mgr_host}}
-            OPS_MGR_USR: {{ops_mgr_usr}}
-            OPS_MGR_PWD: {{ops_mgr_pwd}}
-            PIVNET_API_TOKEN: {{pivnet_token}}
-      - put: send-an-email
-        params:
-          subject: out/subject
-          body: out/report
+- name: regulator
+  plan:
+  - get: pipelines-repo
+  - get: schedule
+    trigger: true
+
+- name: send-email
+  plan:
+  - get: pipelines-repo
+    passed: [regulator]
+  - get: pivnet-cli
+    params:
+      globs:
+      - "*linux-amd64*"
+  - task: prep-email
+    file: pipelines-repo/tasks/report-tile-versions/task.yml
+    params:
+        OPS_MGR_HOST: {{ops_mgr_host}}
+        OPS_MGR_USR: {{ops_mgr_usr}}
+        OPS_MGR_PWD: {{ops_mgr_pwd}}
+        PIVNET_API_TOKEN: {{pivnet_token}}
+  - put: send-an-email
+    params:
+      subject: out/subject
+      body: out/report
