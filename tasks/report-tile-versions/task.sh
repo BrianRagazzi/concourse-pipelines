@@ -10,13 +10,16 @@ om-linux \
 
 pivnet-cli login --api-token="$PIVNET_API_TOKEN"
 PRODUCTS=$(cat ./proddata.out | jq -r '.[]|.type')
+echo "<html><body><table><tr><th>Prod</th><th>installed version</th><th>latest version</th></tr>" >> out/report
 
 for prod in $PRODUCTS
 do
   # echo $prod
   installedver=$(cat ./proddata.out | jq -r --arg prod_id "$prod" '.[] | select(.type == $prod_id ) | .product_version')
   latest=$(pivnet-cli --format=json rs --product-slug $prod | jq -r '.[0]|.version')
-  echo "$prod - $installedver vs $latest " >> out/report
+  #echo "$prod - $installedver vs $latest " >> out/report
+  echo "<tr><td>$prod</td><td>$installedver</td><td>$latest</td></tr>" >> out/report
 done
 
+echo "</table></body></html>" >> out/report
 echo "Tile Version report for $OPS_MGR_HOST" >> out/subject
