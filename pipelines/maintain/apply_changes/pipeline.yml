@@ -1,0 +1,39 @@
+resource_types:
+
+resources:
+- name: pipelines-repo
+  type: git
+  source:
+    uri: {{github_repo}}
+    branch: {{github_branch}}
+    username: {{github_username}}
+    password: {{github_token}}
+
+- name: schedule
+  type: time
+  source:
+    start: {{schedule_start}}
+    stop: {{schedule_stop}}
+    location: {{schedule_location}}
+    source: {interval: 24h}
+
+jobs:
+- name: regulator
+  plan:
+  - get: pipelines-repo
+  - get: schedule
+    trigger: true
+
+- name: apply-changes
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [regulator]
+      trigger: true
+
+  - task: apply-changes
+    file: pipelines-repo/tasks/apply-changes/task.yml
+    params:
+      OPS_MGR_HOST: {{ops_mgr_host}}
+      OPS_MGR_USR: {{ops_mgr_usr}}
+      OPS_MGR_PWD: {{ops_mgr_pwd}}
