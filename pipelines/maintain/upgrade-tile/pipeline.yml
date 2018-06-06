@@ -63,14 +63,6 @@ jobs:
         - ((product_glob))
       trigger: true
       passed: [regulator]
-    - get: om-cli
-      params:
-        globs:
-        - "*-linux"
-    - get: pivnet-cli
-      params:
-        globs:
-        - "*linux-amd64*"
 
   - task: upload-tile
     file: pipelines-repo/tasks/upload-product/task.yml
