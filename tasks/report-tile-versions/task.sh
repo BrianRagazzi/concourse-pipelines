@@ -27,5 +27,5 @@ echo "Tile Version report for $OPS_MGR_HOST" >> out/subject
 
 cat > out/headers <<'EOF'
 MIME-version: 1.0
-Content-Type: text/html; charset="UTF-8
+Content-Type: text/html; charset="UTF-8"
 EOF
