@@ -10,8 +10,8 @@ om-linux \
 
 pivnet-cli login --api-token="$PIVNET_API_TOKEN"
 PRODUCTS=$(cat ./proddata.out | jq -r '.[]|.type')
-echo "<!DOCTYPE html PUBLIC """-//W3C//DTD XHTML 1.0 Strict//EN""" """http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd""">" > out/report
-echo "<html><body><table><tr><th>Prod</th><th>installed version</th><th>latest version</th></tr>" >> out/report
+echo "<!DOCTYPE html>" > out/report
+echo "<html><head><meta charset="""utf-8"""/></head><body><table><tr><th>Prod</th><th>installed version</th><th>latest version</th></tr>" >> out/report
 
 for prod in $PRODUCTS
 do
