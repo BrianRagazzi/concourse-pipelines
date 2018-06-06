@@ -11,7 +11,7 @@ om-linux \
 pivnet-cli login --api-token="$PIVNET_API_TOKEN"
 PRODUCTS=$(cat ./proddata.out | jq -r '.[]|.type')
 echo "<!DOCTYPE html>" > out/report
-echo "<html><head><meta charset="""utf-8"""/></head><body><table><tr><th>Prod</th><th>installed version</th><th>latest version</th></tr>" >> out/report
+echo "<html><head><meta charset="""utf-8"""/></head><body><table><tr><th>Product</th><th>Installed Version</th><th>Latest Version</th></tr>" >> out/report
 
 for prod in $PRODUCTS
 do
@@ -23,7 +23,7 @@ do
 done
 
 echo "</table></body></html>" >> out/report
-echo "Tile Version report for $OPS_MGR_HOST" >> out/subject
+echo "Tile Version Report for $OPS_MGR_HOST" >> out/subject
 
 cat > out/headers <<'EOF'
 MIME-version: 1.0
