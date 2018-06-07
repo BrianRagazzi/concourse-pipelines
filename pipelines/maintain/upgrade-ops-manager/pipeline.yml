@@ -78,6 +78,9 @@ jobs:
     - get: pipelines-repo
       trigger: true
       passed: [regulator]
+    - get: pivnet-opsman-product
+      params:
+        globs: ["*.ova"]
 
   - task: wait-opsman-clear
     file: pipelines-repo/tasks/wait-opsman-clear/task.yml
@@ -133,6 +136,7 @@ jobs:
       trigger: true
       passed: [take-opsmgr-offline]
     - get: pivnet-opsman-product
+      passed: [export-settings-from-current-opsmgr]
       params:
         globs: ["*.ova"]
   - task: deploy-opsman-vm
