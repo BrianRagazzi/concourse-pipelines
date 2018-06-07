@@ -12,7 +12,7 @@ for opsman in ${possible_opsmans}; do
   datever=$(date +"%y%m%d%H%M%S")
   newname=$currname-backup-$datever
   if [[ ${network} == ${GOVC_NETWORK} || ${network} == "" ]]; then
-    echo "Powering off and removing ${opsman}..."
+    echo "Powering off and renaming ${opsman}..."
     set +e
     govc vm.power -vm.ipath=${opsman} -off
     set -e
