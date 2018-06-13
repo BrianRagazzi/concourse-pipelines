@@ -51,6 +51,7 @@ jobs:
   plan:
   - get: pipelines-repo
     passed: [regulator]
+    trigger: true
   - get: pivnet-cli
     params:
       globs:
