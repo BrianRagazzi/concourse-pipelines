@@ -19,6 +19,7 @@ do
   installedver=$(cat ./proddata.out | jq -r --arg prod_id "$prod" '.[] | select(.type == $prod_id ) | .product_version')
   latest=$(pivnet-cli --format=json rs --product-slug $prod | jq -r '.[0]|.version')
   #echo "$prod - $installedver vs $latest " >> out/report
+  echo "Product: $prod current verion: $installedver Latest Available: $latest"
   echo "<tr><td>$prod</td><td>$installedver</td><td>$latest</td></tr>" >> out/report
 done
 
