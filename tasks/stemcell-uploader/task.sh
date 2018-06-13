@@ -40,7 +40,7 @@ fi
 STEMCELL_NAME=bosh-stemcell-$SC_VERSION-$IAAS_TYPE-esxi-ubuntu-trusty-go_agent.tgz
 DIAGNOSTIC_REPORT=$($CMD -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p /api/v0/diagnostic_report)
 
-if [ -z $SC_VERSION ] || [ $SC_VERION = "null" ]; then
+if [ -z $SC_VERSION ] || [ $SC_VERSION = "null" ]; then
   echo "No Stemcell required?"
 else
   STEMCELL_EXISTS=$(echo $DIAGNOSTIC_REPORT | jq -r --arg STEMCELL_NAME $STEMCELL_NAME '.stemcells | contains([$STEMCELL_NAME])')
