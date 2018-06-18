@@ -41,17 +41,12 @@ resources:
       source: {interval: 24h}
 
 jobs:
-- name: regulator
-  plan:
-  - get: pipelines-repo
-  - get: schedule
-    trigger: true
 
 - name: send-email
   plan:
-  - get: pipelines-repo
-    passed: [regulator]
+  - get: schedule
     trigger: true
+  - get: pipelines-repo
   - get: pivnet-cli
     params:
       globs:
