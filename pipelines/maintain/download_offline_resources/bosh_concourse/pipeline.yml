@@ -63,10 +63,8 @@ resources:
 - name: pcfnorm-rootfs
   type: docker-image
   source:
-    password: {{dockerhub_password}}
     repository: pcfnorm/rootfs
     tag: latest
-    username: {{dockerhub_username}}
 
 - name: stemcell-bosh
   type: bosh-io-stemcell
