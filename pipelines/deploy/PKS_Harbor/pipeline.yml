@@ -373,6 +373,12 @@ jobs:
       NSX_PASSWORD: ((nsx_password))
       NSXT_T0_ROUTERID: ((nsxt_t0_routerid))
       NSXT_IP_BLOCK_ID: ((nsxt_ip_block_id))
+      NSXT_NODES_IP_BLOCK_ID: ((nsxt_nodes_ip_block_id))
+      NSXT_CLOUD_CONFIG_DNS: ((nsxt_cloud_config_dns))
+      NSXT_VCENTER_CLUSTER: ((nsxt_vcenter_cluster))
+      NSXT_SUPERUSER_CERTIFICATE: ((nsxt_superuser_certificate))
+      NSXT_SUPERUSER_PRIVATE_KEY: ((nsxt_superuser_private_key))
+      TELEMETRY_SELECTOR: "disabled"
       NSXT_FLOATING_IP_POOL_ID: ((nsxt_floating_ip_pool_id))
       SYSLOG_ADDRESS: ((syslog_address))
       SYSLOG_PORT: ((syslog_port))
