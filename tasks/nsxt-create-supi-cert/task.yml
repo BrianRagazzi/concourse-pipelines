@@ -1,0 +1,26 @@
+---
+
+platform: linux
+
+image_resource:
+  type: docker-image
+  source: {repository: pcfnorm/rootfs}
+
+params:
+  NSX_API_MANAGERS:
+  NSX_API_USER:
+  NSX_API_PASSWORD:
+  PI_NAME: "pks-nsx-t-superuser"
+  NSX_SUPERUSER_CERT_FILE: "pks-nsx-t-superuser.crt"
+  NSX_SUPERUSER_KEY_FILE: "pks-nsx-t-superuser.key"
+  DAYS_VALID: 3650
+
+
+inputs:
+  - name: pipelines-repo
+
+outputs:
+  - name: cert-files
+
+run:
+  path: pipelines-repo/tasks/nsxt-create-supi-cert/task.sh
