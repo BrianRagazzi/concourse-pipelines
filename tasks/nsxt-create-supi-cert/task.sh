@@ -68,7 +68,7 @@ VERIFY_DISPLAYNAME=$(curl -k -X GET \
   )
 
 if [$VERIFY_DISPLAYNAME == "pks-nsx-t-superuser"] then
-  echo "Successfully created Super User Princical Identity"
+  echo "Successfully created Super User Principal Identity"
 fi
 
 cp $NSX_SUPERUSER_CERT_FILE ./cert-files/
