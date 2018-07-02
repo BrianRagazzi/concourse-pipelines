@@ -198,12 +198,6 @@ pks_properties=$(
     ".properties.network_selector.nsx.nsx-t-host": {
       "value":  $nsx_address
     },
-    ".properties.network_selector.nsx.credentials": {
-      "value": {
-        "identity": $nsx_username,
-        "password": $nsx_password
-      }
-    },
     ".properties.network_selector.nsx.nsx-t-ca-cert": {
       "value": ""
     },
@@ -237,9 +231,6 @@ pks_properties=$(
     ".properties.network_selector.nsx.floating-ip-pool-ids": {
       "value": $nsxt_floating_ip_pool_id
     },
-    ".properties.uaa_url": {
-      "value": $uaa_url
-    },
     ".properties.uaa_pks_cli_access_token_lifetime": {
       "value": 86400
     },
@@ -271,7 +262,7 @@ pks_properties=$(
      }
   else
      {
-       ".properties.cloud_provider.vsphere.vcenter_creds": {
+       ".properties.cloud_provider.vsphere.vcenter_master_creds": {
          "value": {
            "identity": $vcenter_usr,
            "password": $vcenter_pwd
