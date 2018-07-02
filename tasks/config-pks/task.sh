@@ -213,9 +213,6 @@ pks_properties=$(
     ".properties.network_selector.nsx.nsx-t-ca-cert": {
       "value": ""
     },
-    ".properties.network_selector.nsx.vcenter_cluster": {
-      "value": $az_1_name
-    },
     ".properties.network_selector.nsx.nsx-t-insecure": {
       "value": true
     },
@@ -235,11 +232,13 @@ pks_properties=$(
       "value": $nsxt_vcenter_cluster
     },
     ".properties.network_selector.nsx.nsx-t-superuser-certificate": {
-      "cert.pem": $nsxt_superuser_certificate,
-      "private_key_pem": $nsxt_superuser_private_key
+      "value": {
+        "cert.pem": $nsxt_superuser_certificate,
+        "private_key_pem": $nsxt_superuser_private_key
+      }
     },
     ".properties.telemetry_selector": {
-      "value": "disabled"
+      "value": $telemetry_selector
     },
     ".properties.network_selector.nsx.floating-ip-pool-ids": {
       "value": $nsxt_floating_ip_pool_id
