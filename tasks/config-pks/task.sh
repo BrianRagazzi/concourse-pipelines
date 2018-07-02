@@ -83,7 +83,13 @@ pks_properties=$(
     --arg az_1_name "$AZ_1_NAME" \
     --arg nsxt_t0_routerid "$NSXT_T0_ROUTERID" \
     --arg nxst_ip_block_id "$NSXT_IP_BLOCK_ID" \
+    --arg nsxt_nodes_ip_block_id "$NSXT_NODES_IP_BLOCK_ID"
     --arg nsxt_floating_ip_pool_id "$NSXT_FLOATING_IP_POOL_ID" \
+    --arg nsxt_cloud_config_dns "$NSXT_CLOUD_CONFIG_DNS" \
+    --arg nsxt_vcenter_cluster "$NSXT_VCENTER_CLUSTER" \
+    --arg nsxt_superuser_certificate "$NSXT_SUPERUSER_CERTIFICATE" \
+    --arg nsxt_superuser_private_key "$NSXT_SUPERUSER_PRIVATE_KEY" \
+    --arg nsxt_telemetry_selector "$TELEMETRY_SELECTOR" \
     --arg syslog_enabled ${SYSLOG_ENABLED:-"false"} \
     --arg syslog_address "$SYSLOG_ADDRESS" \
     --arg syslog_tls_enabled "$SYSLOG_TLS_ENABLED" \
@@ -218,6 +224,22 @@ pks_properties=$(
     },
     ".properties.network_selector.nsx.ip-block-id": {
       "value": $nxst_ip_block_id
+    },
+    ".properties.network_selector.nsx.nodes-ip-block-id": {
+      "value": $nxst_nodes_ip_block_id
+    },
+    ".properties.network_selector.nsx.cloud-config-dns": {
+      "value": $nsxt_cloud_config_dns
+    },
+    ".properties.network_selector.nsx.vcenter_cluster": {
+      "value": $nsxt_vcenter_cluster
+    },
+    ".properties.network_selector.nsx.nsx-t-superuser-certificate": {
+      "cert.pem": $nsxt_superuser_certificate,
+      "private_key_pem": $nsxt_superuser_private_key
+    },
+    ".properties.telemetry_selector": {
+      "value": "disabled"
     },
     ".properties.network_selector.nsx.floating-ip-pool-ids": {
       "value": $nsxt_floating_ip_pool_id
