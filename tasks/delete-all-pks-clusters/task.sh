@@ -6,6 +6,8 @@ echo "Get NSX-CLI script"
 wget https://storage.googleapis.com/pks-releases/nsx-helper-pkg.tar.gz --no-check-certificate
 tar -xvzf nsx-helper-pkg.tar.gz
 
+pks --version
+
 echo "Login to PKS API [$UAA_URL]"
 #pks login -a "$UAA_URL" -u "$PKS_CLI_USERNAME" -p "$PKS_CLI_PASSWORD" --skip-ssl-verification # TBD --ca-cert CERT-PATH
 pks login -a "$UAA_URL" -u "$PKS_CLI_USERNAME" -p "$PKS_CLI_PASSWORD" --skip-ssl-validation # TBD --ca-cert CERT-PATH
