@@ -89,7 +89,7 @@ pks_properties=$(
     --arg nsxt_vcenter_cluster "$NSXT_VCENTER_CLUSTER" \
     --arg nsxt_superuser_certificate "$NSXT_SUPERUSER_CERTIFICATE" \
     --arg nsxt_superuser_private_key "$NSXT_SUPERUSER_PRIVATE_KEY" \
-    --arg nsxt_telemetry_selector "$TELEMETRY_SELECTOR" \
+    --arg telemetry_selector "$TELEMETRY_SELECTOR" \
     --arg syslog_enabled ${SYSLOG_ENABLED:-"false"} \
     --arg syslog_address "$SYSLOG_ADDRESS" \
     --arg syslog_tls_enabled "$SYSLOG_TLS_ENABLED" \
@@ -223,7 +223,7 @@ pks_properties=$(
       "value": $nxst_ip_block_id
     },
     ".properties.network_selector.nsx.nodes-ip-block-id": {
-      "value": $nxst_nodes_ip_block_id
+      "value": $nsxt_nodes_ip_block_id
     },
     ".properties.network_selector.nsx.cloud-config-dns": {
       "value": $nsxt_cloud_config_dns
