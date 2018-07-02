@@ -32,10 +32,11 @@ END
 
 #Register the Certificate - POST Request
 CERTIFICATE_ID=$(curl -k -X POST \
-    "https://${NSX_MANAGER}/api/v1/trust-management/certificates?action=import" \
-    -u "$NSX_USER:$NSX_PASSWORD" \
+    "https://${NSX_API_MANAGERS}/api/v1/trust-management/certificates?action=import" \
+    -u "$NSX_API_USER:$NSX_API_PASSWORD" \
     -H 'content-type: application/json' \
-    -d "$cert_request"
+    -d "$cert_request" \
+    | jq -r '.results[]|.id'
 )
 
 
@@ -53,17 +54,22 @@ END
 
 #Register Pricipal Identity - POST Request
 curl -k -X POST \
-  "https://${NSX_MANAGER}/api/v1/trust-management/principal-identities" \
-  -u "$NSX_USER:$NSX_PASSWORD" \
+  "https://${NSX_API_MANAGERS}/api/v1/trust-management/principal-identities" \
+  -u "$NSX_API_USER:$NSX_API_PASSWORD" \
   -H 'content-type: application/json' \
   -d "$pi_request"
 
 # Verify Certificate and Key
-curl -k -X GET \
-  "https://${NSX_MANAGER}/api/v1/trust-management/principal-identities" \
+VERIFY_DISPLAYNAME=$(curl -k -X GET \
+  "https://${NSX_API_MANAGER}/api/v1/trust-management/principal-identities" \
   --cert $(pwd)/"$NSX_SUPERUSER_CERT_FILE" \
-  --key $(pwd)/"$NSX_SUPERUSER_KEY_FILE"
+  --key $(pwd)/"$NSX_SUPERUSER_KEY_FILE" \
+  | jq -r '.display_name'
+  )
 
+if [$VERIFY_DISPLAYNAME == "pks-nsx-t-superuser"] then
+  echo "Successfully created Super User Princical Identity"
+fi
 
 cp $NSX_SUPERUSER_CERT_FILE ./cert-files/
 cp $NSX_SUPERUSER_KEY_FILE ./cert-files/

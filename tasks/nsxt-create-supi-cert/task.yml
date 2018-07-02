@@ -7,30 +7,20 @@ image_resource:
   source: {repository: pcfnorm/rootfs}
 
 params:
-  OPS_MGR_HOST:
-  OPS_MGR_USR:
-  OPS_MGR_PWD:
   NSX_API_MANAGERS:
   NSX_API_USER:
   NSX_API_PASSWORD:
-  NSX_API_CA_CERT:
-  NSX_SUBNET_PREFIX:
-  NSX_EXTERNAL_SUBNET_PREFIX:
-  NSX_LOG_DROPPED_TRAFFIC:
-  NSX_ENABLE_SNAT:
-  NSX_PRODUCT_TILE_NAME:
-  NSX_FOUNDATION_NAME:
-  NSX_NCP_DEBUG_LOG:
-  NSX_AUTH_TYPE:
-  NSX_CLIENT_CERT_CERT:
-  NSX_CLIENT_CERT_PRIVATE_KEY:
-  OVERLAY_TZ:
-  TIER0_ROUTER:
-  CONTAINER_IP_BLOCKS_NAME:
-  EXTERNAL_IP_POOLS_NAME:
+  PI_NAME: "pks-nsx-t-superuser"
+  NSX_SUPERUSER_CERT_FILE: "pks-nsx-t-superuser.crt"
+  NSX_SUPERUSER_KEY_FILE: "pks-nsx-t-superuser.key"
+  DAYS_VALID: 3650
+
 
 inputs:
   - name: pipelines-repo
 
+outputs:
+  - name: cert-files
+
 run:
-  path: pipelines-repo/tasks/config-nsx-t/task.sh
+  path: pipelines-repo/tasks/nsxt-create-supi-cert/task.sh
