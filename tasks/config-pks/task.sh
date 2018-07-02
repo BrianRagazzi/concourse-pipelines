@@ -128,11 +128,11 @@ pks_properties=$(
     ".properties.plan1_selector.active.description": {
       "value": "Default small plan for K8s cluster",
     },
-    ".properties.plan1_selector.active.az_placement": {
+    ".properties.plan1_selector.active.master_az_placement.value": {
       "value": $az_1_name
     },
-    ".properties.plan1_selector.active.authorization_mode": {
-      "value": "rbac"
+    ".properties.plan1_selector.active.worker_az_placement.value": {
+      "value": $az_1_name
     },
     ".properties.plan1_selector.active.master_vm_type": {
       "value": "medium"
@@ -142,9 +142,6 @@ pks_properties=$(
     },
     ".properties.plan1_selector.active.worker_vm_type": {
       "value": "medium"
-    },
-    ".properties.plan1_selector.active.persistent_disk_type": {
-      "value": "10240"
     },
     ".properties.plan1_selector.active.worker_instances": {
       "value": 2
@@ -167,11 +164,11 @@ pks_properties=$(
     ".properties.plan2_selector.active.description": {
       "value": "Medium workloads",
     },
-    ".properties.plan2_selector.active.az_placement": {
+    ".properties.plan2_selector.active.master_az_placement.value": {
       "value": $az_1_name
     },
-    ".properties.plan2_selector.active.authorization_mode": {
-      "value": "rbac",
+    ".properties.plan2_selector.active.worker_az_placement.value": {
+      "value": $az_1_name
     },
     ".properties.plan2_selector.active.master_vm_type": {
       "value": "large"
@@ -181,9 +178,6 @@ pks_properties=$(
     },
     ".properties.plan2_selector.active.worker_vm_type": {
       "value": "medium"
-    },
-    ".properties.plan2_selector.active.persistent_disk_type": {
-      "value": "10240"
     },
     ".properties.plan2_selector.active.worker_instances": {
       "value": 3
