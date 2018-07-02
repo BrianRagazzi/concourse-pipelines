@@ -83,7 +83,7 @@ pks_properties=$(
     --arg az_1_name "$AZ_1_NAME" \
     --arg nsxt_t0_routerid "$NSXT_T0_ROUTERID" \
     --arg nxst_ip_block_id "$NSXT_IP_BLOCK_ID" \
-    --arg nsxt_nodes_ip_block_id "$NSXT_NODES_IP_BLOCK_ID"
+    --arg nsxt_nodes_ip_block_id "$NSXT_NODES_IP_BLOCK_ID" \
     --arg nsxt_floating_ip_pool_id "$NSXT_FLOATING_IP_POOL_ID" \
     --arg nsxt_cloud_config_dns "$NSXT_CLOUD_CONFIG_DNS" \
     --arg nsxt_vcenter_cluster "$NSXT_VCENTER_CLUSTER" \
