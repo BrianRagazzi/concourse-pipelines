@@ -129,10 +129,10 @@ pks_properties=$(
       "value": "Default small plan for K8s cluster",
     },
     ".properties.plan1_selector.active.master_az_placement.value": {
-      "value": $az_1_name
+      "value": [$az_1_name]
     },
     ".properties.plan1_selector.active.worker_az_placement.value": {
-      "value": $az_1_name
+      "value": [$az_1_name]
     },
     ".properties.plan1_selector.active.master_vm_type": {
       "value": "medium"
@@ -165,10 +165,10 @@ pks_properties=$(
       "value": "Medium workloads",
     },
     ".properties.plan2_selector.active.master_az_placement.value": {
-      "value": $az_1_name
+      "value": [$az_1_name]
     },
     ".properties.plan2_selector.active.worker_az_placement.value": {
-      "value": $az_1_name
+      "value": [$az_1_name]
     },
     ".properties.plan2_selector.active.master_vm_type": {
       "value": "large"
