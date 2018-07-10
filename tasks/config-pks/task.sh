@@ -128,10 +128,10 @@ pks_properties=$(
     ".properties.plan1_selector.active.description": {
       "value": "Default small plan for K8s cluster",
     },
-    ".properties.plan1_selector.active.master_az_placement.value": {
+    ".properties.plan1_selector.active.master_az_placement": {
       "value": [$az_1_name]
     },
-    ".properties.plan1_selector.active.worker_az_placement.value": {
+    ".properties.plan1_selector.active.worker_az_placement": {
       "value": [$az_1_name]
     },
     ".properties.plan1_selector.active.master_vm_type": {
@@ -164,10 +164,10 @@ pks_properties=$(
     ".properties.plan2_selector.active.description": {
       "value": "Medium workloads",
     },
-    ".properties.plan2_selector.active.master_az_placement.value": {
+    ".properties.plan2_selector.active.master_az_placement": {
       "value": [$az_1_name]
     },
-    ".properties.plan2_selector.active.worker_az_placement.value": {
+    ".properties.plan2_selector.active.worker_az_placement": {
       "value": [$az_1_name]
     },
     ".properties.plan2_selector.active.master_vm_type": {
