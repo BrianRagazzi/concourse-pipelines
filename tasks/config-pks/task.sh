@@ -203,6 +203,7 @@ pks_properties=$(
         "identity": $nsx_username,
         "password": $nsx_password
        }
+    },
     ".properties.network_selector.nsx.nsx-t-ca-cert": {
       "value": ""
     },
@@ -227,7 +228,7 @@ pks_properties=$(
     ".properties.network_selector.nsx.network_automation": {
       "value": true
     },
-    ".properties.network_selector.nsx.nat_mode:" {
+    ".properties.network_selector.nsx.nat_mode": {
       "value": true
     },
     ".properties.telemetry_selector": {
