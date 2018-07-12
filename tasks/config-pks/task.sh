@@ -104,6 +104,9 @@ pks_properties=$(
     ".properties.cloud_provider": {
       "value": "vSphere"
     },
+    ".properties.pks_api_hostname": {
+      "value": $uaa_url
+    },
     ".properties.cloud_provider.vsphere.vcenter_ip": {
       "value": $vcenter_host
     },
