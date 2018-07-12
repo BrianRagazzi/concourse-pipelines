@@ -198,11 +198,11 @@ pks_properties=$(
     ".properties.network_selector.nsx.nsx-t-host": {
       "value":  $nsx_address
     },
-    ".properties.network_selector.nsx.credentials": {
+    ".properties.network_selector.nsx.nsx-t-superuser-certificate": {
       "value": {
-        "identity": $nsx_username,
-        "password": $nsx_password
-       }
+        "cert_pem": $nsxt_superuser_certificate,
+        "private_key_pem": $nsxt_superuser_private_key
+      }
     },
     ".properties.network_selector.nsx.nsx-t-ca-cert": {
       "value": ""
