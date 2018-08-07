@@ -584,7 +584,7 @@ jobs:
           mv $boshclipath ./bosh
 
           credspath=`find ./bosh-config-creds/ -name creds-*.yml`
-          stemcellpath=`find ./stemcell/ -name bosh-stemcell-*.tgz`
+          stemcellpath=`find ./stemcell-xenial/ -name bosh-stemcell-*.tgz`
 
           ./bosh alias-env bosh-1 -e $INTERNAL_IP --ca-cert <(./bosh int $credspath --path /director_ssl/ca)
           export BOSH_CLIENT=admin
@@ -605,7 +605,7 @@ jobs:
         path: ""
     params:
       INTERNAL_IP: {{internal_ip}}
-      
+
 - name: concourse-release
   plan:
   - aggregate:
