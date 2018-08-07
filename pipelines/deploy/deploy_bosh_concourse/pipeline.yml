@@ -756,7 +756,7 @@ jobs:
           #!/bin/bash
 
           set -e
-          #uo pipefail
+
           boshclipath=`find ./bosh-cli/ -name bosh-cli-*`
           echo $boshclipath
           chmod +x $boshclipath

@@ -72,6 +72,12 @@ resources:
     name: bosh-vsphere-esxi-ubuntu-trusty-go_agent
     version_family: {{stemcell_version_family}}
 
+- name: stemcell-xenial-bosh
+  type: bosh-io-stemcell
+  source:
+    name: bosh-vsphere-esxi-ubuntu-xenial-go_agent
+    version_family: {{xenial_stemcell_version_family}}
+
 - name: pcfnorm-rootfs-s3
   type: s3
   source:
@@ -93,6 +99,18 @@ resources:
     disable_ssl: false
     regexp: BOSH/stemcells/bosh-stemcell-(.*)-vsphere-esxi-ubuntu-trusty-go_agent.tgz
     skip_ssl_verification: true
+
+- name: stemcell-xenial-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    disable_ssl: false
+    regexp: BOSH/stemcells/bosh-stemcell-(.*)-vsphere-esxi-ubuntu-xenial-go_agent.tgz
+    skip_ssl_verification: true
+
 
 - name: concourse-manifests
   type: git
@@ -142,7 +160,7 @@ jobs:
 
 
 
-- name: stemcell
+- name: stemcell-trusty
   plan:
   - get: stemcell-bosh
     trigger: true
@@ -152,6 +170,15 @@ jobs:
     params:
       file: stemcell-bosh/*.tgz
 
+- name: stemcell-xenial
+  plan:
+  - get: stemcell-xenial-bosh
+    trigger: true
+    params:
+      preserve_filename: true
+  - put: stemcell-xenial-s3
+    params:
+      file: stemcell-xenial-bosh/*.tgz
 
 - name: concourse
   plan:
