@@ -61,6 +61,16 @@ resources:
     regexp: BOSH/stemcells/bosh-stemcell-(.*)-vsphere-esxi-ubuntu-trusty-go_agent.tgz
     skip_ssl_verification: true
 
+- name: stemcell-xenial
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: BOSH/stemcells/bosh-stemcell-(.*)-vsphere-esxi-ubuntu-xenial-go_agent.tgz
+    skip_ssl_verification: true
+
 - name: bosh-releases-garden-runc
   type: s3
   source:
@@ -532,6 +542,70 @@ jobs:
     params:
       INTERNAL_IP: {{internal_ip}}
 
+- name: stemcell-xenial
+  plan:
+  - aggregate:
+    - get: bosh-config-creds
+    - get: stemcell-xenial
+      params: {globs: []}
+    - get: bosh-cli
+      params: {globs: []}
+      passed: [cloud-config]
+      trigger: true
+  - task: upload_stemcell
+    config:
+      platform: linux
+      image_resource:
+        type: s3
+        source:
+          access_key_id: {{s3_access_key_id}}
+          bucket: {{s3_bucket}}
+          endpoint: {{s3_endpoint}}
+          regexp: czero-cflinuxfs2/czero-cflinuxfs2-(.*).tgz
+          secret_access_key: {{s3_secret_access_key}}
+          skip_ssl_verification: true
+        params:
+          unpack: true
+      params:
+        INTERNAL_IP: ""
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+
+          set -eu
+          boshclipath=`find ./bosh-cli/ -name bosh-cli-*`
+          echo $boshclipath
+          chmod +x $boshclipath
+          #ln -s $boshclipath bosh
+          mv $boshclipath ./bosh
+
+          credspath=`find ./bosh-config-creds/ -name creds-*.yml`
+          stemcellpath=`find ./stemcell/ -name bosh-stemcell-*.tgz`
+
+          ./bosh alias-env bosh-1 -e $INTERNAL_IP --ca-cert <(./bosh int $credspath --path /director_ssl/ca)
+          export BOSH_CLIENT=admin
+          export BOSH_CLIENT_SECRET=`./bosh int $credspath --path /admin_password`
+          ./bosh -e bosh-1 env
+
+          ./bosh -e bosh-1 upload-stemcell $stemcellpath
+          EO_SH
+
+          chmod +x task.sh
+          ./task.sh
+      inputs:
+      - name: bosh-config-creds
+        path: ""
+      - name: bosh-cli
+        path: ""
+      - name: stemcell-xenial
+        path: ""
+    params:
+      INTERNAL_IP: {{internal_ip}}
+      
 - name: concourse-release
   plan:
   - aggregate:
@@ -546,7 +620,7 @@ jobs:
        params: {globs: []}
      - get: bosh-cli
        params: {globs: []}
-       passed: [stemcell]
+       passed: [stemcell,stemcell-xenial]
        trigger: true
   - task: upload_concourse_release
     config:
