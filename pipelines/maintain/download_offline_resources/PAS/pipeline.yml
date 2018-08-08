@@ -190,7 +190,7 @@ jobs:
   - get: elastic-runtime-pivnet
     params:
       globs: ["cf-*.pivotal"]
-  - put: pivotal-app-services-s3
+  - put: elastic-runtime-s3
     params:
       file: "elastic-runtime-pivnet/cf-*.pivotal"
 
