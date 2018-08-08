@@ -30,6 +30,16 @@ resources:
   source:
     repository: cloudfoundry/postgres-release
 
+- name: uaa-release
+  type: bosh-io-release
+  source:
+    repository: cloudfoundry/uaa-release
+
+- name: bpm-release
+  type: bosh-io-release
+  source:
+    repository: cloudfoundry-incubator/bpm-release
+
 - name: release-s3
   type: s3
   source:
@@ -245,6 +255,69 @@ jobs:
     params:
       file: renamed/bosh-*.tgz
 
+- name: uaa
+  plan:
+  - get: release
+    resource: uaa-release
+    trigger: true
+    params:
+      tarball: true
+  - task: rename_file
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: pcfnorm/rootfs
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          set -eu
+          version=$(cat ./release/version)
+          mv ./release/release.tgz ./renamed/uaa-release-${version}.tgz
+      inputs:
+      - name: release
+        path: ""
+        optional: false
+      outputs:
+      - name: renamed
+  - put: release-s3
+    params:
+      file: renamed/uaa-release-*.tgz
+
+- name: bpm
+  plan:
+  - get: release
+    resource: bpm-release
+    trigger: true
+    params:
+      tarball: true
+  - task: rename_file
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: pcfnorm/rootfs
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          set -eu
+          version=$(cat ./release/version)
+          mv ./release/release.tgz ./renamed/bpm-release-${version}.tgz
+      inputs:
+      - name: release
+        path: ""
+        optional: false
+      outputs:
+      - name: renamed
+  - put: release-s3
+    params:
+      file: renamed/bpm-release-*.tgz
 
 - name: vsphere-cpi
   plan:
