@@ -5,7 +5,7 @@ wget https://storage.googleapis.com/pks-releases/nsx-helper-pkg.tar.gz --no-chec
 tar -xvzf nsx-helper-pkg.tar.gz
 
 echo "Login to PKS API [$UAA_URL]"
-pks login -a "$UAA_URL" -u "$PKS_CLI_USERNAME" -p "$PKS_CLI_PASSWORD" --skip-ssl-verification # TBD --ca-cert CERT-PATH
+pks login -a "$UAA_URL" -u "$PKS_CLI_USERNAME" -p "$PKS_CLI_PASSWORD" --skip-ssl-validation # TBD --ca-cert CERT-PATH
 
 PKS_NAT_IP=$(./nsx-cli.sh ipam allocate | cut -d ' ' -f 3)
 NUM=0
@@ -16,7 +16,7 @@ NUM=$((NUM + 1))
 PKS_CLUSTER_NAME=testcluster$NUM
 
 echo "Creating PKS cluster [$PKS_CLUSTER_NAME], master node NAT IP [$PKS_NAT_IP], plan [$PKS_SERVICE_PLAN_NAME], number of workers [$PKS_CLUSTER_NUMBER_OF_WORKERS]"
-pks create-cluster "$PKS_CLUSTER_NAME" --external-hostname "$PKS_NAT_IP" --plan "$PKS_SERVICE_PLAN_NAME" --num-nodes "$PKS_CLUSTER_NUMBER_OF_WORKERS"
+pks create-cluster "$PKS_CLUSTER_NAME" --external-hostname "$PKS_NAT_IP" --plan "$PKS_SERVICE_PLAN_NAME" --num-nodes "$PKS_CLUSTER_NUMBER_OF_WORKERS" --non-interactive
 
 echo "Monitoring the creation status for PKS cluster [$PKS_CLUSTER_NAME]:"
 in_progress_state="in progress"
@@ -52,7 +52,7 @@ else
     exit 1
   else
     echo "Tearing down failed cluster"
-    pks delete-cluster "$PKS_CLUSTER_NAME"
+    pks delete-cluster "$PKS_CLUSTER_NAME" --non-interactive
     cluster_state="$in_progress_state"
     while [[ "$cluster_state" == "$in_progress_state" ]]; do
       cluster_state=$(pks cluster "$PKS_CLUSTER_NAME" --json | jq -rc '.last_action_state')
