@@ -281,7 +281,7 @@ jobs:
       trigger: true
 
   - task: configure-ert
-    file: pipelines-repo/tasks/config-ert-2.1/task.yml
+    file: pipelines-repo/tasks/config-ert-2.2/task.yml
     params:
       IAAS: vsphere
       OPS_MGR_HOST: {{ops_mgr_host}}
