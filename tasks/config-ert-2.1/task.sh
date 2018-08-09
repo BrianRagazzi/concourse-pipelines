@@ -733,7 +733,7 @@ ERT_ERRANDS=$(cat <<-EOF
   {"name":"push-apps-manager","post_deploy":"when-changed"},
   {"name":"deploy-notifications","post_deploy":"when-changed"},
   {"name":"deploy-notifications-ui","post_deploy":"when-changed"},
-  {"name":"push-pivotal-account","post_deploy":"when-changed"},
+  {"name":"delete-pivotal-account","post_deploy":"when-changed"},
   {"name":"deploy-autoscaler","post_deploy":"when-changed"},
   {"name":"test-autoscaling","post_deploy":"when-changed"},
   {"name":"nfsbrokerpush","post_deploy":"when-changed"}
