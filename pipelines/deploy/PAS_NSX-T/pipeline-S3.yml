@@ -541,6 +541,7 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
+      trigger: false
   - task: wipe
     file: pipelines-repo/tasks/wipe-env/task.yml
     params:
