@@ -46,7 +46,7 @@ properties_config=$($JQ_CMD -n \
     "value": $healthwatch_bosh_taskcheck_username
   },
   ".properties.boshtasks.enable.bosh_taskcheck_password": {
-    "value": $healthwatch_bosh_taskcheck_pasword
+    "value": $healthwatch_bosh_taskcheck_password
   }
 }
 +
