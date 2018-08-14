@@ -214,7 +214,7 @@ jobs:
       BOSH_VM_FOLDER:  ((bosh_vm_folder))
       BOSH_TEMPLATE_FOLDER: ((bosh_template_folder))
       BOSH_DISK_PATH: ((bosh_disk_path))
-      NSX_NETWORKING_ENABLED: false
+      NSX_NETWORKING_ENABLED: ((nsx_networking_enabled))
       NSX_MODE: ((nsx_mode))
       NSX_ADDRESS: ((nsx_address))
       NSX_USERNAME: ((nsx_username))
@@ -561,7 +561,7 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      trigger: false
+      trigger: true
       passed: [add-pks-user]
 
   - task: create-pks-cluster
@@ -580,7 +580,7 @@ jobs:
 - name: copy-yelb-images-to-harbor
   plan:
   - get: pipelines-repo
-    trigger: false
+    trigger: true
     passed: [create-k8s-testcluster]
   - get: yelb-ui
     params:
@@ -619,7 +619,7 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      trigger: false
+      trigger: true
       passed: [copy-yelb-images-to-harbor]
 
   - task: deploy-pks-test-app
@@ -636,6 +636,7 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
+      trigger: false
   - task: delete-all
     file: pipelines-repo/tasks/delete-all-pks-clusters/task.yml
     params:
@@ -650,6 +651,7 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
+      trigger: false
   - task: wipe
     file: pipelines-repo/tasks/wipe-env/task.yml
     params:
