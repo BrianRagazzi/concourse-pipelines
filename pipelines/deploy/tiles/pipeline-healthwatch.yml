@@ -91,7 +91,6 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      passed: [stage-healthwatch]
     - get: pivnet-product
       resource: pivnet-healthwatch
       params:
@@ -136,7 +135,6 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      passed: [config-healthwatch]
     - get: pivnet-product
       resource: pivnet-healthwatch
       params:
