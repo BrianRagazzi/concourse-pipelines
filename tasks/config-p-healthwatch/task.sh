@@ -11,6 +11,18 @@ OM_CMD=om-linux
 #chmod +x ./jq/jq-linux64
 JQ_CMD=jq
 
+BOSH_TASKCHECK_USER=login
+BOSH_TASKCHECK_PASS=$(
+  om-linux \
+  --target https://$OPS_MGR_HOST \
+  --username "$OPS_MGR_USR" \
+  --password "$OPS_MGR_PWD" \
+    --skip-ssl-validation \
+    curl --silent --path "/api/v0/deployed/director/credentials/uaa_login_client_credentials" | \
+    jq -r '.[] | .value.password'
+)
+
+
 properties_config=$($JQ_CMD -n \
   --arg healthwatch_forwarder_boshhealth_instance_count ${HEALTHWATCH_FORWARDER_BOSHHEALTH_INSTANCE_COUNT:-1} \
   --arg healthwatch_forwarder_boshtasks_instance_count ${HEALTHWATCH_FORWARDER_BOSHTASKS_INSTANCE_COUNT:-2} \
@@ -24,9 +36,17 @@ properties_config=$($JQ_CMD -n \
   --arg healthwatch_mysql_skip_name_resolve ${HEALTHWATCH_MYSQL_SKIP_NAME_RESOLVE:-true} \
   --arg healthwatch_opsman ${HEALTHWATCH_OPSMAN:-"enable"} \
   --arg healthwatch_opsman_enable_url ${HEALTHWATCH_OPSMAN_ENABLE_URL:-null} \
+  --arg healthwatch_bosh_taskcheck_username ${BOSH_TASKCHECK_USER} \
+  --arg healthwatch_bosh_taskcheck_password ${BOSH_TASKCHECK_PASS} \
 '{
   ".properties.opsman": {
     "value": $healthwatch_opsman
+  },
+  ".properties.boshtasks.enable.bosh_taskcheck_username": {
+    "value": $healthwatch_bosh_taskcheck_username
+  },
+  ".properties.boshtasks.enable.bosh_taskcheck_password": {
+    "value": $healthwatch_bosh_taskcheck_pasword
   }
 }
 +
