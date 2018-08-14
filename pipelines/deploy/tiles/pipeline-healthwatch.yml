@@ -1,0 +1,190 @@
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tag: latest-final
+
+resources:
+
+- name: pivnet-cli
+  type: github-release
+  source:
+    user: pivotal-cf
+    repository: pivnet-cli
+    access_token: ((github_token)) ## Optional: Removing this will cause you to hit the rate limit
+
+- name: pipelines-repo
+  type: git
+  source:
+    uri: ((github_repo))
+    branch: ((github_branch))
+    username: ((github_username))
+    password: ((github_token))
+
+- name: pivnet-healthwatch
+  type: pivnet
+  source:
+    api_token: ((pivnet_token))
+    product_slug: p-healthwatch
+    product_version: ((healthwatch_major_minor_version))
+
+
+jobs:
+- name: upload-healthwatch
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-healthwatch
+      params:
+        globs:
+        - "*.pivotal"
+      trigger: true
+    - get: pivnet-cli
+      params:
+        globs:
+        - "*linux-amd64*"
+
+  - task: upload-tile
+    file: pipelines-repo/tasks/upload-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+
+  - task: upload-stemcell
+    file: pipelines-repo/tasks/stemcell-uploader/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+      IAAS_TYPE: ((iaas_type))
+
+- name: stage-healthwatch
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [upload-healthwatch]
+    - get: pivnet-product
+      resource: pivnet-healthwatch
+      params:
+        globs:
+        - "*.pivotal"
+      passed: [upload-healthwatch]
+      trigger: true
+
+  - task: stage-tile
+    file: pipelines-repo/tasks/stage-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_IDENTIFIER: p-healthwatch
+
+- name: config-healthwatch
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [stage-healthwatch]
+    - get: pivnet-product
+      resource: pivnet-healthwatch
+      params:
+        globs: []
+      passed: [stage-healthwatch]
+      trigger: true
+
+  - task: config-tile
+    file: pipelines-repo/tasks/config-p-healthwatch/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      NETWORK_NAME: ((network_name))
+      SERVICE_NETWORK_NAME: ((service_network_name))
+      OTHER_AZS: ((other_azs))
+      SINGLETON_JOBS_AZ: ((singleton_jobs_az))
+      PRODUCT_NAME: p-healthwatch
+      HEALTHWATCH_FORWARDER_BOSHHEALTH_INSTANCE_COUNT: ((healthwatch_forwarder_boshhealth_instance_count))
+      HEALTHWATCH_FORWARDER_BOSHTASKS_INSTANCE_COUNT: ((healthwatch_forwarder_boshtasks_instance_count))
+      HEALTHWATCH_FORWARDER_CANARY_INSTANCE_COUNT: ((healthwatch_forwarder_canary_instance_count))
+      HEALTHWATCH_FORWARDER_CLI_INSTANCE_COUNT: ((healthwatch_forwarder_cli_instance_count))
+      HEALTHWATCH_FORWARDER_FOUNDATION_NAME: ((healthwatch_forwarder_foundation_name))
+      HEALTHWATCH_FORWARDER_HEALTH_CHECK_AZ: ((healthwatch_forwarder_health_check_az))
+      HEALTHWATCH_FORWARDER_HEALTH_CHECK_VM_TYPE: ((healthwatch_forwarder_health_check_vm_type))
+      HEALTHWATCH_FORWARDER_INGESTOR_INSTANCE_COUNT: ((healthwatch_forwarder_ingestor_instance_count))
+      HEALTHWATCH_FORWARDER_OPSMAN_INSTANCE_COUNT: ((healthwatch_forwarder_opsman_instance_count))
+      HEALTHWATCH_MYSQL_SKIP_NAME_RESOLVE: ((healthwatch_mysql_skip_name_resolve))
+      HEALTHWATCH_OPSMAN: ((healthwatch_opsman))
+      HEALTHWATCH_OPSMAN_ENABLE_URL: ((healthwatch_opsman_enable_url))
+      HEALTHWATCH_MYSQL_PERSISTENT_DISK_MB: ((healthwatch_mysql_persistent_disk_mb))
+      HEALTHWATCH_MYSQL_INSTANCES: ((healthwatch_mysql_instances))
+      HEALTHWATCH_MYSQL_INSTANCE_TYPE: ((healthwatch_mysql_instance_type))
+      HEALTHWATCH_REDIS_INSTANCES: ((healthwatch_redis_instances))
+      HEALTHWATCH_REDIS_INSTANCE_TYPE: ((healthwatch_redis_instance_type))
+      HEALTHWATCH_FORWARDER_PERSISTENT_DISK_MB: ((healthwatch_forwarder_persistent_disk_mb))
+      HEALTHWATCH_FORWARDER_INSTANCES: ((healthwatch_forwarder_instances))
+      HEALTHWATCH_FORWARDER_INSTANCE_TYPE: ((healthwatch_forwarder_instance_type))
+
+- name: disable-healthwatch-errands
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [config-healthwatch]
+    - get: pivnet-product
+      resource: pivnet-healthwatch
+      params:
+        globs: []
+      passed: [config-healthwatch]
+      trigger: true
+
+  - task: config-healthwatch-errands
+    file: pipelines-repo/tasks/config-errands/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_IDENTIFIER: p-healthwatch
+      ERRANDS_TO_DISABLE: ((healthwatch_errands_to_disable))
+      ERRANDS_TO_RUN_ON_CHANGE: ((healthwatch_errands_to_run_on_change))
+
+- name: apply-changes
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [disable-healthwatch-errands]
+      trigger: true
+
+  - task: apply-changes
+    file: pipelines-repo/tasks/apply-changes/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+
+- name: configure-users
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [apply-changes]
+      trigger: true
+
+  - task: add-healthwatch-user
+    file: pipelines-repo/tasks/add-uaa-user-to-scope/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PAS_ADMIN_USERNAME: ((hw_admin_username))
+      PAS_ADMIN_PASSWORD: ((hw_admin_password))
+      PAS_ADMIN_EMAIL: ((hw_admin_email))
+      SCOPENAME: "healthwatch.admin"
