@@ -7,7 +7,7 @@ github_username: CHANGEME # [R] Your github username
 iaas_type: vsphere
 debug: false
 
-opsman_major_minor_version: ^2\.1\..*$   # PCF Ops Manager minor version to track
+opsman_major_minor_version: ^2\.2\..*$   # PCF Ops Manager minor version to track
 pks_major_minor_version: ^1\.0\.3.*$   # NSX Container Plugin minor version to track
 harbor_major_minor_version: ^1\.4\..*$
 
