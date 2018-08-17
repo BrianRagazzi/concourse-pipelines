@@ -4,8 +4,9 @@ set -eu
 echo "Login to PKS API [$UAA_URL]"
 pks login -a "$UAA_URL" -u "$PKS_CLI_USERNAME" -p "$PKS_CLI_PASSWORD" --skip-ssl-verification # TBD --ca-cert CERT-PATH
 
-clustername=$(pks clusters --json | \
-  jq -r '.[-1] | select(.name | contains("testcluster")) | .name')
+#081718-BPR - Addes sort-by because the results are not always in a logical order.
+clustername=$(pks clusters --json |   jq -r -c 'sort_by(.name)[-1] | select(.name | contains("testcluster")) | .name')
+
 
 pks cluster ${clustername}
 pks get-credentials ${clustername}
