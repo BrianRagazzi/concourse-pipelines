@@ -59,7 +59,7 @@ function main() {
       jq -e -r '.installations[0] | select(.status=="running")' running-status.txt >/dev/null
       RUNNING_STATUS=$?
 
-      if [[ $pending_changes_count -z ]]; then
+      if [[ -z $pending_changes_count ]]; then
         echo "No pending changes"
         if [[${RUNNING_STATUS} -ne 0 ]]; then
             echo "No pending changes or running installs detected. Proceeding"
