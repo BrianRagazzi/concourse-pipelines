@@ -4,8 +4,18 @@ echo "Get NSX-CLI script"
 wget https://storage.googleapis.com/pks-releases/nsx-helper-pkg.tar.gz --no-check-certificate
 tar -xvzf nsx-helper-pkg.tar.gz
 
+#return pks version
+SKIPSSLPARAM=skip-ssl-validation
+#return pks version
+PKSVER=$(pks --version)
+PKSVER=${PKSVER:18:3}
+if [ "$PKSVER" == "1.0" ] ; then
+  echo "PKS v1.0 detected, using old syntax"
+  SKIPSSLPARAM=skip-ssl-verification
+fi
+
 echo "Login to PKS API [$UAA_URL]"
-pks login -a "$UAA_URL" -u "$PKS_CLI_USERNAME" -p "$PKS_CLI_PASSWORD" --skip-ssl-validation # TBD --ca-cert CERT-PATH
+pks login -a "$UAA_URL" -u "$PKS_CLI_USERNAME" -p "$PKS_CLI_PASSWORD" --$SKIPSSLPARAM # TBD --ca-cert CERT-PATH
 
 PKS_NAT_IP=$(./nsx-cli.sh ipam allocate | cut -d ' ' -f 3)
 NUM=0
