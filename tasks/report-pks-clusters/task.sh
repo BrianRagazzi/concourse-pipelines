@@ -4,10 +4,10 @@ set -e
 
 OUTFILE=out/report
 
-echo "<!DOCTYPE html>" > OUTFILE
+echo "<!DOCTYPE html>" > $OUTFILE
 echo "<html><head><meta charset="""utf-8"""/></head><body>" >> $OUTFILE
 
-echo "<b>Report for PKS on $UAA_URL</b><br>" >> OUTFILE
+echo "<b>Report for PKS on $UAA_URL</b><br>" >> $OUTFILE
 SKIPSSLPARAM=skip-ssl-validation
 #return pks version
 PKSVER=$(pks --version)
@@ -35,7 +35,7 @@ do
   NATIP=$(echo $CLUSTERINFO | jq -r '.parameters.kubernetes_master_host')
   CLUSTERSTATE=$(echo $CLUSTERINFO | jq -r '.last_action_state')
 
-  echo "<br><table><tr><th>Cluster Name</th><th>UUID</th><th>NAT IP</th><th>State</th></tr>"  >> $OUTFILE
+  echo "<table><tr><th>Cluster Name</th><th>UUID</th><th>NAT IP</th><th>State</th></tr>"  >> $OUTFILE
   echo "<tr><td>${name}</td><td>$UUID</td><td>$NATIP</td><td>$CLUSTERSTATE</td></tr>" >> $OUTFILE
   echo "<tr><td colspan=4 align=center><b>Services</b></td><tr>" >> $OUTFILE
   echo "<tr><td colspan=4>" >> $OUTFILE
