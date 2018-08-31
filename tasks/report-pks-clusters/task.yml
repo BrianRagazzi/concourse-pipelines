@@ -9,6 +9,9 @@ image_resource:
 inputs:
 - name: pipelines-repo
 
+outputs:
+  - name: out
+
 run:
   path: pipelines-repo/tasks/report-pks-clusters/task.sh
 
