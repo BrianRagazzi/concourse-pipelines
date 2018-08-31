@@ -48,7 +48,7 @@ do
   # kubectl get services --all-namespaces -o json | jq -r '.items[] | "\(.metadata.namespace)\t\(.metadata.name)\t\(.spec.type)\t\(.spec.clusterIP)\t\(.status.loadBalancer.ingress[0].ip)\t\(.spec.ports[0].port)\/\(.spec.ports[0].protocol)"'
   kubectl get services --all-namespaces -o json | jq -r '.items[] | "<tr><td>\(.metadata.namespace)<\/td><td>\(.metadata.name)<\/td><td>\(.spec.type)<\/td><td>\(.spec.clusterIP)<\/td><td>\(.status.loadBalancer.ingress[0].ip)<\/td><td>\(.spec.ports[0].port)\/\(.spec.ports[0].protocol)<\/td><\/tr>"' >> $OUTFILE
 
-  echo "</table></td></tr><hr>" >> $OUTFILE
+  echo "</table></td></tr><br><br>" >> $OUTFILE
 done
 echo "</body></html>" >> $OUTFILE
 
