@@ -48,7 +48,7 @@ pks_network=$(
       "name": $az_1_name
     },
     "other_availability_zones": [
-      {"name": $az_1_name},{"name": $az_2_name}
+      {"name": $az_1_name},{"name": $az_2_name},{"name": $az_3_name}
     ],
     "network": {
       "name": $main_network_name
@@ -59,7 +59,7 @@ pks_network=$(
   }
   '
 )
-echo $pks_network
+#echo $pks_network
 #.properties.cloud_provider.vsphere.vcenter_creds is replaced with
 # .properties.cloud_provider.vsphere.vcenter_master_creds in PKS 1.0.3
 pks_properties=$(
@@ -253,23 +253,6 @@ pks_properties=$(
       }
     }
   }
-  +
-  if $pks_major_version == "1" and $pks_mid_version == "0" and $pks_minor_version == "3" then
-    {
-      ".properties.cloud_provider.vsphere.vcenter_master_creds": {
-        "value": {
-          "identity": $vcenter_usr,
-          "password": $vcenter_pwd
-         }
-       },
-       ".properties.cloud_provider.vsphere.vcenter_worker_creds": {
-         "value": {
-           "identity": $vcenter_usr,
-           "password": $vcenter_pwd
-         }
-       }
-     }
-  else
      {
        ".properties.cloud_provider.vsphere.vcenter_master_creds": {
          "value": {
@@ -278,27 +261,26 @@ pks_properties=$(
          }
        }
      }
-  end
 
   +
   if $syslog_enabled == "true" then
     {
-      ".properties.syslog_migration_selector": {
+      ".properties.syslog_selector": {
         "value": "enabled"
       },
-      ".properties.syslog_migration_selector.enabled.address": {
+      ".properties.syslog_selector.enabled.address": {
         "value": $syslog_address
       },
-      ".properties.syslog_migration_selector.enabled.tls_enabled": {
+      ".properties.syslog_selector.enabled.tls_enabled": {
         "value": $syslog_tls_enabled
       },
-      ".properties.syslog_migration_selector.enabled.port": {
+      ".properties.syslog_selector.enabled.port": {
         "value": $syslog_port
       },
-      ".properties.syslog_migration_selector.enabled.ca_cert": {
+      ".properties.syslog_selector.enabled.ca_cert": {
         "value": $syslog_ssl_ca_certificate
       },
-      ".properties.syslog_migration_selector.enabled.transport_protocol": {
+      ".properties.syslog_selector.enabled.transport_protocol": {
         "value": $syslog_transport_protocol
       }
     }
