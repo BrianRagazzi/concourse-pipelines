@@ -352,6 +352,8 @@ jobs:
     params:
       MAIN_NETWORK_NAME: ((main_network_name))
       AZ_1_NAME: ((az_1_name))
+      AZ_2_NAME: ((az_2_name))
+      AZ_3_NAME: ((az_3_name))
       VCENTER_HOST: ((vcenter_host))
       VCENTER_USR: ((vcenter_usr))
       VCENTER_PWD: ((vcenter_pwd))
