@@ -60,7 +60,7 @@ else
     if [[ -z "$RESPONSE" ]]; then
       wget https://s3.amazonaws.com/bosh-core-stemcells/vsphere/$STEMCELL_NAME
     else
-      $PIVNET_CLI download-product-files -p stemcells -r $SC_VERSION -g "*$IAAS_TYPE*" --accept-eula
+      $PIVNET_CLI download-product-files -p $SC_SLUG -r $SC_VERSION -g "*$IAAS_TYPE*" --accept-eula
     fi
 
     SC_FILE_PATH=`find ./ -name *.tgz`
