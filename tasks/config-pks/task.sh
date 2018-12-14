@@ -38,8 +38,8 @@ SSL_PRIVATE_KEY=`echo $certificates | jq --raw-output '.key'`
 pks_network=$(
   jq -n \
     --arg az_1_name "$AZ_1_NAME" \
-    --arg infra_network_name "$INFRA_NETWORK_NAME" \
-    --arg services_network_name "$SERVICES_NETWORK_NAME" \
+    --arg main_network_name "$MAIN_NETWORK_NAME" \
+    --arg services_network_name "$MAIN_NETWORK_NAME" \
   '
   {
     "singleton_availability_zone": {
@@ -51,7 +51,7 @@ pks_network=$(
       }
     ],
     "network": {
-      "name": $infra_network_name
+      "name": $main_network_name
     },
     "service_network": {
       "name": $services_network_name

@@ -350,8 +350,7 @@ jobs:
   - task: configure-pks
     file: pipelines-repo/tasks/config-pks/task.yml
     params:
-      INFRA_NETWORK_NAME: ((infra_network_name))
-      SERVICES_NETWORK_NAME: ((main_network_name))
+      MAIN_NETWORK_NAME: ((main_network_name))
       AZ_1_NAME: ((az_1_name))
       VCENTER_HOST: ((vcenter_host))
       VCENTER_USR: ((vcenter_usr))
