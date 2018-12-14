@@ -101,6 +101,9 @@ pks_properties=$(
     --arg pks_minor_version "$PKS_MINOR_VERSION" \
   '
   {
+    ".properties.vm_extensions": {
+      "value": true
+    },
     ".properties.cloud_provider": {
       "value": "vSphere"
     },
@@ -168,10 +171,10 @@ pks_properties=$(
       "value": "Medium workloads",
     },
     ".properties.plan2_selector.active.master_az_placement": {
-      "value": [$az_1_name]
+      "value": [$az_1_name,$az_2_name,$az_3_name]
     },
     ".properties.plan2_selector.active.worker_az_placement": {
-      "value": [$az_1_name]
+      "value": [$az_1_name,$az_2_name,$az_3_name]
     },
     ".properties.plan2_selector.active.master_vm_type": {
       "value": "large"
