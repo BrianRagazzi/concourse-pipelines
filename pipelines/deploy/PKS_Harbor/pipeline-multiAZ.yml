@@ -148,14 +148,16 @@ jobs:
 - name: deploy-opsman
   plan:
   - aggregate:
-    - get: pipelines-repo
-    - get: pivnet-opsman-product
+    - get: pcf-pipelines
+      resource: pipelines-repo
+      params: {globs: []}
+    - get: pivnet-opsmgr
       resource: pcf-ops-manager
       params: {globs: ["*.ova"]}
       trigger: false
 
   - task: deploy
-    file: pipelines-repo/tasks/deploy-opsman-vm/task.yml
+    file: pcf-pipelines/tasks/deploy-opsman-vm/task.yml
     params:
       OPSMAN_TIMEOUT: ((om_timeout))
       GOVC_INSECURE: ((vcenter_insecure))
