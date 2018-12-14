@@ -66,6 +66,8 @@ pks_properties=$(
   jq -n \
     --arg ops "$OPS_MGR_HOST" \
     --arg az_1_name "$AZ_1_NAME" \
+    --arg az_2_name "$AZ_2_NAME" \
+    --arg az_3_name "$AZ_3_NAME" \
     --arg vcenter_host "$VCENTER_HOST" \
     --arg vcenter_usr "$VCENTER_USR" \
     --arg vcenter_pwd "$VCENTER_PWD" \
