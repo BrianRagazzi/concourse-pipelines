@@ -509,9 +509,9 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
+    - get: pivnet-product
       passed: [configure-pks]
       trigger: false
-    - get: pivnet-product
       resource: pivotal-container-service
       params: {globs: ["*.pivotal"]}
 
