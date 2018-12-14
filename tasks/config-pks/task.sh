@@ -48,8 +48,6 @@ pks_network=$(
     "other_availability_zones": [
       {
         "name": $az_1_name
-        "name": $az_2_name
-        "name": $az_3_name
       }
     ],
     "network": {
