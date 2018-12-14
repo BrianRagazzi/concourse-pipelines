@@ -46,9 +46,7 @@ pks_network=$(
       "name": $az_1_name
     },
     "other_availability_zones": [
-      {
-        "name": $az_1_name
-      }
+      {"name": $az_1_name},{"name": $az_2_name}
     ],
     "network": {
       "name": $main_network_name
@@ -59,7 +57,7 @@ pks_network=$(
   }
   '
 )
-echo pks_network
+echo $pks_network
 #.properties.cloud_provider.vsphere.vcenter_creds is replaced with
 # .properties.cloud_provider.vsphere.vcenter_master_creds in PKS 1.0.3
 pks_properties=$(
