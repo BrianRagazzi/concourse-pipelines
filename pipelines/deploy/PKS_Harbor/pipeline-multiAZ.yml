@@ -152,11 +152,12 @@ jobs:
     - get: pivnet-opsman-product
       resource: pcf-ops-manager
       params: {globs: ["*.ova"]}
-      trigger: true
+      trigger: false
 
   - task: deploy
-    file: pipelines-repo/tasks/import-opsman/task.yml
+    file: pipelines-repo/tasks/deploy-opsman-vm/task.yml
     params:
+      OPSMAN_TIMEOUT: ((om_timeout))
       GOVC_INSECURE: ((vcenter_insecure))
       GOVC_CA_CERT: ((vcenter_ca_cert))
       GOVC_URL: ((vcenter_host))
@@ -164,22 +165,22 @@ jobs:
       GOVC_PASSWORD: ((vcenter_pwd))
       GOVC_DATACENTER: ((vcenter_data_center))
       GOVC_DATASTORE: ((om_data_store))
-      GOVC_NETWORK: ((om_vm_network))
+      OPSMAN_NETWORK: ((om_vm_network))
       GOVC_RESOURCE_POOL: ((om_resource_pool))
       GOVC_HOST: ((om_vm_host))
-      OPS_MGR_HOST: ((ops_mgr_host))
-      OM_VM_FOLDER: ((om_vm_folder))
-      OPS_MGR_SSH_PWD: ((om_ssh_pwd))
-      OM_NTP_SERVERS: ((om_ntp_servers))
-      OM_DNS_SERVERS: ((om_dns_servers))
-      OM_GATEWAY: ((om_gateway))
-      OM_NETMASK: ((om_netmask))
-      OM_IP: ((om_ip))
+      #OPS_MGR_HOST: ((ops_mgr_host))
+      OPSMAN_VM_FOLDER: ((om_vm_folder))
+      OPSMAN_SSH_PASSWORD: ((om_ssh_pwd))
+      NTP: ((om_ntp_servers))
+      DNS: ((om_dns_servers))
+      GATEWAY: ((om_gateway))
+      NETMASK: ((om_netmask))
+      OPSMAN_IP: ((om_ip))
       OM_VM_NETWORK: ((om_vm_network))
-      OM_VM_NAME: ((om_vm_name))
-      OM_RESOURCE_POOL: ((om_resource_pool))
+      OPSMAN_DOMAIN_OR_IP_ADDRESS: ((om_vm_name))
+      #OM_RESOURCE_POOL: ((om_resource_pool))
       OPSMAN_DISK_TYPE: ((opsman_disk_type))
-      OM_VM_POWER_STATE: ((om_vm_power_state))
+      #OM_VM_POWER_STATE: ((om_vm_power_state))
 
 - name: configure-director
   plan:
@@ -188,7 +189,7 @@ jobs:
     - get: pcf-ops-manager
       params: {globs: []}
       passed: [deploy-opsman]
-      trigger: true
+      trigger: false
 
   - task: config-opsman-auth
     file: pipelines-repo/tasks/config-opsman/task.yml
@@ -290,7 +291,7 @@ jobs:
     - get: pcf-ops-manager
       params: {globs: []}
       passed: [configure-director]
-      trigger: true
+      trigger: false
 
   - task: apply-changes
     file: pipelines-repo/tasks/apply-changes/task.yml
@@ -309,7 +310,7 @@ jobs:
     - get: pcf-ops-manager
       params: {globs: []}
       passed: [deploy-director]
-      trigger: true
+      trigger: false
     - get: pivnet-cli
       params:
         globs:
@@ -352,7 +353,7 @@ jobs:
       resource: pivotal-container-service
       params: {globs: []}
       passed: [upload-pks]
-      trigger: true
+      trigger: false
 
   - task: configure-pks
     file: pipelines-repo/tasks/config-pks/task.yml
@@ -416,7 +417,7 @@ jobs:
   - aggregate:
     - get: pipelines-repo
       passed: [apply-changes-pks]
-      trigger: true
+      trigger: false
     - get: pivnet-product
       resource: pivnet-harbor
       params: {globs: ["*.pivotal"]}
@@ -452,7 +453,7 @@ jobs:
       resource: pivnet-harbor
       passed: [upload-harbor]
       params: {globs: ["*.pivotal"]}
-      trigger: true
+      trigger: false
 
   - task: stage-tile
     file: pipelines-repo/tasks/stage-product/task.yml
@@ -536,7 +537,7 @@ jobs:
     - get: pivnet-harbor
       passed: [configure-harbor]
       params: {globs: ["*.pivotal"]}
-      trigger: true
+      trigger: false
 
   - task: apply-changes
     file: pipelines-repo/tasks/apply-changes/task.yml
@@ -567,7 +568,7 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      trigger: true
+      trigger: false
       passed: [add-pks-user]
 
   - task: create-pks-cluster
@@ -586,7 +587,7 @@ jobs:
 - name: copy-yelb-images-to-harbor
   plan:
   - get: pipelines-repo
-    trigger: true
+    trigger: false
     passed: [create-k8s-testcluster]
   - get: yelb-ui
     params:
@@ -625,7 +626,7 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      trigger: true
+      trigger: false
       passed: [copy-yelb-images-to-harbor]
 
   - task: deploy-pks-test-app

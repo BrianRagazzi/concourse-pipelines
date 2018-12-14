@@ -21,6 +21,7 @@ vcenter_insecure: 1         # vCenter skip TLS cert validation; enter `1` to dis
 vcenter_ca_cert:           # vCenter CA cert at the API endpoint; enter a value if `vcenter_insecure: 0`
 
 # Ops Manager VM configuration
+om_timeout: 120 #time to wait in seconds for OM to come online
 om_vm_host:                           # Optional - vCenter host to deploy Ops Manager in
 om_vm_folder: CHANGEME                      # Optional - vCenter folder to put Ops Manager in
 om_data_store: CHANGEME           # vCenter datastore name to deploy Ops Manager in

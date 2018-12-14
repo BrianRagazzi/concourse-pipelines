@@ -510,7 +510,7 @@ jobs:
   - aggregate:
     - get: pipelines-repo
       passed: [configure-pks]
-      trigger: true
+      trigger: false
     - get: pivnet-product
       resource: pivotal-container-service
       params: {globs: ["*.pivotal"]}

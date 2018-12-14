@@ -42,6 +42,7 @@ resources:
     skip_ssl_verification: true
 
 resource_types: []
+
 jobs:
 - name: deploy-concourse
   plan:
