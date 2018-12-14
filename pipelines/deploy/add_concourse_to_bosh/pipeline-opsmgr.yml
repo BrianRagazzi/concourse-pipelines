@@ -1,0 +1,195 @@
+groups: []
+
+resources:
+- name: bosh-cli
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    bucket: {{s3_bucket}}
+    endpoint: {{s3_endpoint}}
+    regexp: BOSH/bosh-cli-(.*)-linux-amd64
+    secret_access_key: {{s3_secret_access_key}}
+    skip_ssl_verification: true
+
+- name: bosh-config-creds
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "BOSH/config/creds-(.*).yml"
+    skip_ssl_verification: true
+
+- name: bosh-manifests-concourse
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    bucket: {{s3_bucket}}
+    endpoint: {{s3_endpoint}}
+    regexp: BOSH/manifests/concourse-deployment-(.*).tgz
+    secret_access_key: {{s3_secret_access_key}}
+    skip_ssl_verification: true
+
+- name: bosh-config-concourse-cluster-creds
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "BOSH/config/concourse-creds-(.*)-(.*).yml"
+    skip_ssl_verification: true
+
+resource_types: []
+
+jobs:
+- name: deploy-concourse
+  plan:
+  - aggregate:
+     - get: bosh-config-creds
+     - get: bosh-manifests-concourse
+       params:
+         unpack: true
+         globs: []
+     - get: bosh-cli
+       params: {globs: []}
+       trigger: true
+  - task: deploy_concourse_release
+    config:
+      platform: linux
+      image_resource:
+        type: s3
+        source:
+          access_key_id: {{s3_access_key_id}}
+          bucket: {{s3_bucket}}
+          endpoint: {{s3_endpoint}}
+          regexp: czero-cflinuxfs2/czero-cflinuxfs2-(.*).tgz
+          secret_access_key: {{s3_secret_access_key}}
+          skip_ssl_verification: true
+        params:
+          unpack: true
+      params:
+        INTERNAL_IP: ""
+        CONCOURSE_DEPLOYMENT_NAME: ""
+        CONCOURSE_WEB_IP: ""
+        CONCOURSE_WEB_PORT: "8080"
+        CONCOURSE_NETWORK_NAME: ""
+        CONCOURSE_WEB_VM_TYPE: ""
+        CONCOURSE_DB_VM_TYPE: ""
+        CONCOURSE_WORKER_VM_TYPE: ""
+        CONCOURSE_DB_PERSISTENT_DISK: ""
+        CONCOURSE_WORKER_INSTANCES: ""
+        CONCOURSE_WEB_INSTANCES: ""
+        CONCOURSE_BASICAUTH_USERNAME: ""
+        CONCOURSE_BASICAUTH_PASSWORD: ""
+        ATC_TLS_CERTIFICATE: ""
+        ATC_TLS_PRIVATE_KEY: ""
+        CONCOURSE_URL: ""
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          #build in manifest has hard-coded URLs and digests, remove.
+          cat > versionfix.yml <<'EOYML'
+          - type: remove
+            path: /releases/name=postgres/sha1
+          - type: remove
+            path: /releases/name=postgres/url
+          - type: remove
+            path: /releases/name=concourse/sha1
+          - type: remove
+            path: /releases/name=concourse/url
+          - type: remove
+            path: /releases/name=garden-runc/sha1
+          - type: remove
+            path: /releases/name=garden-runc/url
+          EOYML
+
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+
+          set -e
+
+          boshclipath=`find ./bosh-cli/ -name bosh-cli-*`
+          echo $boshclipath
+          chmod +x $boshclipath
+          mv $boshclipath ./bosh
+
+          credspath=`find ./bosh-config-creds/ -name creds-*.yml`
+          concoursepath=./bosh-manifests-concourse/cluster
+
+          ./bosh alias-env bosh-1 -e $INTERNAL_IP --ca-cert <(./bosh int $credspath --path /director_ssl/ca)
+          export BOSH_CLIENT=admin
+          export BOSH_CLIENT_SECRET=`./bosh int $credspath --path /admin_password`
+          ./bosh -e bosh-1 env
+
+          #write cert and key out to a file
+          #echo $ATC_TLS_CERTIFICATE > ./cert.pem
+          #echo $ATC_TLS_PRIVATE_KEY > ./private.key
+
+          echo 'y' | ./bosh -e bosh-1 deploy -d $CONCOURSE_DEPLOYMENT_NAME $concoursepath/concourse.yml \
+          --vars-store cluster-creds.yml \
+          -o ./versionfix.yml \
+          -o $concoursepath/operations/static-web.yml \
+          -o $concoursepath/operations/basic-auth.yml \
+          -o $concoursepath/operations/scale.yml \
+           --var web_ip=$CONCOURSE_WEB_IP \
+           --var external_url=$CONCOURSE_URL:$CONCOURSE_WEB_PORT \
+           --var network_name=$CONCOURSE_NETWORK_NAME \
+           --var web_vm_type=$CONCOURSE_WEB_VM_TYPE \
+           --var db_vm_type=$CONCOURSE_DB_VM_TYPE \
+           --var db_persistent_disk_type=$CONCOURSE_DB_PERSISTENT_DISK \
+           --var worker_vm_type=$CONCOURSE_WORKER_VM_TYPE \
+           --var deployment_name=$CONCOURSE_DEPLOYMENT_NAME \
+           --var local_user.username=$CONCOURSE_BASICAUTH_USERNAME \
+           --var local_user.password=$CONCOURSE_BASICAUTH_PASSWORD \
+           --var atc_basic_auth.username=$CONCOURSE_BASICAUTH_USERNAME \
+           --var atc_basic_auth.password=$CONCOURSE_BASICAUTH_PASSWORD \
+           --var worker_instances=$CONCOURSE_WORKER_INSTANCES \
+           --var web_instances=$CONCOURSE_WEB_INSTANCES \
+           --var concourse_version=latest \
+           --var garden_runc_version=latest \
+           --var postgres_version=latest
+
+
+          #-o $concoursepath/operations/tls.yml \
+          #-o $concoursepath/operations/privileged-https.yml \
+          #-o $concoursepath/operations/privileged-http.yml \
+          # --var atc_tls.certificate="$ATC_TLS_CERTIFICATE" \
+          # --var atc_tls.private_key="$ATC_TLS_PRIVATE_KEY"
+          EO_SH
+
+          chmod +x task.sh
+          ./task.sh
+
+          datever=$(date +"%y%m%d%H%M%S")
+          cp ./cluster-creds.yml ./out/concourse-creds-${datever}-${CONCOURSE_DEPLOYMENT_NAME}.yml
+      inputs:
+      - name: bosh-config-creds
+        path: ""
+      - name: bosh-cli
+        path: ""
+      - name: bosh-manifests-concourse
+        path: ""
+      outputs:
+      - name: out
+    params:
+      INTERNAL_IP: {{internal_ip}}
+      CONCOURSE_DEPLOYMENT_NAME: {{concourse_deployment_name}}
+      CONCOURSE_WEB_IP: {{concourse_web_ip}}
+      CONCOURSE_WEB_PORT: {{concourse_web_port}}
+      CONCOURSE_NETWORK_NAME: {{concourse_network_name}}
+      CONCOURSE_WEB_VM_TYPE: {{concourse_web_vm_type}}
+      CONCOURSE_DB_VM_TYPE: {{concourse_db_vm_type}}
+      CONCOURSE_WORKER_VM_TYPE: {{concourse_worker_vm_type}}
+      CONCOURSE_DB_PERSISTENT_DISK: {{concourse_db_persistent_disk_type}}
+      CONCOURSE_WORKER_INSTANCES: {{concourse_worker_instances}}
+      CONCOURSE_WEB_INSTANCES: {{concourse_web_instances}}
+      CONCOURSE_BASICAUTH_USERNAME: {{concourse_basicauth_username}}
+      CONCOURSE_BASICAUTH_PASSWORD: {{concourse_basicauth_password}}
+      CONCOURSE_URL: {{concourse_url}}
+  - put: bosh-config-concourse-cluster-creds
+    params:
+      file: ./out/concourse-creds-*.yml

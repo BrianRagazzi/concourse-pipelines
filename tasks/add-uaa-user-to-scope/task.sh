@@ -2,6 +2,17 @@
 
 set -eu
 
+CF_GUID=$(
+  om-linux \
+    --target https://$OPS_MGR_HOST \
+    --username "$OPS_MGR_USR" \
+    --password "$OPS_MGR_PWD" \
+    --skip-ssl-validation \
+    curl --silent --path "/api/v0/deployed/products" | \
+    jq -r '.[] | .installation_name' | grep cf- | tail -1
+)
+export CF_GUID=$CF_GUID
+
 SYS_DOMAIN=$(
   om-linux \
   --target https://$OPS_MGR_HOST \
@@ -33,7 +44,8 @@ CHK=$(
   uaac users| grep $PAS_ADMIN_USERNAME
 )
 if [ -z "$CHK" ]; then
-  uaac user add $PAS_ADMIN_USERNAME -p $PAS_ADMIN_PASSWORD --emails $EMAIL
+  echo "creating new user with email: $PAS_ADMIN_EMAIL"
+  uaac user add $PAS_ADMIN_USERNAME -p $PAS_ADMIN_PASSWORD --emails $PAS_ADMIN_EMAIL
 fi
 # uaac member add cloud_controller.admin $PAS_ADMIN_USERNAME
 # uaac member add uaa.admin $PAS_ADMIN_USERNAME

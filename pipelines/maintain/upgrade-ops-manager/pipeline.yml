@@ -58,11 +58,10 @@ resources:
 - name: schedule
   type: time
   source:
-    interval: 30m
-    start: "4:00 AM"
-    stop: "5:00 AM"
-    location: America/Chicago
-    days: [Sunday]
+    start: {{schedule_start}}
+    stop: {{schedule_stop}}
+    location: {{schedule_location}}
+    days: [{{schedule_days}}]
 
 jobs:
 - name: regulator
@@ -79,6 +78,9 @@ jobs:
     - get: pipelines-repo
       trigger: true
       passed: [regulator]
+    - get: pivnet-opsman-product
+      params:
+        globs: ["*.ova"]
 
   - task: wait-opsman-clear
     file: pipelines-repo/tasks/wait-opsman-clear/task.yml
@@ -134,6 +136,7 @@ jobs:
       trigger: true
       passed: [take-opsmgr-offline]
     - get: pivnet-opsman-product
+      passed: [export-settings-from-current-opsmgr]
       params:
         globs: ["*.ova"]
   - task: deploy-opsman-vm

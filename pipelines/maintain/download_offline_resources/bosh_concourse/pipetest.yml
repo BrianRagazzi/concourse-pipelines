@@ -1,0 +1,77 @@
+groups: []
+resources:
+- name: stemcell-bosh
+  type: bosh-io-stemcell
+  source:
+    name: bosh-vsphere-esxi-ubuntu-trusty-go_agent
+    version_family: {{stemcell_version_family}}
+
+- name: bosh-release
+  type: bosh-io-release
+  source:
+    repository: cloudfoundry/bosh
+
+- name: release-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: BOSH/releases/(.*).tgz
+    skip_ssl_verification: true
+
+- name: stemcell-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    disable_ssl: false
+    regexp: BOSH/stemcells/bosh-stemcell-(.*)-vsphere-esxi-ubuntu-trusty-go_agent.tgz
+    skip_ssl_verification: true
+
+resource_types: []
+jobs:
+- name: stemcell-trusty
+  plan:
+  - get: stemcell-bosh
+    trigger: true
+    params:
+      preserve_filename: true
+  - put: stemcell-s3
+    params:
+      file: stemcell-bosh/*.tgz
+
+- name: bosh
+  plan:
+  - get: release
+    resource: bosh-release
+    trigger: true
+    params:
+      tarball: true
+  - task: rename_file
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: pcfnorm/rootfs
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          set -eu
+          version=$(cat ./release/version)
+          mv ./release/release.tgz ./renamed/bosh-${version}.tgz
+      inputs:
+      - name: release
+        path: ""
+        optional: false
+      outputs:
+      - name: renamed
+  - put: release-s3
+    params:
+      file: renamed/bosh-*.tgz

@@ -214,7 +214,7 @@ jobs:
       BOSH_VM_FOLDER:  ((bosh_vm_folder))
       BOSH_TEMPLATE_FOLDER: ((bosh_template_folder))
       BOSH_DISK_PATH: ((bosh_disk_path))
-      NSX_NETWORKING_ENABLED: false
+      NSX_NETWORKING_ENABLED: ((nsx_networking_enabled))
       NSX_MODE: ((nsx_mode))
       NSX_ADDRESS: ((nsx_address))
       NSX_USERNAME: ((nsx_username))
@@ -349,7 +349,7 @@ jobs:
       trigger: true
 
   - task: configure-pks
-    file: pipelines-repo/tasks/configure-pks/task.yml
+    file: pipelines-repo/tasks/config-pks/task.yml
     params:
       INFRA_NETWORK_NAME: ((infra_network_name))
       SERVICES_NETWORK_NAME: ((main_network_name))
@@ -373,6 +373,12 @@ jobs:
       NSX_PASSWORD: ((nsx_password))
       NSXT_T0_ROUTERID: ((nsxt_t0_routerid))
       NSXT_IP_BLOCK_ID: ((nsxt_ip_block_id))
+      NSXT_NODES_IP_BLOCK_ID: ((nsxt_nodes_ip_block_id))
+      NSXT_CLOUD_CONFIG_DNS: ((nsxt_cloud_config_dns))
+      NSXT_VCENTER_CLUSTER: ((nsxt_vcenter_cluster))
+      NSXT_SUPERUSER_CERTIFICATE: ((nsxt_superuser_certificate))
+      NSXT_SUPERUSER_PRIVATE_KEY: ((nsxt_superuser_private_key))
+      TELEMETRY_SELECTOR: "disabled"
       NSXT_FLOATING_IP_POOL_ID: ((nsxt_floating_ip_pool_id))
       SYSLOG_ADDRESS: ((syslog_address))
       SYSLOG_PORT: ((syslog_port))
@@ -504,7 +510,7 @@ jobs:
   - aggregate:
     - get: pipelines-repo
       passed: [configure-pks]
-      trigger: true
+      trigger: false
     - get: pivnet-product
       resource: pivotal-container-service
       params: {globs: ["*.pivotal"]}
@@ -524,7 +530,7 @@ jobs:
     - get: pivnet-harbor
       passed: [configure-harbor]
       params: {globs: ["*.pivotal"]}
-      trigger: false
+      trigger: true
 
   - task: apply-changes
     file: pipelines-repo/tasks/apply-changes/task.yml
@@ -541,7 +547,7 @@ jobs:
       # passed: [apply-changes]
 
   - task: configure-pks-cli-user
-    file: pipelines-repo/tasks/configure-pks-cli-user/task.yml
+    file: pipelines-repo/tasks/config-pks-cli-user/task.yml
     params:
       OPS_MGR_HOST: ((ops_mgr_host))
       OPS_MGR_USR: ((ops_mgr_usr))
@@ -555,7 +561,7 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      trigger: false
+      trigger: true
       passed: [add-pks-user]
 
   - task: create-pks-cluster
@@ -574,7 +580,7 @@ jobs:
 - name: copy-yelb-images-to-harbor
   plan:
   - get: pipelines-repo
-    trigger: false
+    trigger: true
     passed: [create-k8s-testcluster]
   - get: yelb-ui
     params:
@@ -613,7 +619,7 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      trigger: false
+      trigger: true
       passed: [copy-yelb-images-to-harbor]
 
   - task: deploy-pks-test-app
@@ -630,6 +636,7 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
+      trigger: false
   - task: delete-all
     file: pipelines-repo/tasks/delete-all-pks-clusters/task.yml
     params:
@@ -644,6 +651,7 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
+      trigger: false
   - task: wipe
     file: pipelines-repo/tasks/wipe-env/task.yml
     params:

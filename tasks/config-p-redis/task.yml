@@ -3,7 +3,8 @@ platform: linux
 
 image_resource:
   type: docker-image
-  source: {repository: rjain/buildbox}
+  source:
+    repository: pcfnorm/rootfs
 
 params:
   DEBUG:
@@ -105,8 +106,6 @@ params:
 
 inputs:
   - name: pipelines-repo
-  - name: om-cli
-  - name: jq
 
 run:
-  path: pipelines-repo/tasks/config-redis/task.sh
+  path: pipelines-repo/tasks/config-p-redis/task.sh

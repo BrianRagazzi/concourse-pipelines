@@ -24,9 +24,11 @@ function check_for_no_pending_changes() {
     --client-secret "${OPSMAN_CLIENT_SECRET}" \
     --username "${OPSMAN_USERNAME}" \
     --password "${OPSMAN_PASSWORD}" \
-    curl -path /api/v0/staged/pending_changes | jq ".product_changes | length")
-  if [[ $pending_changes_count -ne 0 ]]; then
-    echo "Detected $pending_changes_count pending changes. Aborting."
+    curl -path /api/v0/staged/pending_changes | jq -r '.product_changes[]|select(.action!="unchanged")')
+  if [[ -z $pending_changes_count ]]; then
+    echo "No pending changes"
+  else
+    echo "Detected pending changes. Aborting."
     exit 1
   fi
 }

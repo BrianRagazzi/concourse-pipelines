@@ -281,7 +281,7 @@ jobs:
       trigger: true
 
   - task: configure-ert
-    file: pipelines-repo/tasks/config-ert-2.1/task.yml
+    file: pipelines-repo/tasks/config-ert-2.2/task.yml
     params:
       IAAS: vsphere
       OPS_MGR_HOST: {{ops_mgr_host}}
@@ -405,6 +405,7 @@ jobs:
       ENABLE_GROOTFS: {{enable_grootfs}}
       ROUTING_TLS_TERMINATION: {{routing_tls_termination}}
       ROUTER_CLIENT_CERT_VALIDATION: {{router_client_cert_validation}}
+      ROUTING_CUSTOM_CA_CERTIFICATES: {{trusted_certificates}}
 
   - task: configure-errands
     file: pipelines-repo/tasks/config-errands/task.yml
@@ -494,7 +495,7 @@ jobs:
     - get: pcf-ops-manager
       params: {globs: []}
       passed: [configure-ert, configure-nsx]
-      trigger: false
+      trigger: true
 
   - task: deploy-ert
     file: pipelines-repo/tasks/apply-changes/task.yml

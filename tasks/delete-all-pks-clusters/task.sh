@@ -6,8 +6,11 @@ echo "Get NSX-CLI script"
 wget https://storage.googleapis.com/pks-releases/nsx-helper-pkg.tar.gz --no-check-certificate
 tar -xvzf nsx-helper-pkg.tar.gz
 
+pks --version
+
 echo "Login to PKS API [$UAA_URL]"
-pks login -a "$UAA_URL" -u "$PKS_CLI_USERNAME" -p "$PKS_CLI_PASSWORD" --skip-ssl-verification # TBD --ca-cert CERT-PATH
+#pks login -a "$UAA_URL" -u "$PKS_CLI_USERNAME" -p "$PKS_CLI_PASSWORD" --skip-ssl-verification # TBD --ca-cert CERT-PATH
+pks login -a "$UAA_URL" -u "$PKS_CLI_USERNAME" -p "$PKS_CLI_PASSWORD" --skip-ssl-validation # TBD --ca-cert CERT-PATH
 NUM=$(pks clusters --json | jq '. | length')
 echo "$NUM PKS clusters Exist and will be deleted"
 
@@ -23,7 +26,7 @@ do
 
 
   echo "Deleting PKS cluster [$name]..."
-  pks delete-cluster "$name"
+  pks delete-cluster "$name" --non-interactive  #non-interactive parame req'd for PKS CLI 1.1+
 
   echo "Monitoring the deletion status for PKS cluster [$name]"
   in_progress_state="in progress"

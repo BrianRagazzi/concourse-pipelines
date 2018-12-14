@@ -16,7 +16,6 @@ params:
 inputs:
   - name: pivnet-product
   - name: pipelines-repo
-  - name: pivnet-cli
 
 run:
   path: pipelines-repo/tasks/upload-product/task.sh

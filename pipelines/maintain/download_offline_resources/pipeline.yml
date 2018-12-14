@@ -10,7 +10,7 @@ resources:
   type: time
   source:
     start: 12:00 AM
-    stop: 2:00 AM
+    stop: 5:00 PM
 
 - name: stemcell-pivnet
   type: pivnet
@@ -98,6 +98,14 @@ resources:
     api_token: {{pivnet_token}}
     product_slug: harbor-container-registry
     sort_by: semver
+
+- name: rabbitmq-pivnet
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: p-rabbitmq
+    sort_by: semver
+
 
 - name: ops-manager-s3
   type: s3
@@ -243,6 +251,16 @@ resources:
     disable_ssl: false
     skip_ssl_verification: true
 
+- name: rabbitmq-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "PCF/Tiles/p-rabbitmq-(.*).pivotal"
+    disable_ssl: false
+    skip_ssl_verification: true
 
 - name: nsxt-s3
   type: s3
@@ -270,6 +288,7 @@ groups:
     - redis
     - nsxt
     - healthwatch
+    - rabbitmq
 - name: pks
   jobs:
     - pks
@@ -286,6 +305,7 @@ jobs:
     params:
       globs: ["*vsphere*"]
   - put: stemcell-s3
+    get_params: {skip_download: true}
     params:
       file: "stemcell-pivnet/*.tgz"
 
@@ -298,6 +318,7 @@ jobs:
     params:
       globs: ["*.ova"]
   - put: ops-manager-s3
+    get_params: {skip_download: true}
     params:
       file: "ops-manager-pivnet/pcf-vsphere-*.ova"
 
@@ -310,6 +331,7 @@ jobs:
     params:
       globs: ["cf-*.pivotal"]
   - put: pivotal-app-services-s3
+    get_params: {skip_download: true}
     params:
       file: "elastic-runtime-pivnet/cf-*.pivotal"
 
@@ -322,6 +344,7 @@ jobs:
     params:
       globs: ["*.pivotal"]
   - put: pcf-metrics-s3
+    get_params: {skip_download: true}
     params:
       file: "pcf-metrics-pivnet/apm-*.pivotal"
 
@@ -334,6 +357,7 @@ jobs:
     params:
       globs: ["*.pivotal"]
   - put: iso-seg-s3
+    get_params: {skip_download: true}
     params:
       file: "iso-seg-pivnet/p-isolation-segment-*.pivotal"
 
@@ -346,8 +370,22 @@ jobs:
     params:
       globs: ["*.pivotal"]
   - put: healthwatch-s3
+    get_params: {skip_download: true}
     params:
       file: "healthwatch-pivnet/p-healthwatch-*.pivotal"
+
+- name: rabbitmq
+  build_logs_to_retain: 7
+  plan:
+  - get: wee-hours
+    trigger: true
+  - get: rabbitmq-pivnet
+    params:
+      globs: ["*.pivotal"]
+  - put: rabbitmq-s3
+    get_params: {skip_download: true}
+    params:
+      file: "rabbitmq-pivnet/p-rabbitmq-*.pivotal"
 
 - name: mysql
   build_logs_to_retain: 7
@@ -358,6 +396,7 @@ jobs:
     params:
       globs: ["*.pivotal"]
   - put: mysql-s3
+    get_params: {skip_download: true}
     params:
       file: "mysql-pivnet/p-mysql-*.pivotal"
 
@@ -370,6 +409,7 @@ jobs:
     params:
       globs: ["*.pivotal"]
   - put: redis-s3
+    get_params: {skip_download: true}
     params:
       file: "redis-pivnet/p-redis-*.pivotal"
 
@@ -404,6 +444,7 @@ jobs:
       - name: pcfnorm-rootfs-tarball
         path: ""
   - put: pcfnorm-rootfs-s3
+    get_params: {skip_download: true}
     params:
       file: pcfnorm-rootfs-tarball/pcfnorm-rootfs-*.tgz
 
@@ -414,12 +455,15 @@ jobs:
   - get: wee-hours
     trigger: true
   - put: pivotal-container-service-s3
+    get_params: {skip_download: true}
     params:
       file: "pks-pivnet/pivotal-container-service-*.pivotal"
   - put: pks-cli-s3
+    get_params: {skip_download: true}
     params:
       file: "pks-pivnet/pks-linux-amd64-*"
   - put: kubectl-s3
+    get_params: {skip_download: true}
     params:
       file: "pks-pivnet/kubectl-linux-amd64-*"
 
@@ -432,6 +476,7 @@ jobs:
     params:
       globs: ["*.pivotal"]
   - put: harbor-s3
+    get_params: {skip_download: true}
     params:
       file: "harbor-pivnet/harbor-container-registry-*.pivotal"
 
@@ -444,5 +489,6 @@ jobs:
     params:
       globs: ["*.pivotal"]
   - put: nsxt-s3
+    get_params: {skip_download: true}
     params:
       file: "nsxt-pivnet/VMware-NSX-T-*.pivotal"

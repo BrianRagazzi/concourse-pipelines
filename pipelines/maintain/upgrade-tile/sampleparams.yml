@@ -1,0 +1,24 @@
+# Pipeline resource configuration
+pivnet_token: blahblahblahtoken
+github_token: blahblahblahtoken # [R] Your github token
+github_repo: https://github.com/BrianRagazzi/concourse-pipelines # [R] Pipelines github repo
+github_branch: master
+github_username: BlahUsername # [R] Your github username
+iaas_type: vsphere
+debug: false
+
+product_name: p-mysql
+product_version: ^1\.10\..*$
+product_identifier: p-mysql
+product_glob: "*.pivotal"  #exc
+
+## Ops Manager installation meta data
+ops_mgr_usr: admin       # Username for Ops Manager admin account
+ops_mgr_pwd: SECRETPASSWORD       # Password for Ops Manager admin account
+ops_mgr_host: opsmgr.domain.local
+
+#schedule
+schedule_start: "3:00 AM" #"5:00 AM" or 0500 or 5AM
+schedule_stop: "5:00 AM" #"5:00 AM" or 0500 or 5AM
+schedule_location: "America/Chicago" #America/Chicago
+schedule_days: Thursday

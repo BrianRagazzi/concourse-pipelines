@@ -139,6 +139,7 @@ cf_properties=$(
     --arg mysql_proxy_shutdown_delay "${MYSQL_PROXY_SHUTDOWN_DELAY}" \
     --arg routing_tls_termination "$ROUTING_TLS_TERMINATION" \
     --arg router_client_cert_validation "$ROUTER_CLIENT_CERT_VALIDATION" \
+    --arg routing_custom_ca_certificates "$ROUTING_CUSTOM_CA_CERTIFICATES" \
     '
     {
       ".properties.router_client_cert_validation": {
@@ -147,6 +148,9 @@ cf_properties=$(
       ".properties.routing_tls_termination": {
         "value": $routing_tls_termination
       },
+#      ".properties.routing_custom_ca_certificates": {
+#        "value": $routing_custom_ca_certificates
+#      },
       ".properties.system_blobstore": {
         "value": "internal"
       },
@@ -729,7 +733,7 @@ ERT_ERRANDS=$(cat <<-EOF
   {"name":"push-apps-manager","post_deploy":"when-changed"},
   {"name":"deploy-notifications","post_deploy":"when-changed"},
   {"name":"deploy-notifications-ui","post_deploy":"when-changed"},
-  {"name":"push-pivotal-account","post_deploy":"when-changed"},
+  {"name":"delete-pivotal-account","post_deploy":"when-changed"},
   {"name":"deploy-autoscaler","post_deploy":"when-changed"},
   {"name":"test-autoscaling","post_deploy":"when-changed"},
   {"name":"nfsbrokerpush","post_deploy":"when-changed"}

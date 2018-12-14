@@ -1,0 +1,24 @@
+smtp-host: CHANGEME
+smtp-port: 25
+#smtp-username:
+#smtp-password:
+email-from: CHAMNGEME@DOMAIN.LOCAL
+email-to: CHANGEME@DOMAIN>LOCAL
+docker-tag: latest
+
+pivnet_token: CHANGEME
+github_token: CHANGEMME # [R] Your github token
+github_repo: https://github.com/BrianRagazzi/concourse-pipelines # [R] Pipelines github repo
+github_branch: master
+github_username: CHANGEME # [R] Your github username
+
+## Ops Manager installation meta data
+# opsman_admin_username/opsman_admin_password needs to be specified
+ops_mgr_usr: CHANGEME      # Username for Ops Manager admin account
+ops_mgr_pwd: CHANGME       # Password for Ops Manager admin account
+ops_mgr_host: CHANGEME
+
+#schedule
+schedule_start: "5:00 PM" #"5:00 AM" or 0500 or 5AM
+schedule_stop: "6:00 PM" #"5:00 AM" or 0500 or 5AM
+schedule_location: "America/Chicago" #America/Chicago

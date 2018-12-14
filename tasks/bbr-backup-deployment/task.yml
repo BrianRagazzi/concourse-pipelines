@@ -12,10 +12,10 @@ outputs:
 
 params:
   SKIP_SSL_VALIDATION: true
-  OPS_MGR_HOST:
-  OPS_MGR_USR:
-  OPS_MGR_PWD:
-  BOSH_ADDRESS:
+  OPS_MGR_HOST: ""
+  OPS_MGR_USR: ""
+  OPS_MGR_PWD: ""
+  BOSH_ADDRESS: ""
 
 run:
   path: pipelines-repo/tasks/bbr-backup-deployment/task.sh

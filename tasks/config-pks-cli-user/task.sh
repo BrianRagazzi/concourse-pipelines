@@ -18,7 +18,7 @@ UAA_ADMIN_SECRET=$(om-linux \
   --target "https://$OPS_MGR_HOST" \
   --username "$OPS_MGR_USR" \
   --password "$OPS_MGR_PWD" \
-  --skip-ssl-validation curl -p /api/v0/deployed/products/$PKS_GUID/credentials/.properties.uaa_admin_secret | jq -rc '.credential.value.secret'
+  --skip-ssl-validation curl -p /api/v0/deployed/products/$PKS_GUID/credentials/.properties.pks_uaa_management_admin_client | jq -rc '.credential.value.secret'
   )
 
 if [ -n "$UAA_ADMIN_SECRET" ]; then

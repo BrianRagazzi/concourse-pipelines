@@ -17,9 +17,8 @@ resources:
 - name: schedule
   type: time
   source:
-    interval: 30m
     start: "2:00 AM"
-    stop: "3:59 AM"
+    stop: "8:00 AM"
     location: America/Chicago
     days: [Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday]
 

@@ -1,0 +1,554 @@
+groups: []
+resources:
+- name: concourse-release
+  type: bosh-io-release
+  source:
+    repository: concourse/concourse
+
+- name: bosh-release
+  type: bosh-io-release
+  source:
+    repository: cloudfoundry/bosh
+
+- name: syslog-release
+  type: bosh-io-release
+  source:
+    repository: cloudfoundry/syslog-release
+
+- name: vsphere-cpi-release
+  type: bosh-io-release
+  source:
+    repository: cloudfoundry-incubator/bosh-vsphere-cpi-release
+
+- name: garden-runc-release
+  type: bosh-io-release
+  source:
+    repository: cloudfoundry/garden-runc-release
+
+- name: postgres-release
+  type: bosh-io-release
+  source:
+    repository: cloudfoundry/postgres-release
+
+- name: uaa-release
+  type: bosh-io-release
+  source:
+    repository: cloudfoundry/uaa-release
+
+- name: bpm-release
+  type: bosh-io-release
+  source:
+    repository: cloudfoundry-incubator/bpm-release
+
+- name: release-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: BOSH/releases/(.*).tgz
+    skip_ssl_verification: true
+
+- name: manifest-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: BOSH/manifests/(.*).tgz
+    skip_ssl_verification: true
+
+- name: bosh-cli-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: BOSH/bosh-cli-(.*)-linux-amd64
+    skip_ssl_verification: true
+
+- name: pcfnorm-rootfs
+  type: docker-image
+  source:
+    repository: pcfnorm/rootfs
+    tag: latest
+
+- name: stemcell-bosh
+  type: bosh-io-stemcell
+  source:
+    name: bosh-vsphere-esxi-ubuntu-trusty-go_agent
+    version_family: {{stemcell_version_family}}
+
+- name: stemcell-xenial-bosh
+  type: bosh-io-stemcell
+  source:
+    name: bosh-vsphere-esxi-ubuntu-xenial-go_agent
+    version_family: {{xenial_stemcell_version_family}}
+
+- name: pcfnorm-rootfs-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    disable_ssl: false
+    regexp: pcfnorm-rootfs/pcfnorm-rootfs-(.*).tgz
+    skip_ssl_verification: true
+
+- name: stemcell-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    disable_ssl: false
+    regexp: BOSH/stemcells/bosh-stemcell-(.*)-vsphere-esxi-ubuntu-trusty-go_agent.tgz
+    skip_ssl_verification: true
+
+- name: stemcell-xenial-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    disable_ssl: false
+    regexp: BOSH/stemcells/bosh-stemcell-(.*)-vsphere-esxi-ubuntu-xenial-go_agent.tgz
+    skip_ssl_verification: true
+
+
+- name: concourse-manifests
+  type: git
+  source:
+    uri: https://github.com/concourse/concourse-bosh-deployment.git
+    branch: master
+
+- name: bosh-manifests
+  type: git
+  source:
+    uri: https://github.com/cloudfoundry/bosh-deployment.git
+    branch: master
+
+resource_types: []
+jobs:
+- name: pcfnorm-rootfs
+  plan:
+  - aggregate:
+    - get: pcfnorm-rootfs
+      trigger: true
+  - task: create-tarball
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: pcfnorm/rootfs
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          set -eu
+          datever=$(date +"%y%m%d%H%M%S")
+          echo "Creating tarball with version ${datever}..."
+          tar czf "pcfnorm-rootfs-tarball/pcfnorm-rootfs-${datever}.tgz" -C pcfnorm-rootfs .
+      inputs:
+      - name: pcfnorm-rootfs
+        path: ""
+        optional: false
+      outputs:
+      - name: pcfnorm-rootfs-tarball
+        path: ""
+  - put: pcfnorm-rootfs-s3
+    params:
+      file: pcfnorm-rootfs-tarball/pcfnorm-rootfs-*.tgz
+
+
+
+- name: stemcell-trusty
+  plan:
+  - get: stemcell-bosh
+    trigger: true
+    params:
+      preserve_filename: true
+  - put: stemcell-s3
+    params:
+      file: stemcell-bosh/*.tgz
+
+- name: stemcell-xenial
+  plan:
+  - get: stemcell-xenial-bosh
+    trigger: true
+    params:
+      preserve_filename: true
+  - put: stemcell-xenial-s3
+    params:
+      file: stemcell-xenial-bosh/*.tgz
+
+- name: concourse
+  plan:
+  - get: release
+    resource: concourse-release
+    trigger: true
+    params:
+      tarball: true
+  - task: rename_file
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: pcfnorm/rootfs
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          set -eu
+          version=$(cat ./release/version)
+          mv ./release/release.tgz ./renamed/concourse-${version}.tgz
+      inputs:
+      - name: release
+        path: ""
+        optional: false
+      outputs:
+      - name: renamed
+  - put: release-s3
+    params:
+      file: renamed/concourse-*.tgz
+
+
+- name: bosh
+  plan:
+  - get: release
+    resource: bosh-release
+    trigger: true
+    params:
+      tarball: true
+  - task: rename_file
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: pcfnorm/rootfs
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          set -eu
+          version=$(cat ./release/version)
+          mv ./release/release.tgz ./renamed/bosh-${version}.tgz
+      inputs:
+      - name: release
+        path: ""
+        optional: false
+      outputs:
+      - name: renamed
+  - put: release-s3
+    params:
+      file: renamed/bosh-*.tgz
+
+- name: uaa
+  plan:
+  - get: release
+    resource: uaa-release
+    trigger: true
+    params:
+      tarball: true
+  - task: rename_file
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: pcfnorm/rootfs
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          set -eu
+          version=$(cat ./release/version)
+          mv ./release/release.tgz ./renamed/uaa-release-${version}.tgz
+      inputs:
+      - name: release
+        path: ""
+        optional: false
+      outputs:
+      - name: renamed
+  - put: release-s3
+    params:
+      file: renamed/uaa-release-*.tgz
+
+- name: bpm
+  plan:
+  - get: release
+    resource: bpm-release
+    trigger: true
+    params:
+      tarball: true
+  - task: rename_file
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: pcfnorm/rootfs
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          set -eu
+          version=$(cat ./release/version)
+          mv ./release/release.tgz ./renamed/bpm-release-${version}.tgz
+      inputs:
+      - name: release
+        path: ""
+        optional: false
+      outputs:
+      - name: renamed
+  - put: release-s3
+    params:
+      file: renamed/bpm-release-*.tgz
+
+- name: vsphere-cpi
+  plan:
+  - get: release
+    resource: vsphere-cpi-release
+    trigger: true
+    params:
+      tarball: true
+  - task: rename_file
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: pcfnorm/rootfs
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          set -eu
+          version=$(cat ./release/version)
+          mv ./release/release.tgz ./renamed/bosh-vsphere-cpi-release-${version}.tgz
+      inputs:
+      - name: release
+        path: ""
+        optional: false
+      outputs:
+      - name: renamed
+  - put: release-s3
+    params:
+      file: renamed/bosh-vsphere-cpi-release-*.tgz
+
+- name: garden-runc-release
+  plan:
+  - get: release
+    resource: garden-runc-release
+    trigger: true
+    params:
+      tarball: true
+  - task: rename_file
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: pcfnorm/rootfs
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          set -eu
+          version=$(cat ./release/version)
+          mv ./release/release.tgz ./renamed/garden-runc-release-${version}.tgz
+      inputs:
+      - name: release
+        path: ""
+        optional: false
+      outputs:
+      - name: renamed
+  - put: release-s3
+    params:
+      file: renamed/garden-runc-release-*.tgz
+
+- name: syslog-release
+  plan:
+  - get: release
+    resource: syslog-release
+    trigger: true
+    params:
+      tarball: true
+  - task: rename_file
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: pcfnorm/rootfs
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          set -eu
+          version=$(cat ./release/version)
+          mv ./release/release.tgz ./renamed/syslog-release-${version}.tgz
+      inputs:
+      - name: release
+        path: ""
+        optional: false
+      outputs:
+      - name: renamed
+  - put: release-s3
+    params:
+      file: renamed/syslog-release-*.tgz
+
+
+- name: postgres-release
+  plan:
+  - get: release
+    resource: postgres-release
+    trigger: true
+    params:
+      tarball: true
+  - task: rename_file
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: pcfnorm/rootfs
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          set -eu
+          version=$(cat ./release/version)
+          mv ./release/release.tgz ./renamed/postgres-release-${version}.tgz
+      inputs:
+      - name: release
+        path: ""
+        optional: false
+      outputs:
+      - name: renamed
+  - put: release-s3
+    params:
+      file: "renamed/postgres-release-*.tgz"
+
+- name: concourse-manifests
+  plan:
+  - get: concourse-manifests
+    trigger: true
+  - task: create-tarball
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: pcfnorm/rootfs
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          set -eu
+          datever=$(date +"%y%m%d%H%M%S")
+          echo "Creating tarball with version ${datever}..."
+          #tar czf "pcfnorm-rootfs-tarball/pcfnorm-rootfs-${datever}.tgz" -C pcfnorm-rootfs .
+          tar czf "out/concourse-deployment-${datever}.tgz" -C concourse-manifests .
+      inputs:
+      - name: concourse-manifests
+        path: ""
+        optional: false
+      outputs:
+      - name: out
+        path: ""
+  - put: manifest-s3
+    params:
+      file: "out/concourse-deployment-*.tgz"
+
+- name: bosh-manifests
+  plan:
+  - get: bosh-manifests
+    trigger: true
+  - task: create-tarball
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: pcfnorm/rootfs
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          set -eu
+          datever=$(date +"%y%m%d%H%M%S")
+          echo "Creating tarball with version ${datever}..."
+          #tar czf "pcfnorm-rootfs-tarball/pcfnorm-rootfs-${datever}.tgz" -C pcfnorm-rootfs .
+          tar czf "out/bosh-deployment-${datever}.tgz" -C bosh-manifests .
+      inputs:
+      - name: bosh-manifests
+        path: ""
+        optional: false
+      outputs:
+      - name: out
+        path: ""
+  - put: manifest-s3
+    params:
+      file: "out/bosh-deployment-*.tgz"
+
+- name: bosh-cli
+  plan:
+  - get: bosh-manifests
+    trigger: true
+    passed: [bosh-manifests]
+  - task: download-cli
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: pcfnorm/rootfs
+      params:
+        BOSH_CLI_URI: "https://s3.amazonaws.com/bosh-cli-artifacts/bosh-cli-2.0.48-linux-amd64"
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          cat > task.sh <<'EO_SH'
+          #!/bin/bash
+
+          set -eu
+          mkdir -p ./out
+          wget -P ./out "$BOSH_CLI_URI"
+
+          EO_SH
+
+          chmod +x task.sh
+          ./task.sh
+
+          cat ./task.sh
+      outputs:
+      - name: out
+        path: ""
+    params:
+      BOSH_CLI_URI: {{bosh_cli_uri}}
+  - put: bosh-cli-s3
+    params:
+      file: "out/bosh-cli-*"

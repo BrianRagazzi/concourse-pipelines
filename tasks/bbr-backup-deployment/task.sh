@@ -27,6 +27,8 @@ BBR_PASS=$(
 if [ -z $BOSH_ADDRESS ]; then
   echo "Getting address of BOSH Director from Ops Manager"
   BOSH_ADDRESS=$(jq -r '.jobs[] | select(.name == "bosh") | .properties.director.address' director_manifest.json)
+else
+ echo "Using provided BOSH Address: $BOSH_ADDRESS"
 fi
 
 BOSH_CA_CERT_PATH="${PWD}/bosh.crt"

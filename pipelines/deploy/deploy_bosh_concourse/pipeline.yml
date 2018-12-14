@@ -41,6 +41,17 @@ resources:
     regexp: BOSH/releases/bosh-(\d*.\d*.\d*).tgz
     skip_ssl_verification: true
 
+- name: bosh-releases-bpm
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: BOSH/releases/bpm-release-(.*).tgz
+    skip_ssl_verification: true
+
+
 - name: bosh-vsphere-cpi
   type: s3
   source:
@@ -60,6 +71,16 @@ resources:
     bucket: {{s3_bucket}}
     regexp: BOSH/stemcells/bosh-stemcell-(.*)-vsphere-esxi-ubuntu-trusty-go_agent.tgz
     skip_ssl_verification: true
+
+# - name: stemcell-xenial
+#   type: s3
+#   source:
+#     access_key_id: {{s3_access_key_id}}
+#     secret_access_key: {{s3_secret_access_key}}
+#     endpoint: {{s3_endpoint}}
+#     bucket: {{s3_bucket}}
+#     regexp: BOSH/stemcells/bosh-stemcell-(.*)-vsphere-esxi-ubuntu-xenial-go_agent.tgz
+#     skip_ssl_verification: true
 
 - name: bosh-releases-garden-runc
   type: s3
@@ -160,9 +181,10 @@ jobs:
        params: {globs: []}
      - get: bosh-releases-bosh
      - get: bosh-vsphere-cpi
+     - get: bosh-releases-bpm
      - get: stemcell
      - get: bosh-deployment
-       trigger: true
+       trigger: false
        resource: bosh-manifests-bosh
        params:
          unpack: true
@@ -228,6 +250,7 @@ jobs:
 
 
           boshtarpath=`find ../bosh-releases-bosh/ -name bosh-*.tgz`
+          boshbpmpath=`find ../bosh-releases-bpm/ -name bpm-release-*.tgz`
           boshcpipath=`find ../bosh-vsphere-cpi/ -name bosh-vsphere-cpi-release-*.tgz`
           stemcellpath=`find ../stemcell/ -name bosh-stemcell-*.tgz`
 
@@ -248,9 +271,10 @@ jobs:
           -o bosh-deployment/local-bosh-release-tarball.yml \
           -o bosh-deployment/misc/no-internet-access/vsphere-cpi.yml \
           -o bosh-deployment/misc/no-internet-access/stemcell.yml \
+          -o bosh-deployment/misc/no-internet-access/bpm.yml \
           -v internal_dns="$INTERNAL_DNS" \
           -v internal_ntp="$INTERNAL_NTP" \
-          -v director_name="DIRECTOR_NAME" \
+          -v director_name="$DIRECTOR_NAME" \
           -v internal_cidr="$INTERNAL_CIDR" \
           -v internal_gw="$INTERNAL_GW" \
           -v internal_ip="$INTERNAL_IP" \
@@ -268,7 +292,7 @@ jobs:
           -v local_vsphere_cpi="$boshcpipath" \
           -v local_bosh_release="$boshtarpath" \
           -v local_stemcell="$stemcellpath" \
-
+          -v local_bpm_release="$boshbpmpath"
           EO_SH
 
           chmod +x task.sh
@@ -284,6 +308,8 @@ jobs:
       - name: bosh-deployment
         path: ""
       - name: bosh-releases-bosh
+        path: ""
+      - name: bosh-releases-bpm
         path: ""
       - name: bosh-vsphere-cpi
         path: ""
@@ -324,7 +350,7 @@ jobs:
     - get: bosh-cli
       params: {globs: []}
       passed: [deploy-director]
-      trigger: true
+      trigger: false
   - task: login_set_config
     config:
       platform: linux
@@ -400,7 +426,7 @@ jobs:
     - get: bosh-cli
       params: {globs: []}
       passed: [cloud-config]
-      trigger: true
+      trigger: false
   - task: login_set_config
     config:
       platform: linux
@@ -477,7 +503,7 @@ jobs:
     - get: bosh-cli
       params: {globs: []}
       passed: [cloud-config]
-      trigger: true
+      trigger: false
   - task: upload_stemcell
     config:
       platform: linux
@@ -532,6 +558,70 @@ jobs:
     params:
       INTERNAL_IP: {{internal_ip}}
 
+# - name: stemcell-xenial
+#   plan:
+#   - aggregate:
+#     - get: bosh-config-creds
+#     - get: stemcell-xenial
+#       params: {globs: []}
+#     - get: bosh-cli
+#       params: {globs: []}
+#       passed: [cloud-config]
+#       trigger: false
+#   - task: upload_stemcell
+#     config:
+#       platform: linux
+#       image_resource:
+#         type: s3
+#         source:
+#           access_key_id: {{s3_access_key_id}}
+#           bucket: {{s3_bucket}}
+#           endpoint: {{s3_endpoint}}
+#           regexp: czero-cflinuxfs2/czero-cflinuxfs2-(.*).tgz
+#           secret_access_key: {{s3_secret_access_key}}
+#           skip_ssl_verification: true
+#         params:
+#           unpack: true
+#       params:
+#         INTERNAL_IP: ""
+#       run:
+#         path: sh
+#         args:
+#         - -c
+#         - |
+#           cat > task.sh <<'EO_SH'
+#           #!/bin/bash
+#
+#           set -eu
+#           boshclipath=`find ./bosh-cli/ -name bosh-cli-*`
+#           echo $boshclipath
+#           chmod +x $boshclipath
+#           #ln -s $boshclipath bosh
+#           mv $boshclipath ./bosh
+#
+#           credspath=`find ./bosh-config-creds/ -name creds-*.yml`
+#           stemcellpath=`find ./stemcell-xenial/ -name bosh-stemcell-*.tgz`
+#
+#           ./bosh alias-env bosh-1 -e $INTERNAL_IP --ca-cert <(./bosh int $credspath --path /director_ssl/ca)
+#           export BOSH_CLIENT=admin
+#           export BOSH_CLIENT_SECRET=`./bosh int $credspath --path /admin_password`
+#           ./bosh -e bosh-1 env
+#
+#           ./bosh -e bosh-1 upload-stemcell $stemcellpath
+#           EO_SH
+#
+#           chmod +x task.sh
+#           ./task.sh
+#       inputs:
+#       - name: bosh-config-creds
+#         path: ""
+#       - name: bosh-cli
+#         path: ""
+#       - name: stemcell-xenial
+#         path: ""
+#     params:
+#       INTERNAL_IP: {{internal_ip}}
+
 - name: concourse-release
   plan:
   - aggregate:
@@ -547,7 +637,7 @@ jobs:
      - get: bosh-cli
        params: {globs: []}
        passed: [stemcell]
-       trigger: true
+       trigger: false
   - task: upload_concourse_release
     config:
       platform: linux
@@ -625,7 +715,7 @@ jobs:
      - get: bosh-cli
        params: {globs: []}
        passed: [concourse-release]
-       trigger: true
+       trigger: false
   - task: deploy_concourse_release
     config:
       platform: linux
@@ -682,7 +772,7 @@ jobs:
           #!/bin/bash
 
           set -e
-          #uo pipefail
+
           boshclipath=`find ./bosh-cli/ -name bosh-cli-*`
           echo $boshclipath
           chmod +x $boshclipath
@@ -714,6 +804,8 @@ jobs:
            --var db_persistent_disk_type=$CONCOURSE_DB_PERSISTENT_DISK \
            --var worker_vm_type=$CONCOURSE_WORKER_VM_TYPE \
            --var deployment_name=$CONCOURSE_DEPLOYMENT_NAME \
+           --var local_user.username=$CONCOURSE_BASICAUTH_USERNAME \
+           --var local_user.password=$CONCOURSE_BASICAUTH_PASSWORD \
            --var atc_basic_auth.username=$CONCOURSE_BASICAUTH_USERNAME \
            --var atc_basic_auth.password=$CONCOURSE_BASICAUTH_PASSWORD \
            --var worker_instances=$CONCOURSE_WORKER_INSTANCES \
@@ -873,7 +965,7 @@ jobs:
           --vars-store="$credspath" \
           -o bosh-deployment/vsphere/cpi.yml \
           -o bosh-deployment/vsphere/resource-pool.yml \
-          -v director_name="DIRECTOR_NAME" \
+          -v director_name="$DIRECTOR_NAME" \
           -v internal_cidr="$INTERNAL_CIDR" \
           -v internal_gw="$INTERNAL_GW" \
           -v internal_ip="$INTERNAL_IP" \

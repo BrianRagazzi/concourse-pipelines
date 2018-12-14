@@ -1,0 +1,32 @@
+---
+
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: pcfnorm/rootfs
+
+params:
+  DEBUG:
+  OPS_MGR_HOST:
+  OPS_MGR_USR:
+  OPS_MGR_PWD:
+  NETWORK_NAME:
+  SERVICE_NETWORK_NAME:
+  SINGLETON_JOB_AZ:
+  OTHER_AZS:
+  TILE_RABBIT_ADMIN_USER:
+  TILE_RABBIT_ADMIN_PASSWD:
+  TILE_RABBIT_PROXY_INSTANCES:
+  TILE_RABBIT_SERVER_INSTANCES:
+  TILE_RABBIT_ON_DEMAND_PLAN_1_INSTANCE_QUOTA:
+  TILE_RABBIT_ON_DEMAND_PLAN_6_INSTANCE_QUOTA:
+  SYSLOG_SELECTOR:
+  SYSLOG_PROTOCOL:
+  SYSLOG_ADDRESS:
+  SYSLOG_PORT:
+inputs:
+  - name: pipelines-repo
+run:
+  path: pipelines-repo/tasks/config-p-rabbitmq/task.sh

@@ -1,0 +1,214 @@
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tag: latest-final
+
+resources:
+- name: pivnet-cli
+  type: github-release
+  source:
+    user: pivotal-cf
+    repository: pivnet-cli
+    access_token: ((github_token)) ## Optional: Removing this will cause you to hit the rate limit
+
+- name: pipelines-repo
+  type: git
+  source:
+    uri: ((github_repo))
+    branch: ((github_branch))
+
+- name: pivotal-container-service
+  type: pivnet
+  source:
+    api_token: ((pivnet_token))
+    product_slug: pivotal-container-service
+    product_version: ((pks_major_minor_version))
+    sort_by: semver
+    copy_metadata: true
+    fingerprint_components:
+    - product-files
+
+- name: pivnet-harbor
+  type: pivnet
+  source:
+    api_token: ((pivnet_token))
+    product_slug: harbor-container-registry
+    product_version: ((harbor_major_minor_version))
+
+- name: schedule
+  type: time
+  source:
+    start: {{schedule_start}}
+    stop: {{schedule_stop}}
+    location: {{schedule_location}}
+    days: [{{schedule_days}}]
+
+jobs:
+- name: regulator
+  plan:
+  - get: schedule
+    trigger: true
+  - get: pipelines-repo
+    params: { globs: [] }
+
+- name: upload-pks
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [regulator]
+    - get: pivnet-product
+      resource: pivotal-container-service
+      params: {globs: ["*.pivotal"]}
+      trigger: true
+    - get: pivnet-cli
+      params:
+        globs:
+        - "*linux-amd64*"
+
+  - task: upload-pks
+    file: pipelines-repo/tasks/upload-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+
+- name: upload-stemcell-pks
+  plan:
+  - aggregate:
+    - get: pivnet-cli
+      params:
+        globs:
+        - "*linux-amd64*"
+      passed: [upload-pks]
+    - get: pipelines-repo
+      passed: [upload-pks]
+    - get: pivnet-product
+      resource: pivotal-container-service
+      params: {globs: []}
+      passed: [upload-pks]
+      trigger: true
+
+
+  - task: upload-stemcell
+    file: pipelines-repo/tasks/stemcell-uploader/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+      IAAS_TYPE: ((iaas_type))
+      PRODUCT_IDENTIFIER: pivotal-container-service
+
+- name: stage-pks
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [upload-stemcell-pks]
+    - get: pivnet-product
+      resource: pivotal-container-service
+      params: {globs: []}
+      passed: [upload-stemcell-pks]
+      trigger: true
+
+
+  - task: stage-tile
+    file: pipelines-repo/tasks/stage-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_IDENTIFIER: pivotal-container-service
+
+- name: upload-harbor
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [regulator]
+    - get: pivnet-product
+      resource: pivnet-harbor
+      params: {globs: ["*.pivotal"]}
+      trigger: true
+    - get: pivnet-cli
+      params:
+        globs:
+        - "*linux-amd64*"
+
+  - task: upload-harbor
+    file: pipelines-repo/tasks/upload-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+
+- name: upload-stemcell-harbor
+  plan:
+  - aggregate:
+    - get: pivnet-cli
+      params:
+        globs:
+        - "*linux-amd64*"
+      passed: [upload-harbor]
+    - get: pipelines-repo
+      passed: [upload-harbor]
+    - get: pivnet-product
+      resource: pivnet-harbor
+      params: {globs: []}
+      passed: [upload-harbor]
+      trigger: true
+
+
+  - task: upload-stemcell
+    file: pipelines-repo/tasks/stemcell-uploader/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+      IAAS_TYPE: ((iaas_type))
+      PRODUCT_IDENTIFIER: harbor-container-registry
+
+- name: stage-harbor
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [upload-stemcell-harbor]
+      trigger: true
+    - get: pivnet-product
+      resource: pivnet-harbor
+      params: {globs: []}
+      passed: [upload-stemcell-harbor]
+      trigger: true
+
+
+  - task: stage-tile
+    file: pipelines-repo/tasks/stage-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_IDENTIFIER: harbor-container-registry
+
+- name: apply-changes
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      trigger: true
+      passed: [stage-pks, stage-harbor]
+
+  - task: apply-changes
+    file: pipelines-repo/tasks/apply-changes/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))

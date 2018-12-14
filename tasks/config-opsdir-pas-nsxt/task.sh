@@ -182,6 +182,44 @@ security_configuration=$(
     }'
 )
 
+syslog_configuration=$(
+  jq -n \
+  --arg  syslog_enabled "$SYSLOG_ENABLED" \
+  --arg  syslog_address "$SYSLOG_ADDRESS" \
+  --arg  syslog_port "$SYSLOG_PORT" \
+  --arg  syslog_tls_enabled $SYSLOG_TLS_ENABLED \
+  --arg  syslog_permitted_peer "$SYSLOG_PERMITTED_PEER" \
+  --arg  syslog_ssl_ca_certificate "$SYSLOG_SSL_CA_CERTIFICATE" \
+  --arg  syslog_transport_protocol "$SYSLOG_TRANSPORT_PROTOCOL" \
+  '
+  if $syslog_enabled == "true" then
+    {
+    "enabled": true,
+    "address": $syslog_address,
+    "transport_protocol": $syslog_transport_protocol,
+    "port": $syslog_port
+    }
+  else
+    {
+    "enabled": false
+    }
+  end
+  +
+  if $syslog_tls_enabled == "true" then
+    {
+    "tls_enabled": true,
+    "ssl_ca_certificate": $syslog_ssl_ca_certificate,
+    "permitted_peer": $syslog_permitted_peer
+    }
+  else
+    {
+    "tls_enabled": false
+    }
+  end
+  '
+)
+
+
 network_assignment=$(
 jq -n \
   --arg infra_availability_zones "$INFRA_NW_AZS" \
@@ -196,6 +234,7 @@ jq -n \
   }
   }'
 )
+# echo $syslog_configuration
 
 echo "Configuring IaaS, AZ and Director..."
 om-linux \
@@ -217,4 +256,5 @@ om-linux \
   configure-director \
   --networks-configuration "$network_configuration" \
   --network-assignment "$network_assignment" \
-  --security-configuration "$security_configuration"
+  --security-configuration "$security_configuration" \
+  --syslog-configuration "$syslog_configuration"

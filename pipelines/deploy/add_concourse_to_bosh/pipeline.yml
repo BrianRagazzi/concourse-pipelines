@@ -38,7 +38,7 @@ resources:
     secret_access_key: {{s3_secret_access_key}}
     endpoint: {{s3_endpoint}}
     bucket: {{s3_bucket}}
-    regexp: "BOSH/config/concourse-(.*).yml"
+    regexp: "BOSH/config/concourse-creds-(.*)-(.*).yml"
     skip_ssl_verification: true
 
 resource_types: []
@@ -110,7 +110,7 @@ jobs:
           #!/bin/bash
 
           set -e
-          #uo pipefail
+
           boshclipath=`find ./bosh-cli/ -name bosh-cli-*`
           echo $boshclipath
           chmod +x $boshclipath
@@ -142,6 +142,8 @@ jobs:
            --var db_persistent_disk_type=$CONCOURSE_DB_PERSISTENT_DISK \
            --var worker_vm_type=$CONCOURSE_WORKER_VM_TYPE \
            --var deployment_name=$CONCOURSE_DEPLOYMENT_NAME \
+           --var local_user.username=$CONCOURSE_BASICAUTH_USERNAME \
+           --var local_user.password=$CONCOURSE_BASICAUTH_PASSWORD \
            --var atc_basic_auth.username=$CONCOURSE_BASICAUTH_USERNAME \
            --var atc_basic_auth.password=$CONCOURSE_BASICAUTH_PASSWORD \
            --var worker_instances=$CONCOURSE_WORKER_INSTANCES \
@@ -162,7 +164,7 @@ jobs:
           ./task.sh
 
           datever=$(date +"%y%m%d%H%M%S")
-          cp ./cluster-creds.yml ./out/concourse-${CONCOURSE_DEPLOYMENT_NAME}-creds-${datever}.yml
+          cp ./cluster-creds.yml ./out/concourse-creds-${datever}-${CONCOURSE_DEPLOYMENT_NAME}.yml
       inputs:
       - name: bosh-config-creds
         path: ""
@@ -182,11 +184,11 @@ jobs:
       CONCOURSE_DB_VM_TYPE: {{concourse_db_vm_type}}
       CONCOURSE_WORKER_VM_TYPE: {{concourse_worker_vm_type}}
       CONCOURSE_DB_PERSISTENT_DISK: {{concourse_db_persistent_disk_type}}
-      CONCOURSE_WORKER_INSTANCES: {{concource_worker_instances}}
-      CONCOURSE_WEB_INSTANCES: {{concource_web_instances}}
+      CONCOURSE_WORKER_INSTANCES: {{concourse_worker_instances}}
+      CONCOURSE_WEB_INSTANCES: {{concourse_web_instances}}
       CONCOURSE_BASICAUTH_USERNAME: {{concourse_basicauth_username}}
       CONCOURSE_BASICAUTH_PASSWORD: {{concourse_basicauth_password}}
       CONCOURSE_URL: {{concourse_url}}
   - put: bosh-config-concourse-cluster-creds
     params:
-      file: ./out/concourse-*.yml
+      file: ./out/concourse-creds-*.yml

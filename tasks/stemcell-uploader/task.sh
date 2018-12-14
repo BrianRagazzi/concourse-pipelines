@@ -13,6 +13,8 @@ chmod +x $PIVNET_CLI
 CMD=om-linux
 
 SC_VERSION=`cat ./pivnet-product/metadata.json | jq -r '.Dependencies[] | select(.Release.Product.Name | contains("Stemcells")) | .Release.Version' | head -1`
+SC_SLUG=`cat ./pivnet-product/metadata.json | jq -r '.Dependencies[] | select(.Release.Product.Name | contains("Stemcells")) | .Release.Product.Slug' | head -1`
+
 # echo "looking for stemcell version $SC_VERSION-$IAAS_TYPE"
 
 # The meta data does not always specify the required stemcell, but the report in Ops Manager will...
@@ -36,11 +38,12 @@ if [ -z $SC_VERSION ]; then
     )
   fi
 fi
-
+#note this will not work with Xenial stemcells
 STEMCELL_NAME=bosh-stemcell-$SC_VERSION-$IAAS_TYPE-esxi-ubuntu-trusty-go_agent.tgz
+
 DIAGNOSTIC_REPORT=$($CMD -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p /api/v0/diagnostic_report)
 
-if [ -z $SC_VERSION ]; then
+if [ -z $SC_VERSION ] || [ $SC_VERSION = "null" ]; then
   echo "No Stemcell required?"
 else
   STEMCELL_EXISTS=$(echo $DIAGNOSTIC_REPORT | jq -r --arg STEMCELL_NAME $STEMCELL_NAME '.stemcells | contains([$STEMCELL_NAME])')
@@ -51,13 +54,13 @@ else
     $PIVNET_CLI login --api-token="$PIVNET_API_TOKEN"
 
     set +e
-    RESPONSE=`$PIVNET_CLI releases -p stemcells | grep $SC_VERSION`
+    RESPONSE=`$PIVNET_CLI releases -p $SC_SLUG | grep $SC_VERSION`
     set -e
 
     if [[ -z "$RESPONSE" ]]; then
       wget https://s3.amazonaws.com/bosh-core-stemcells/vsphere/$STEMCELL_NAME
     else
-      $PIVNET_CLI download-product-files -p stemcells -r $SC_VERSION -g "*$IAAS_TYPE*" --accept-eula
+      $PIVNET_CLI download-product-files -p $SC_SLUG -r $SC_VERSION -g "*$IAAS_TYPE*" --accept-eula
     fi
 
     SC_FILE_PATH=`find ./ -name *.tgz`

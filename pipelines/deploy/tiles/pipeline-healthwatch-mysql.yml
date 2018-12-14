@@ -372,4 +372,5 @@ jobs:
       OPS_MGR_PWD: ((ops_mgr_pwd))
       PAS_ADMIN_USERNAME: ((hw_admin_username))
       PAS_ADMIN_PASSWORD: ((hw_admin_password))
+      PAS_ADMIN_EMAIL: ((hw_admin_email))
       SCOPENAME: "healthwatch.admin"

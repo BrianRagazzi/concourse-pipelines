@@ -1,0 +1,65 @@
+resource_types:
+  - name: email
+    type: docker-image
+    source:
+      repository: pcfseceng/email-resource
+      tag: {{docker-tag}}
+
+resources:
+  - name: send-an-email
+    type: email
+    source:
+      smtp:
+        host: {{smtp-host}}
+        port: {{smtp-port}}
+        anonymous: true
+        skip_ssl_validation: true
+      from: {{email-from}}
+      to: [ {{email-to}} ]
+
+  - name: pipelines-repo
+    type: git
+    source:
+      uri: {{github_repo}}
+      branch: {{github_branch}}
+      username: {{github_username}}
+      password: {{github_token}}
+
+  - name: pivnet-cli
+    type: github-release
+    source:
+      user: pivotal-cf
+      repository: pivnet-cli
+      access_token: {{github_token}} ## Optional: Removing this will cause you to hit the rate limit
+
+  - name: schedule
+    type: time
+    source:
+      start: {{schedule_start}}
+      stop: {{schedule_stop}}
+      location: {{schedule_location}}
+      source: {interval: 24h}
+
+jobs:
+
+- name: send-email
+  plan:
+  - get: schedule
+    trigger: true
+  - get: pipelines-repo
+  - get: pivnet-cli
+    params:
+      globs:
+      - "*linux-amd64*"
+  - task: prep-email
+    file: pipelines-repo/tasks/report-tile-versions/task.yml
+    params:
+        OPS_MGR_HOST: {{ops_mgr_host}}
+        OPS_MGR_USR: {{ops_mgr_usr}}
+        OPS_MGR_PWD: {{ops_mgr_pwd}}
+        PIVNET_API_TOKEN: {{pivnet_token}}
+  - put: send-an-email
+    params:
+      subject: out/subject
+      body: out/report
+      headers: out/headers

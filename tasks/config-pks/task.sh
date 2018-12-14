@@ -38,20 +38,20 @@ SSL_PRIVATE_KEY=`echo $certificates | jq --raw-output '.key'`
 pks_network=$(
   jq -n \
     --arg az_1_name "$AZ_1_NAME" \
-    --arg infra_network_name "$INFRA_NETWORK_NAME" \
-    --arg services_network_name "$SERVICES_NETWORK_NAME" \
+    --arg az_2_name "$AZ_2_NAME" \
+    --arg az_3_name "$AZ_3_NAME" \
+    --arg main_network_name "$MAIN_NETWORK_NAME" \
+    --arg services_network_name "$MAIN_NETWORK_NAME" \
   '
   {
     "singleton_availability_zone": {
       "name": $az_1_name
     },
     "other_availability_zones": [
-      {
-        "name": $az_1_name
-      }
+      {"name": $az_1_name},{"name": $az_2_name},{"name": $az_3_name}
     ],
     "network": {
-      "name": $infra_network_name
+      "name": $main_network_name
     },
     "service_network": {
       "name": $services_network_name
@@ -59,13 +59,15 @@ pks_network=$(
   }
   '
 )
-
+#echo $pks_network
 #.properties.cloud_provider.vsphere.vcenter_creds is replaced with
 # .properties.cloud_provider.vsphere.vcenter_master_creds in PKS 1.0.3
 pks_properties=$(
   jq -n \
     --arg ops "$OPS_MGR_HOST" \
     --arg az_1_name "$AZ_1_NAME" \
+    --arg az_2_name "$AZ_2_NAME" \
+    --arg az_3_name "$AZ_3_NAME" \
     --arg vcenter_host "$VCENTER_HOST" \
     --arg vcenter_usr "$VCENTER_USR" \
     --arg vcenter_pwd "$VCENTER_PWD" \
@@ -83,7 +85,13 @@ pks_properties=$(
     --arg az_1_name "$AZ_1_NAME" \
     --arg nsxt_t0_routerid "$NSXT_T0_ROUTERID" \
     --arg nxst_ip_block_id "$NSXT_IP_BLOCK_ID" \
+    --arg nsxt_nodes_ip_block_id "$NSXT_NODES_IP_BLOCK_ID" \
     --arg nsxt_floating_ip_pool_id "$NSXT_FLOATING_IP_POOL_ID" \
+    --arg nsxt_cloud_config_dns "$NSXT_CLOUD_CONFIG_DNS" \
+    --arg nsxt_vcenter_cluster "$NSXT_VCENTER_CLUSTER" \
+    --arg nsxt_superuser_certificate "$NSXT_SUPERUSER_CERTIFICATE" \
+    --arg nsxt_superuser_private_key "$NSXT_SUPERUSER_PRIVATE_KEY" \
+    --arg telemetry_selector "$TELEMETRY_SELECTOR" \
     --arg syslog_enabled ${SYSLOG_ENABLED:-"false"} \
     --arg syslog_address "$SYSLOG_ADDRESS" \
     --arg syslog_tls_enabled "$SYSLOG_TLS_ENABLED" \
@@ -97,6 +105,9 @@ pks_properties=$(
   {
     ".properties.cloud_provider": {
       "value": "vSphere"
+    },
+    ".properties.pks_api_hostname": {
+      "value": $uaa_url
     },
     ".properties.cloud_provider.vsphere.vcenter_ip": {
       "value": $vcenter_host
@@ -122,11 +133,11 @@ pks_properties=$(
     ".properties.plan1_selector.active.description": {
       "value": "Default small plan for K8s cluster",
     },
-    ".properties.plan1_selector.active.az_placement": {
-      "value": $az_1_name
+    ".properties.plan1_selector.active.master_az_placement": {
+      "value": [$az_1_name]
     },
-    ".properties.plan1_selector.active.authorization_mode": {
-      "value": "rbac"
+    ".properties.plan1_selector.active.worker_az_placement": {
+      "value": [$az_1_name]
     },
     ".properties.plan1_selector.active.master_vm_type": {
       "value": "medium"
@@ -136,9 +147,6 @@ pks_properties=$(
     },
     ".properties.plan1_selector.active.worker_vm_type": {
       "value": "medium"
-    },
-    ".properties.plan1_selector.active.persistent_disk_type": {
-      "value": "10240"
     },
     ".properties.plan1_selector.active.worker_instances": {
       "value": 2
@@ -161,11 +169,11 @@ pks_properties=$(
     ".properties.plan2_selector.active.description": {
       "value": "Medium workloads",
     },
-    ".properties.plan2_selector.active.az_placement": {
-      "value": $az_1_name
+    ".properties.plan2_selector.active.master_az_placement": {
+      "value": [$az_1_name,$az_2_name,$az_3_name]
     },
-    ".properties.plan2_selector.active.authorization_mode": {
-      "value": "rbac",
+    ".properties.plan2_selector.active.worker_az_placement": {
+      "value": [$az_1_name,$az_2_name,$az_3_name]
     },
     ".properties.plan2_selector.active.master_vm_type": {
       "value": "large"
@@ -175,9 +183,6 @@ pks_properties=$(
     },
     ".properties.plan2_selector.active.worker_vm_type": {
       "value": "medium"
-    },
-    ".properties.plan2_selector.active.persistent_disk_type": {
-      "value": "10240"
     },
     ".properties.plan2_selector.active.worker_instances": {
       "value": 3
@@ -198,17 +203,14 @@ pks_properties=$(
     ".properties.network_selector.nsx.nsx-t-host": {
       "value":  $nsx_address
     },
-    ".properties.network_selector.nsx.credentials": {
+    ".properties.network_selector.nsx.nsx-t-superuser-certificate": {
       "value": {
-        "identity": $nsx_username,
-        "password": $nsx_password
+        "cert_pem": $nsxt_superuser_certificate,
+        "private_key_pem": $nsxt_superuser_private_key
       }
     },
     ".properties.network_selector.nsx.nsx-t-ca-cert": {
       "value": ""
-    },
-    ".properties.network_selector.nsx.vcenter_cluster": {
-      "value": $az_1_name
     },
     ".properties.network_selector.nsx.nsx-t-insecure": {
       "value": true
@@ -219,11 +221,26 @@ pks_properties=$(
     ".properties.network_selector.nsx.ip-block-id": {
       "value": $nxst_ip_block_id
     },
+    ".properties.network_selector.nsx.nodes-ip-block-id": {
+      "value": $nsxt_nodes_ip_block_id
+    },
+    ".properties.network_selector.nsx.cloud-config-dns": {
+      "value": $nsxt_cloud_config_dns
+    },
+    ".properties.network_selector.nsx.vcenter_cluster": {
+      "value": $nsxt_vcenter_cluster
+    },
+    ".properties.network_selector.nsx.network_automation": {
+      "value": true
+    },
+    ".properties.network_selector.nsx.nat_mode": {
+      "value": true
+    },
+    ".properties.telemetry_selector": {
+      "value": $telemetry_selector
+    },
     ".properties.network_selector.nsx.floating-ip-pool-ids": {
       "value": $nsxt_floating_ip_pool_id
-    },
-    ".properties.uaa_url": {
-      "value": $uaa_url
     },
     ".properties.uaa_pks_cli_access_token_lifetime": {
       "value": 86400
@@ -236,54 +253,34 @@ pks_properties=$(
         "private_key_pem": $SSL_PRIVATE_KEY,
         "cert_pem": $SSL_CERT
       }
+    },
+    ".properties.cloud_provider.vsphere.vcenter_master_creds": {
+      "value": {
+        "identity": $vcenter_usr,
+        "password": $vcenter_pwd
+      }
     }
   }
-  +
-  if $pks_major_version == "1" and $pks_mid_version == "0" and $pks_minor_version == "3" then
-    {
-      ".properties.cloud_provider.vsphere.vcenter_master_creds": {
-        "value": {
-          "identity": $vcenter_usr,
-          "password": $vcenter_pwd
-         }
-       },
-       ".properties.cloud_provider.vsphere.vcenter_worker_creds": {
-         "value": {
-           "identity": $vcenter_usr,
-           "password": $vcenter_pwd
-         }
-       }
-     }
-  else
-     {
-       ".properties.cloud_provider.vsphere.vcenter_creds": {
-         "value": {
-           "identity": $vcenter_usr,
-           "password": $vcenter_pwd
-         }
-       }
-     }
-  end
 
   +
   if $syslog_enabled == "true" then
     {
-      ".properties.syslog_migration_selector": {
+      ".properties.syslog_selector": {
         "value": "enabled"
       },
-      ".properties.syslog_migration_selector.enabled.address": {
+      ".properties.syslog_selector.enabled.address": {
         "value": $syslog_address
       },
-      ".properties.syslog_migration_selector.enabled.tls_enabled": {
+      ".properties.syslog_selector.enabled.tls_enabled": {
         "value": $syslog_tls_enabled
       },
-      ".properties.syslog_migration_selector.enabled.port": {
+      ".properties.syslog_selector.enabled.port": {
         "value": $syslog_port
       },
-      ".properties.syslog_migration_selector.enabled.ca_cert": {
+      ".properties.syslog_selector.enabled.ca_cert": {
         "value": $syslog_ssl_ca_certificate
       },
-      ".properties.syslog_migration_selector.enabled.transport_protocol": {
+      ".properties.syslog_selector.enabled.transport_protocol": {
         "value": $syslog_transport_protocol
       }
     }

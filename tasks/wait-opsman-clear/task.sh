@@ -53,17 +53,25 @@ function main() {
         exit 1
       fi
 
-      grep "action" changes-status.txt
-      ACTION_STATUS=$?
-      jq -e -r '.installations[0] | select(.status=="running")' running-status.txt >/dev/null
-      RUNNING_STATUS=$?
+      #grep "action" changes-status.txt
+      PENDING_CHANGES=$(cat changes-status.txt | jq -r '.product_changes[] | select(.action!="unchanged")')
 
-      if [[ ${ACTION_STATUS} -ne 0 && ${RUNNING_STATUS} -ne 0 ]]; then
-          echo "No pending changes or running installs detected. Proceeding"
-          exit 0
+
+      if [[ -z $PENDING_CHANGES ]]; then
+        echo "No pending changes"
+        RUNNING_STATUS=$(cat running-status.txt | jq -e -r '.installations[0] | select(.status=="running")')
+        if [ -z ${RUNNING_STATUS} ]; then
+            echo "No running installs detected. Proceeding"
+            exit 0
+        fi
+        echo "Pending changes or running installs detected. Waiting"
+        sleep $POLL_INTERVAL
+      else
+        echo "There are pending changes, aborting"
+        exit 1
       fi
-      echo "Pending changes or running installs detected. Waiting"
-      sleep $POLL_INTERVAL
+
+
   done
   set -e
 }
