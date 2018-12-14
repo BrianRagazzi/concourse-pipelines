@@ -103,9 +103,6 @@ pks_properties=$(
     --arg pks_minor_version "$PKS_MINOR_VERSION" \
   '
   {
-    ".properties.vm_extensions": {
-      "value": true
-    },
     ".properties.cloud_provider": {
       "value": "vSphere"
     },
