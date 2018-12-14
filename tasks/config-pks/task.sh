@@ -251,16 +251,14 @@ pks_properties=$(
         "private_key_pem": $SSL_PRIVATE_KEY,
         "cert_pem": $SSL_CERT
       }
+    },
+    ".properties.cloud_provider.vsphere.vcenter_master_creds": {
+      "value": {
+        "identity": $vcenter_usr,
+        "password": $vcenter_pwd
+      }
     }
   }
-     {
-       ".properties.cloud_provider.vsphere.vcenter_master_creds": {
-         "value": {
-           "identity": $vcenter_usr,
-           "password": $vcenter_pwd
-         }
-       }
-     }
 
   +
   if $syslog_enabled == "true" then
