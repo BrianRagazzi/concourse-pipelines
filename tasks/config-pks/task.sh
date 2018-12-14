@@ -38,6 +38,8 @@ SSL_PRIVATE_KEY=`echo $certificates | jq --raw-output '.key'`
 pks_network=$(
   jq -n \
     --arg az_1_name "$AZ_1_NAME" \
+    --arg az_2_name "$AZ_2_NAME" \
+    --arg az_3_name "$AZ_3_NAME" \
     --arg main_network_name "$MAIN_NETWORK_NAME" \
     --arg services_network_name "$MAIN_NETWORK_NAME" \
   '
