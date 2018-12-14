@@ -148,18 +148,15 @@ jobs:
 - name: deploy-opsman
   plan:
   - aggregate:
-    - get: pcf-pipelines
-      resource: pipelines-repo
-      params: {globs: []}
-    - get: pivnet-opsmgr
+    - get: pipelines-repo
+    - get: pivnet-opsman-product
       resource: pcf-ops-manager
       params: {globs: ["*.ova"]}
-      trigger: false
+      trigger: true
 
   - task: deploy
-    file: pcf-pipelines/tasks/deploy-opsman-vm/task.yml
+    file: pipelines-repo/tasks/import-opsman/task.yml
     params:
-      OPSMAN_TIMEOUT: ((om_timeout))
       GOVC_INSECURE: ((vcenter_insecure))
       GOVC_CA_CERT: ((vcenter_ca_cert))
       GOVC_URL: ((vcenter_host))
@@ -167,22 +164,22 @@ jobs:
       GOVC_PASSWORD: ((vcenter_pwd))
       GOVC_DATACENTER: ((vcenter_data_center))
       GOVC_DATASTORE: ((om_data_store))
-      OPSMAN_NETWORK: ((om_vm_network))
+      GOVC_NETWORK: ((om_vm_network))
       GOVC_RESOURCE_POOL: ((om_resource_pool))
       GOVC_HOST: ((om_vm_host))
-      #OPS_MGR_HOST: ((ops_mgr_host))
-      OPSMAN_VM_FOLDER: ((om_vm_folder))
-      OPSMAN_SSH_PASSWORD: ((om_ssh_pwd))
-      NTP: ((om_ntp_servers))
-      DNS: ((om_dns_servers))
-      GATEWAY: ((om_gateway))
-      NETMASK: ((om_netmask))
-      OPSMAN_IP: ((om_ip))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OM_VM_FOLDER: ((om_vm_folder))
+      OPS_MGR_SSH_PWD: ((om_ssh_pwd))
+      OM_NTP_SERVERS: ((om_ntp_servers))
+      OM_DNS_SERVERS: ((om_dns_servers))
+      OM_GATEWAY: ((om_gateway))
+      OM_NETMASK: ((om_netmask))
+      OM_IP: ((om_ip))
       OM_VM_NETWORK: ((om_vm_network))
-      OPSMAN_DOMAIN_OR_IP_ADDRESS: ((om_vm_name))
-      #OM_RESOURCE_POOL: ((om_resource_pool))
+      OM_VM_NAME: ((om_vm_name))
+      OM_RESOURCE_POOL: ((om_resource_pool))
       OPSMAN_DISK_TYPE: ((opsman_disk_type))
-      #OM_VM_POWER_STATE: ((om_vm_power_state))
+      OM_VM_POWER_STATE: ((om_vm_power_state))
 
 - name: configure-director
   plan:
