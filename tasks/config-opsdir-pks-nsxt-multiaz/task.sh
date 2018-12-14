@@ -67,13 +67,6 @@ EOF
 network_configuration=$(
   jq -n \
     --argjson icmp_checks_enabled $ICMP_CHECKS_ENABLED \
-    --arg infra_network_name "$INFRA_NETWORK_NAME" \
-    --arg infra_vcenter_network "$INFRA_VCENTER_NETWORK" \
-    --arg infra_network_cidr "$INFRA_NW_CIDR" \
-    --arg infra_reserved_ip_ranges "$INFRA_EXCLUDED_RANGE" \
-    --arg infra_dns "$INFRA_NW_DNS" \
-    --arg infra_gateway "$INFRA_NW_GATEWAY" \
-    --arg infra_availability_zones "$INFRA_NW_AZS" \
     --arg main_network_name "$MAIN_NETWORK_NAME" \
     --arg main_vcenter_network "$MAIN_VCENTER_NETWORK" \
     --arg main_network_cidr "$MAIN_NW_CIDR" \
@@ -85,20 +78,6 @@ network_configuration=$(
     {
       "icmp_checks_enabled": $icmp_checks_enabled,
       "networks": [
-        {
-          "name": $infra_network_name,
-          "service_network": false,
-          "subnets": [
-            {
-              "iaas_identifier": $infra_vcenter_network,
-              "cidr": $infra_network_cidr,
-              "reserved_ip_ranges": $infra_reserved_ip_ranges,
-              "dns": $infra_dns,
-              "gateway": $infra_gateway,
-              "availability_zone_names": ($infra_availability_zones | split(","))
-            }
-          ]
-        },
         {
           "name": $main_network_name,
           "service_network": true,
@@ -179,12 +158,12 @@ syslog_configuration=$(
 
 network_assignment=$(
 jq -n \
-  --arg infra_availability_zones "$INFRA_NW_AZS" \
-  --arg network "$INFRA_NETWORK_NAME" \
+  --arg main_availability_zones "$MAIN_NW_AZS" \
+  --arg network "$MAIN_NETWORK_NAME" \
   '
   {
   "singleton_availability_zone": {
-    "name": ($infra_availability_zones | split(",") | .[0])
+    "name": ($main_availability_zones | split(",") | .[0])
   },
   "network": {
     "name": $network
