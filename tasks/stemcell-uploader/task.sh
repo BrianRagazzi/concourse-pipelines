@@ -13,6 +13,8 @@ chmod +x $PIVNET_CLI
 CMD=om-linux
 
 SC_VERSION=`cat ./pivnet-product/metadata.json | jq -r '.Dependencies[] | select(.Release.Product.Name | contains("Stemcells")) | .Release.Version' | head -1`
+SC_SLUG=`cat ./pivnet-product/metadata.json | jq -r '.Dependencies[] | select(.Release.Product.Name | contains("Stemcells")) | .Release.Product.Slug' | head -1`
+
 # echo "looking for stemcell version $SC_VERSION-$IAAS_TYPE"
 
 # The meta data does not always specify the required stemcell, but the report in Ops Manager will...
@@ -36,8 +38,9 @@ if [ -z $SC_VERSION ]; then
     )
   fi
 fi
-
+#note this will not work with Xenial stemcells
 STEMCELL_NAME=bosh-stemcell-$SC_VERSION-$IAAS_TYPE-esxi-ubuntu-trusty-go_agent.tgz
+
 DIAGNOSTIC_REPORT=$($CMD -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p /api/v0/diagnostic_report)
 
 if [ -z $SC_VERSION ] || [ $SC_VERSION = "null" ]; then
@@ -51,7 +54,7 @@ else
     $PIVNET_CLI login --api-token="$PIVNET_API_TOKEN"
 
     set +e
-    RESPONSE=`$PIVNET_CLI releases -p stemcells | grep $SC_VERSION`
+    RESPONSE=`$PIVNET_CLI releases -p $SC_SLUG | grep $SC_VERSION`
     set -e
 
     if [[ -z "$RESPONSE" ]]; then
