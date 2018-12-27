@@ -10,7 +10,7 @@ inputs:
 - name: pipelines-repo
 
 run:
-  path: pipelines-repo/tasks/create-pks-cluster/task.sh
+  path: pipelines-repo/tasks/create-pks-cluster-no-nsx-helper/task.sh
 
 params:
   PCF_PKS_API:
@@ -18,7 +18,5 @@ params:
   PKS_CLI_PASSWORD:
   PKS_SERVICE_PLAN_NAME:
   PKS_CLUSTER_NUMBER_OF_WORKERS:
-  NSX_MANAGER_USERNAME:
-  NSX_MANAGER_PASSWORD:
-  NSX_MANAGER_IP:
-  PKS_KEEP_FAILED_CLUSTER_ALIVE:  
+  PKS_CLUSTER_EXT_HOSTNAME:
+  PKS_KEEP_FAILED_CLUSTER_ALIVE:
