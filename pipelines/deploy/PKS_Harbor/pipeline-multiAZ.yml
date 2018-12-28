@@ -380,6 +380,7 @@ jobs:
       NSXT_VCENTER_CLUSTER: ((nsxt_vcenter_cluster))
       NSXT_SUPERUSER_CERTIFICATE: ((nsxt_superuser_certificate))
       NSXT_SUPERUSER_PRIVATE_KEY: ((nsxt_superuser_private_key))
+      NSXT_CA_CERT: ((nsx_ca_certificate))
       TELEMETRY_SELECTOR: "disabled"
       NSXT_FLOATING_IP_POOL_ID: ((nsxt_floating_ip_pool_id))
       SYSLOG_ADDRESS: ((syslog_address))

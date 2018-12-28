@@ -94,6 +94,7 @@ pks_properties=$(
     --arg nsxt_vcenter_cluster "$NSXT_VCENTER_CLUSTER" \
     --arg nsxt_superuser_certificate "$NSXT_SUPERUSER_CERTIFICATE" \
     --arg nsxt_superuser_private_key "$NSXT_SUPERUSER_PRIVATE_KEY" \
+    --arg nsxt_ca_cert "$NSXT_CA_CERT" \
     --arg telemetry_selector "$TELEMETRY_SELECTOR" \
     --arg syslog_enabled ${SYSLOG_ENABLED:-"false"} \
     --arg syslog_address "$SYSLOG_ADDRESS" \
@@ -213,7 +214,7 @@ pks_properties=$(
       }
     },
     ".properties.network_selector.nsx.nsx-t-ca-cert": {
-      "value": ""
+      "value": $nsxt_ca_cert
     },
     ".properties.network_selector.nsx.nsx-t-insecure": {
       "value": true
