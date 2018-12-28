@@ -19,21 +19,24 @@ if [ -z $VCENTER_PWD_WORKER ]; then
   VCENTER_PWD_WORKER=$VCENTER_PWD
 fi
 
-domains="*.${SYSTEM_DOMAIN} *.${UAA_DOMAIN}"
-data=$(echo $domains | jq --raw-input -c '{"domains": (. | split(" "))}')
-certificates=$(om-linux \
-     --target "https://${OPS_MGR_HOST}" \
-     --username "$OPS_MGR_USR" \
-     --password "$OPS_MGR_PWD" \
-     --skip-ssl-validation \
-     curl \
-     --silent \
-     --path "/api/v0/certificates/generate" \
-     -x POST \
-     -d $data
-   )
-SSL_CERT=`echo $certificates | jq --raw-output '.certificate'`
-SSL_PRIVATE_KEY=`echo $certificates | jq --raw-output '.key'`
+if [ -z $SSL_CERT ]; then
+  echo "Generating SSL cert since one was not provided"
+  domains="*.${SYSTEM_DOMAIN} *.${UAA_DOMAIN}"
+  data=$(echo $domains | jq --raw-input -c '{"domains": (. | split(" "))}')
+  certificates=$(om-linux \
+       --target "https://${OPS_MGR_HOST}" \
+       --username "$OPS_MGR_USR" \
+       --password "$OPS_MGR_PWD" \
+       --skip-ssl-validation \
+       curl \
+       --silent \
+       --path "/api/v0/certificates/generate" \
+       -x POST \
+       -d $data
+     )
+  SSL_CERT=`echo $certificates | jq --raw-output '.certificate'`
+  SSL_PRIVATE_KEY=`echo $certificates | jq --raw-output '.key'`
+fi
 
 pks_network=$(
   jq -n \

@@ -363,6 +363,8 @@ jobs:
       OM_DATA_STORE: ((om_data_store))
       BOSH_VM_FOLDER: ((bosh_vm_folder))
       UAA_URL: ((uaa_url))
+      SSL_CERT: ((uaa_ssl_cert))
+      SSL_PRIVATE_KEY: ((uaa_private_key))
       OPS_MGR_USR: ((ops_mgr_usr))
       OPS_MGR_PWD: ((ops_mgr_pwd))
       OPS_MGR_HOST: ((ops_mgr_host))
