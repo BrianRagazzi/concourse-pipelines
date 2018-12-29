@@ -36,6 +36,8 @@ if [ -z $SSL_CERT ]; then
      )
   SSL_CERT=`echo $certificates | jq --raw-output '.certificate'`
   SSL_PRIVATE_KEY=`echo $certificates | jq --raw-output '.key'`
+else
+  echo "Using supplied SSL CERT"
 fi
 
 pks_network=$(
