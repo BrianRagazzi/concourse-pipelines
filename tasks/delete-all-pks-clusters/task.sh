@@ -2,9 +2,9 @@
 
 set -e
 
-echo "Get NSX-CLI script"
-wget https://storage.googleapis.com/pks-releases/nsx-helper-pkg.tar.gz --no-check-certificate
-tar -xvzf nsx-helper-pkg.tar.gz
+# echo "Get NSX-CLI script"
+# wget https://storage.googleapis.com/pks-releases/nsx-helper-pkg.tar.gz --no-check-certificate
+# tar -xvzf nsx-helper-pkg.tar.gz
 
 pks --version
 
@@ -22,7 +22,7 @@ do
   UUID=$(pks cluster ${name} --json | jq -r '.uuid')
   echo "Cluster UUID: $UUID"
   #NATIP=$(pks cluster ${name} --json | jq -r '.kubernetes_master_ips[0]')
-  NATIP=$(pks cluster ${name} --json | jq -r '.parameters.kubernetes_master_host')
+  #NATIP=$(pks cluster ${name} --json | jq -r '.parameters.kubernetes_master_host')
 
 
   echo "Deleting PKS cluster [$name]..."
@@ -52,12 +52,12 @@ do
     echo "Error deleting cluster [$name], last_action_state=[$cluster_state], last_action_description=[$last_action_description]"
   fi
 
-  echo "cleaning up NSX-T"
-  set +e
-  ./nsx-cli.sh cleanup "$UUID" false
-  sleep 10
-  ./nsx-cli.sh cleanup "$UUID" false
-  sleep 5
-  ./nsx-cli.sh ipam release "$NATIP"
-  set -e
+  # echo "cleaning up NSX-T"
+  # set +e
+  # ./nsx-cli.sh cleanup "$UUID" false
+  # sleep 10
+  # ./nsx-cli.sh cleanup "$UUID" false
+  # sleep 5
+  # ./nsx-cli.sh ipam release "$NATIP"
+  # set -e
 done
