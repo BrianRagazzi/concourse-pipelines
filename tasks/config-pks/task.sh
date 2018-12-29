@@ -301,7 +301,6 @@ pks_properties=$(
   '
 )
 
-echo $pks_properties
 
 om-linux --target "https://${OPS_MGR_HOST}" \
   --skip-ssl-validation \
