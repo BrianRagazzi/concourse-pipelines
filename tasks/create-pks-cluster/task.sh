@@ -55,7 +55,7 @@ if [[ "$cluster_state" == "$succeeded_state" ]]; then
   # echo "Configuring NAT on NSX-T - [$PKS_NAT_IP] to [$MASTER_IP]"
   # ./nsx-cli.sh nat create-rule "$CLUSTER_UUID" "$MASTER_IP" "$PKS_NAT_IP"
   # echo "Next step: make sure that the external hostname configured for the cluster [$PKS_NAT_IP] is accessible from a DNS/network standpoint, so it can be managed with 'kubectl'"
-  echo "Next step: make sure that the external hostname configured for the cluster [$PKS_CLUSTER_EXT_HOSTNAME] resolves to [$MASTER_IP]"
+  echo "Next step: make sure that the external hostname configured for the cluster [$EXT_HOSTNAME] resolves to [$MASTER_IP]"
 else
   echo "Error creating cluster [$PKS_CLUSTER_NAME], last_action_state=[$cluster_state], last_action_description=[$last_action_description]"
   if [[ "$PKS_KEEP_FAILED_CLUSTER_ALIVE" == "true" ]]; then
