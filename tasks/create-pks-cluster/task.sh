@@ -15,7 +15,7 @@
 # fi
 
 echo "Login to PKS API [$UAA_URL]"
-pks login -a "$UAA_URL" -u "$PKS_CLI_USERNAME" -p "$PKS_CLI_PASSWORD" --$SKIPSSLPARAM # TBD --ca-cert CERT-PATH
+pks login -a "$UAA_URL" -u "$PKS_CLI_USERNAME" -p "$PKS_CLI_PASSWORD" --skip-ssl-validation
 
 #PKS_NAT_IP=$(./nsx-cli.sh ipam allocate | cut -d ' ' -f 3)
 NUM=0
