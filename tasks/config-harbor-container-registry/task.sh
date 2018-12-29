@@ -9,7 +9,7 @@ export ROOT_DIR=`pwd`
 source $ROOT_DIR/pipelines-repo/functions/generate_cert.sh
 export USE_CA_CERT=true
 
-if [[ -n "$HARBOR_CERT_PEM" ]]; then
+if [[ -z "$HARBOR_CERT_PEM" ]]; then
   domains=("*.${HARBOR_DOMAIN}")
   USE_CA_CERT=false
 
