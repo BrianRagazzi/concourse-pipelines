@@ -88,13 +88,6 @@ network_configuration=$(
     --arg services_dns "$SERVICES_NW_DNS" \
     --arg services_gateway "$SERVICES_NW_GATEWAY" \
     --arg services_availability_zones "$SERVICES_NW_AZS" \
-    --arg dynamic_services_network_name "$DYNAMIC_SERVICES_NETWORK_NAME" \
-    --arg dynamic_services_vcenter_network "$DYNAMIC_SERVICES_VCENTER_NETWORK" \
-    --arg dynamic_services_network_cidr "$DYNAMIC_SERVICES_NW_CIDR" \
-    --arg dynamic_services_reserved_ip_ranges "$DYNAMIC_SERVICES_EXCLUDED_RANGE" \
-    --arg dynamic_services_dns "$DYNAMIC_SERVICES_NW_DNS" \
-    --arg dynamic_services_gateway "$DYNAMIC_SERVICES_NW_GATEWAY" \
-    --arg dynamic_services_availability_zones "$DYNAMIC_SERVICES_NW_AZS" \
     '
     {
       "icmp_checks_enabled": $icmp_checks_enabled,
@@ -138,20 +131,6 @@ network_configuration=$(
               "dns": $services_dns,
               "gateway": $services_gateway,
               "availability_zone_names": ($services_availability_zones | split(","))
-            }
-          ]
-        },
-        {
-          "name": $dynamic_services_network_name,
-          "service_network": true,
-          "subnets": [
-            {
-              "iaas_identifier": $dynamic_services_vcenter_network,
-              "cidr": $dynamic_services_network_cidr,
-              "reserved_ip_ranges": $dynamic_services_reserved_ip_ranges,
-              "dns": $dynamic_services_dns,
-              "gateway": $dynamic_services_gateway,
-              "availability_zone_names": ($dynamic_services_availability_zones | split(","))
             }
           ]
         }
