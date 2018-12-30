@@ -22,7 +22,7 @@ do
   UUID=$(pks cluster ${name} --json | jq -r '.uuid')
   echo "Cluster UUID: $UUID"
   #NATIP=$(pks cluster ${name} --json | jq -r '.kubernetes_master_ips[0]')
-  #NATIP=$(pks cluster ${name} --json | jq -r '.parameters.kubernetes_master_host')
+  # NATIP=$(pks cluster ${name} --json | jq -r '.parameters.kubernetes_master_host')
 
 
   echo "Deleting PKS cluster [$name]..."
