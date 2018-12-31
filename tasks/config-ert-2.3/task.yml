@@ -132,6 +132,7 @@ params:
   POE_SSL_KEY3:
   OPSMAN_CLIENT_ID:
   OPSMAN_CLIENT_SECRET:
+  CONTAINER_NETWORKING_INTERFACE_PLUGIN:  
 
 inputs:
   - name: pipelines-repo
