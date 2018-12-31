@@ -293,6 +293,7 @@ jobs:
       CLOUD_CONTROLLER_INSTANCES: ((cloud_controller_instances))
       CLOUD_CONTROLLER_WORKER_INSTANCES: ((cloud_controller_worker_instances))
       COMPANY_NAME: ((company_name))
+      CONTAINER_NETWORKING_INTERFACE_PLUGIN: ((container_networking_interface_plugin))
       CONTAINER_NETWORKING_NW_CIDR: ((container_networking_nw_cidr))
       CREDHUB_INSTANCES: ((credhub_instances))
       CREDHUB_PRIMARY_ENCRYPTION_NAME: ((credhub_primary_encryption_name))

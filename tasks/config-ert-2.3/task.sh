@@ -187,6 +187,7 @@ cf_properties=$(
     --argjson credhub_encryption_keys "$credhub_encryption_keys_json" \
     --argjson networking_poe_ssl_certs "$networking_poe_ssl_certs_json" \
     --arg container_networking_nw_cidr "$CONTAINER_NETWORKING_NW_CIDR" \
+    --arg container_networking_interface_plugin "$CONTAINER_NETWORKING_INTERFACE_PLUGIN" \
     '
     {
       ".properties.system_blobstore": {
@@ -194,6 +195,9 @@ cf_properties=$(
       },
       ".properties.logger_endpoint_port": {
         "value": "443"
+      },
+      ".properties.container_networking_interface_plugin": {
+        "value": $container_networking_interface_plugin
       },
       ".properties.container_networking_interface_plugin.silk.network_cidr": {
         "value": $container_networking_nw_cidr
