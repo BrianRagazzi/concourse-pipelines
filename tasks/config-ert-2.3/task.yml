@@ -134,7 +134,7 @@ params:
   OPSMAN_CLIENT_SECRET:
 
 inputs:
-  - name: pcf-pipelines
+  - name: pipelines-repo
 
 run:
-  path: pcf-pipelines/tasks/config-ert/task.sh
+  path: pipelines-repo/tasks/config-ert-2.3/task.sh
