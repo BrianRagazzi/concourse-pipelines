@@ -196,9 +196,6 @@ cf_properties=$(
       ".properties.logger_endpoint_port": {
         "value": "443"
       },
-      ".properties.container_networking_interface_plugin.silk.network_cidr": {
-        "value": $container_networking_nw_cidr
-      },
       ".properties.security_acknowledgement": {
         "value": $security_acknowledgement
       },
@@ -270,6 +267,9 @@ cf_properties=$(
       {
         ".properties.container_networking_interface_plugin": {
           "value": "silk"
+        },
+        ".properties.container_networking_interface_plugin.silk.network_cidr": {
+          "value": $container_networking_nw_cidr
         }
       }
     end
