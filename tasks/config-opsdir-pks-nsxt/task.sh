@@ -4,6 +4,7 @@ set -eu
 
 iaas_configuration=$(
   jq -n \
+  --arg name "$VCENTER_HOST" \
   --arg vcenter_host "$VCENTER_HOST" \
   --arg vcenter_username "$VCENTER_USR" \
   --arg vcenter_password "$VCENTER_PWD" \
@@ -23,6 +24,7 @@ iaas_configuration=$(
   --arg nsx_ca_certificate "$NSX_CA_CERTIFICATE" \
   '
   {
+    "name": $name,
     "vcenter_host": $vcenter_host,
     "vcenter_username": $vcenter_username,
     "vcenter_password": $vcenter_password,
