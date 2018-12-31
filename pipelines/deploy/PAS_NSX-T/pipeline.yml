@@ -57,6 +57,7 @@ groups:
   - configure-nsx
   - upload-ert
   - configure-ert
+  - deploy-ert
 - name: cleanup
   jobs:
   - wipe-env
@@ -486,7 +487,7 @@ jobs:
     - get: pcf-ops-manager
       params: {globs: []}
       passed: [configure-ert, configure-nsx]
-      trigger: true
+      trigger: false
 
   - task: deploy-ert
     file: pipelines-repo/tasks/apply-changes/task.yml
