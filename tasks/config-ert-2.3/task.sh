@@ -196,8 +196,11 @@ cf_properties=$(
       ".properties.logger_endpoint_port": {
         "value": "443"
       },
+      ".properties.container_networking": {
+        "value": "enable"
+      },
       ".properties.container_networking_interface_plugin": {
-        "value": $container_networking_interface_plugin
+        "value": "external"
       },
       ".properties.container_networking_interface_plugin.silk.network_cidr": {
         "value": $container_networking_nw_cidr
