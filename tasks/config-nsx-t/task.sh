@@ -8,10 +8,10 @@ set -eu
 #                   | openssl x509 -text \
 #                   >  /tmp/complete_nsx_manager_cert.log
 #
-# #get IP address for FQDN, required as of NCP 2.1.2
-# NSX_API_MANAGER_IP=$(
-#   getent hosts $NSX_API_MANAGERS | awk '{ print $1 }'
-# )
+ #get IP address for FQDN, required as of NCP 2.1.2
+ NSX_API_MANAGER_IP=$(
+   getent hosts $NSX_API_MANAGERS | awk '{ print $1 }'
+ )
 #
 # NSX_MANAGER_CERT_ADDRESS=`cat /tmp/complete_nsx_manager_cert.log \
 #                         | grep Subject | grep "CN=" \
@@ -44,7 +44,7 @@ fi
 
 nsx_t_properties=$(
   jq -n \
-    --arg nsx_api_managers "$NSX_API_MANAGERS" \
+    --arg nsx_api_managers "$NSX_API_MANAGER_IP" \
     --arg nsx_api_user "$NSX_API_USER" \
     --arg nsx_api_password "$NSX_API_PASSWORD" \
     --arg nsx_api_ca_cert "$NSX_API_CA_CERT" \
