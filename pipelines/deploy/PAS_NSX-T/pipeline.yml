@@ -58,6 +58,9 @@ groups:
   - upload-ert
   - configure-ert
   - deploy-ert
+- name: post-deploy
+  jobs:
+  - pas-admin-user
 - name: cleanup
   jobs:
   - wipe-env
@@ -408,6 +411,8 @@ jobs:
       TCP_ROUTING: ((tcp_routing))
       TCP_ROUTING_PORTS: ((tcp_routing_ports))
       UAA_INSTANCES: ((uaa_instances))
+      MYSQL_PROXY_STATIC_IPS: ((mysql_proxy_static_ips))
+      MYSQL_PROXY_SERVICE_HOSTNAME: ((mysql_proxy_service_hostname))
 
   - task: configure-errands
     file: pipelines-repo/tasks/config-errands/task.yml
@@ -497,7 +502,7 @@ jobs:
     - get: pcf-ops-manager
       params: {globs: []}
       passed: [configure-ert, configure-nsx]
-      trigger: true
+      trigger: false
 
   - task: deploy-ert
     file: pipelines-repo/tasks/apply-changes/task.yml
@@ -505,6 +510,24 @@ jobs:
       OPS_MGR_HOST: ((ops_mgr_host))
       OPS_MGR_USR: ((ops_mgr_usr))
       OPS_MGR_PWD: ((ops_mgr_pwd))
+
+- name: pas-admin-user
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      #passed: [deploy-ert]
+      trigger: false
+
+  - task: config-pas-admin-user
+    file: pipelines-repo/tasks/config-pas-admin-user/task.yml
+    params:
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PAS_ADMIN_USERNAME: ((pas_cli_username))
+      PAS_ADMIN_PASSWORD: ((pas_cli_password))
+
+
 
 - name: wipe-env
   plan:
