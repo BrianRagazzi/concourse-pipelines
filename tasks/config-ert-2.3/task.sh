@@ -188,6 +188,8 @@ cf_properties=$(
     --argjson networking_poe_ssl_certs "$networking_poe_ssl_certs_json" \
     --arg container_networking_nw_cidr "$CONTAINER_NETWORKING_NW_CIDR" \
     --arg container_networking_interface_plugin "$CONTAINER_NETWORKING_INTERFACE_PLUGIN" \
+    --arg mysql_proxy_static_ips "${MYSQL_PROXY_STATIC_IPS}" \
+    --arg mysql_proxy_service_hostname "${MYSQL_PROXY_SERVICE_HOSTNAME}" \
     '
     {
       ".properties.system_blobstore": {
@@ -243,6 +245,12 @@ cf_properties=$(
       },
       ".diego_brain.static_ips": {
         "value": $ssh_static_ips
+      },
+      ".mysql_proxy.static_ips": {
+        "value": $mysql_proxy_static_ips
+      },
+      ".mysql_proxy.service_hostname": {
+        "value": $mysql_proxy_service_hostname
       }
     }
 
