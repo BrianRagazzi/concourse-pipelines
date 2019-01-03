@@ -285,7 +285,7 @@ jobs:
       trigger: true
 
   - task: configure-ert
-    file: pipelines-repo/tasks/config-ert-2.3/task.yml
+    file: pipelines-repo/tasks/config-ert-2.4/task.yml
     params:
       ALLOW_APP_SSH_ACCESS: ((allow_app_ssh_access))
       APPS_DOMAIN: ((apps_domain))
