@@ -411,8 +411,6 @@ jobs:
       TCP_ROUTING: ((tcp_routing))
       TCP_ROUTING_PORTS: ((tcp_routing_ports))
       UAA_INSTANCES: ((uaa_instances))
-      MYSQL_PROXY_STATIC_IPS: ((mysql_proxy_static_ips))
-      MYSQL_PROXY_SERVICE_HOSTNAME: ((mysql_proxy_service_hostname))
 
   - task: configure-errands
     file: pipelines-repo/tasks/config-errands/task.yml
