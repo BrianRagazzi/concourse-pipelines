@@ -17,7 +17,8 @@ set -eu
 # limitations under the License.
 
 cf api $CF_API_URI --skip-ssl-validation
-cf auth $CF_USERNAME $CF_PASSWORD
+#cf auth $CF_USERNAME $CF_PASSWORD
+cf login -a $CF_API_URI -u $CF_USERNAME -p $CF_PASSWORD --skip-ssl-validation -o system -s system
 
 
 for STACK_NAME in $STACKS;
