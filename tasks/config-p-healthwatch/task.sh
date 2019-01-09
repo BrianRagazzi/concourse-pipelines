@@ -91,6 +91,18 @@ end
   },
   ".healthwatch-forwarder.health_check_vm_type": {
     "value": $healthwatch_forwarder_health_check_vm_type
+  },
+  ".properties.syslog_selector": {
+    "value": "Yes without encryption"
+  },
+  ".properties.syslog_selector.active.syslog_address": {
+    "value": "syslog.lab13.cse.lab"
+  },
+  ".properties.syslog_selector.active.syslog_port": {
+    "value": "514"
+  },
+  ".properties.syslog_selector.active.syslog_transport": {
+    "value": "udp"
   }
 }'
 )

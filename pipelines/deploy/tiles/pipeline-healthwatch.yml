@@ -158,7 +158,7 @@ jobs:
   - aggregate:
     - get: pipelines-repo
       passed: [disable-healthwatch-errands]
-      trigger: true
+      trigger: false
 
   - task: apply-changes
     file: pipelines-repo/tasks/apply-changes/task.yml
