@@ -499,7 +499,7 @@ jobs:
     - get: pcf-ops-manager
       params: {globs: []}
       passed: [configure-ert, configure-nsx]
-      trigger: false
+      trigger: true
 
   - task: deploy-ert
     file: pipelines-repo/tasks/apply-changes/task.yml
@@ -512,8 +512,8 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      #passed: [deploy-ert]
-      trigger: false
+      passed: [deploy-ert]
+      trigger: true
 
   - task: config-pas-admin-user
     file: pipelines-repo/tasks/config-pas-admin-user/task.yml
