@@ -38,7 +38,7 @@ properties_config=$($JQ_CMD -n \
   --arg healthwatch_opsman_enable_url ${HEALTHWATCH_OPSMAN_ENABLE_URL:-null} \
   --arg healthwatch_bosh_taskcheck_username ${BOSH_TASKCHECK_USER} \
   --arg healthwatch_bosh_taskcheck_password ${BOSH_TASKCHECK_PASS} \
-  --arg healthwatch_syslog_selector ${HEALTHWATCH_SYSLOG_SELECTOR:-"No"} \
+  --arg healthwatch_syslog_selector "${HEALTHWATCH_SYSLOG_SELECTOR}" \
   --arg syslog_port ${SYSLOG_PORT} \
   --arg syslog_address ${SYSLOG_ADDRESS} \
   --arg syslog_transport_protocol ${SYSLOG_TRANSPORT_PROTOCOL} \
@@ -97,7 +97,7 @@ end
     "value": $healthwatch_forwarder_health_check_vm_type
   },
   ".properties.syslog_selector": {
-    "value": \"$healthwatch_syslog_selector\"
+    "value": $healthwatch_syslog_selector
   },
   ".properties.syslog_selector.active.syslog_address": {
     "value": $syslog_address
