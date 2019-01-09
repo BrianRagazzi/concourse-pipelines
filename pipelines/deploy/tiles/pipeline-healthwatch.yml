@@ -130,6 +130,10 @@ jobs:
       HEALTHWATCH_FORWARDER_PERSISTENT_DISK_MB: ((healthwatch_forwarder_persistent_disk_mb))
       HEALTHWATCH_FORWARDER_INSTANCES: ((healthwatch_forwarder_instances))
       HEALTHWATCH_FORWARDER_INSTANCE_TYPE: ((healthwatch_forwarder_instance_type))
+      HEALTHWATCH_SYSLOG_SELECTOR: ((healthwatch_syslog_selector))
+      SYSLOG_PORT: ((syslog_port))
+      SYSLOG_ADDRESS: ((syslog_address))
+      SYSLOG_TRANSPORT_PROTOCOL: ((syslog_transport_protocol))
 
 - name: disable-healthwatch-errands
   plan:

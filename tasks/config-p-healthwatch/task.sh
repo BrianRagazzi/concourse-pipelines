@@ -38,6 +38,10 @@ properties_config=$($JQ_CMD -n \
   --arg healthwatch_opsman_enable_url ${HEALTHWATCH_OPSMAN_ENABLE_URL:-null} \
   --arg healthwatch_bosh_taskcheck_username ${BOSH_TASKCHECK_USER} \
   --arg healthwatch_bosh_taskcheck_password ${BOSH_TASKCHECK_PASS} \
+  --arg healthwatch_syslog_selector ${HEALTHWATCH_SYSLOG_SELECTOR:-"No"} \
+  --arg syslog_port ${SYSLOG_PORT} \
+  --arg syslog_address ${SYSLOG_ADDRESS} \
+  --arg syslog_transport_protocol ${SYSLOG_TRANSPORT_PROTOCOL} \
 '{
   ".properties.opsman": {
     "value": $healthwatch_opsman
@@ -93,16 +97,16 @@ end
     "value": $healthwatch_forwarder_health_check_vm_type
   },
   ".properties.syslog_selector": {
-    "value": "Yes without encryption"
+    "value": $healthwatch_syslog_selector
   },
   ".properties.syslog_selector.active.syslog_address": {
-    "value": "syslog.lab13.cse.lab"
+    "value": $syslog_address
   },
   ".properties.syslog_selector.active.syslog_port": {
-    "value": "514"
+    "value": $syslog_port
   },
   ".properties.syslog_selector.active.syslog_transport": {
-    "value": "udp"
+    "value": $syslog_transport_protocol
   }
 }'
 )
