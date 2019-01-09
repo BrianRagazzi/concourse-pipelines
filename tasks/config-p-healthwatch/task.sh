@@ -97,7 +97,7 @@ end
     "value": $healthwatch_forwarder_health_check_vm_type
   },
   ".properties.syslog_selector": {
-    "value": $healthwatch_syslog_selector
+    "value": \"$healthwatch_syslog_selector\"
   },
   ".properties.syslog_selector.active.syslog_address": {
     "value": $syslog_address
