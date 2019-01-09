@@ -19,17 +19,19 @@ image_resource:
   type: docker-image
   source:
     repository: pcfnorm/rootfs
+    tag: 1.0.28
 
 
 inputs:
 - name: buildpack
-- name: pipelines-repo
+- name: pcf-pipelines
 
 params:
   CF_API_URI:
   CF_USERNAME:
   CF_PASSWORD:
   BUILDPACK_NAME:
+  STACKS:
 
 run:
-  path: pipelines-repo/tasks/stage-buildpack/task.sh
+  path: pcf-pipelines/tasks/stage-buildpack/task.sh
