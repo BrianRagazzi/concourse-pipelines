@@ -45,8 +45,7 @@ ADMIN_CLIENT_PW=$(
     jq -r '.[] | .value.password'
 )
 
-cf login -a https://api.$SYS_DOMAIN -u admin -p $ADMIN_PW --skip-ssl-validation -o system
-# -s system
+cf login -a https://api.$SYS_DOMAIN -u admin -p $ADMIN_PW --skip-ssl-validation -o system -s system
 
 cf create-user $PAS_ADMIN_USERNAME $PAS_ADMIN_PASSWORD
 cf set-org-role $PAS_ADMIN_USERNAME system OrgManager

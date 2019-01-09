@@ -22,7 +22,6 @@ resources:
     product_version: ((opsman_major_minor_version))
     sort_by: semver
 
-
 - name: elastic-runtime
   type: pivnet
   source:
