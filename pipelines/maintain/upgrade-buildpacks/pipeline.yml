@@ -31,79 +31,79 @@ resources:
 - name: binary-buildpack
   type: pivnet
   source:
-    api_token: {{pivnet_token}}
-    product_slug: buildpacks
-    product_version: Binary*
+    api_token: ((pivnet_token))
+    product_slug: binary-buildpack
+    product_version: \d+\.\d+\.\d+
 
 - name: dotnet-core-buildpack
   type: pivnet
   source:
-    api_token: {{pivnet_token}}
-    product_slug: buildpacks
-    product_version: .NET*
+    api_token: ((pivnet_token))
+    product_slug: dotnet-core-buildpack
+    product_version: \d+\.\d+\.\d+
 
 - name: go-buildpack
   type: pivnet
   source:
-    api_token: {{pivnet_token}}
-    product_slug: buildpacks
-    product_version: go_*
+    api_token: ((pivnet_token))
+    product_slug: go-buildpack
+    product_version: \d+\.\d+\.\d+
 
 - name: java-buildpack
   type: pivnet
   source:
-    api_token: {{pivnet_token}}
-    product_slug: buildpacks
-    product_version: Java*
+    api_token: ((pivnet_token))
+    product_slug: java-buildpack
+    product_version: \d+\.\d+(\.\d+)?
 
 - name: nodejs-buildpack
   type: pivnet
   source:
-    api_token: {{pivnet_token}}
-    product_slug: buildpacks
-    product_version: NodeJS*
+    api_token: ((pivnet_token))
+    product_slug: nodejs-buildpack
+    product_version: \d+\.\d+\.\d+
 
 - name: php-buildpack
   type: pivnet
   source:
-    api_token: {{pivnet_token}}
-    product_slug: buildpacks
-    product_version: PHP*
+    api_token: ((pivnet_token))
+    product_slug: php-buildpack
+    product_version: \d+\.\d+\.\d+
 
 - name: python-buildpack
   type: pivnet
   source:
-    api_token: {{pivnet_token}}
-    product_slug: buildpacks
-    product_version: Python*
+    api_token: ((pivnet_token))
+    product_slug: python-buildpack
+    product_version: \d+\.\d+\.\d+
 
 - name: ruby-buildpack
   type: pivnet
   source:
-    api_token: {{pivnet_token}}
-    product_slug: buildpacks
-    product_version: Ruby*
+    api_token: ((pivnet_token))
+    product_slug: ruby-buildpack
+    product_version: \d+\.\d+\.\d+
 
 - name: staticfile-buildpack
   type: pivnet
   source:
-    api_token: {{pivnet_token}}
-    product_slug: buildpacks
-    product_version: Staticfile*
+    api_token: ((pivnet_token))
+    product_slug: staticfile-buildpack
+    product_version: \d+\.\d+\.\d+
 
 - name: tc-buildpack
   type: pivnet
   source:
-    api_token: {{pivnet_token}}
-    product_slug: buildpacks
-    product_version: "tc Server*"
+    api_token: ((pivnet_token))
+    product_slug: tc-server-buildpack
+    product_version: \d+\.\d+(\.\d+)?
 
 - name: nginx-buildpack
   type: pivnet
   source:
-    api_token: {{pivnet_token}}
-    product_slug: buildpacks
-    product_version: nginx*
+    api_token: ((pivnet_token))
+    product_slug: nginx-buildpack
+    product_version: \d+\.\d+(\.\d+)?
 
 # - name: schedule
 #   type: time
@@ -117,10 +117,10 @@ resources:
 - name: schedule
   type: time
   source:
-    start: {{schedule_start}}
-    stop: {{schedule_stop}}
-    location: {{schedule_location}}
-    days: [{{schedule_days}}]
+    start: ((schedule_start))
+    stop: ((schedule_stop))
+    location: ((schedule_location))
+    days: [((schedule_days))]
 
 jobs:
 - name: regulator
@@ -148,7 +148,7 @@ jobs:
       params: { globs: [] }
     - get: tc-buildpack
       params: { globs: [] }
-    - get: ngix-buildpack
+    - get: nginx-buildpack
       params: { globs: [] }
 
 - name: stage-binary-buildpack
@@ -516,6 +516,6 @@ jobs:
 
 
 cf_api_params: &cf_api_params
-  CF_API_URI: {{cf_api_uri}}
-  CF_USERNAME: {{cf_user}}
-  CF_PASSWORD: {{cf_password}}
+  CF_API_URI: ((cf_api_uri))
+  CF_USERNAME: ((cf_user))
+  CF_PASSWORD: ((cf_password))
