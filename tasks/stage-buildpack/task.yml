@@ -24,7 +24,7 @@ image_resource:
 
 inputs:
 - name: buildpack
-- name: pcf-pipelines
+- name: pipelines-repo
 
 params:
   CF_API_URI:
@@ -34,4 +34,4 @@ params:
   STACKS:
 
 run:
-  path: pcf-pipelines/tasks/stage-buildpack/task.sh
+  path: pipelines-repo/tasks/stage-buildpack/task.sh
