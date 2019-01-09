@@ -47,7 +47,7 @@ resources:
   source:
     api_token: {{pivnet_token}}
     product_slug: buildpacks
-    product_version: Go*
+    product_version: go_*
 
 - name: java-buildpack
   type: pivnet
@@ -98,6 +98,13 @@ resources:
     product_slug: buildpacks
     product_version: "tc Server*"
 
+- name: nginx-buildpack
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: buildpacks
+    product_version: nginx*
+
 # - name: schedule
 #   type: time
 #   source:
@@ -140,6 +147,8 @@ jobs:
     - get: staticfile-buildpack
       params: { globs: [] }
     - get: tc-buildpack
+      params: { globs: [] }
+    - get: ngix-buildpack
       params: { globs: [] }
 
 - name: stage-binary-buildpack
@@ -468,6 +477,43 @@ jobs:
       <<: *cf_api_params
       SOURCE_BUILDPACK_NAME: tc_buildpack_latest
       TARGET_BUILDPACK_NAME: tc_buildpack
+
+- name: stage-nginx-buildpack
+  serial_groups: [cc-api]
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: buildpack
+      passed: [regulator]
+      resource: nginx-buildpack
+      trigger: true
+      params:
+        globs:
+        - "*offline*"
+
+  - task: stage
+    file: pipelines-repo/tasks/stage-buildpack/task.yml
+    params:
+      <<: *cf_api_params
+      BUILDPACK_NAME: nginx_buildpack_latest
+
+- name: promote-nginx-buildpack
+  serial_groups: [cc-api]
+  plan:
+  - aggregate:
+    - get: nginx-buildpack
+      passed: [stage-nginx-buildpack]
+      trigger: true
+      params: {globs: []}
+    - get: pipelines-repo
+
+  - task: promote
+    file: pipelines-repo/tasks/promote-buildpack/task.yml
+    params:
+      <<: *cf_api_params
+      SOURCE_BUILDPACK_NAME: nginx_buildpack_latest
+      TARGET_BUILDPACK_NAME: nginx_buildpack
+
 
 cf_api_params: &cf_api_params
   CF_API_URI: {{cf_api_uri}}
