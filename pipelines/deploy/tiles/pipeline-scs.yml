@@ -1,0 +1,504 @@
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tag: latest-final
+
+resources:
+
+- name: pivnet-cli
+  type: github-release
+  source:
+    user: pivotal-cf
+    repository: pivnet-cli
+    access_token: ((github_token)) ## Optional: Removing this will cause you to hit the rate limit
+
+- name: pipelines-repo
+  type: git
+  source:
+    uri: ((github_repo))
+    branch: ((github_branch))
+    username: ((github_username))
+    password: ((github_token))
+
+
+- name: pivnet-mysql
+  type: pivnet
+  source:
+    api_token: ((pivnet_token))
+    product_slug: pivotal-mysql
+    product_version: ((mysql_major_minor_version))
+
+- name: pivnet-rabbitmq
+  type: pivnet
+  source:
+    api_token: ((pivnet_token))
+    product_slug: p-rabbitmq
+    product_version: ((rabbitmq_major_minor_version))
+
+# - name: replicator
+#   type: github-release
+#   source:
+#     user: pivotal-cf
+#     repository: replicator
+#     access_token: ((github_token)) ## Optional: Removing this will cause you to hit the rate limit
+
+- name: pivnet-scs
+  type: pivnet
+  source:
+    api_token: ((pivnet_token))
+    product_slug: p-spring-cloud-services
+    product_version: ((spring_cloud_services_major_minor_version))
+
+jobs:
+- name: upload-mysql
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-mysql
+      params:
+        globs:
+        - "*.pivotal"
+      trigger: true
+    - get: pivnet-cli
+      params:
+        globs:
+        - "*linux-amd64*"
+
+  - task: upload-mysql
+    file: pipelines-repo/tasks/upload-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+
+  - task: upload-stemcell
+    file: pipelines-repo/tasks/stemcell-uploader/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+      IAAS_TYPE: ((iaas_type))
+
+- name: stage-mysql
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-mysql
+      params:
+        globs:
+        - "*.pivotal"
+      passed: [upload-mysql]
+      trigger: true
+
+  - task: stage-mysql
+    file: pipelines-repo/tasks/stage-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_IDENTIFIER: p-mysql
+
+- name: config-mysql
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-mysql
+      params:
+        globs: []
+      passed: [stage-mysql]
+      trigger: true
+
+  - task: config-tile
+    file: pipelines-repo/tasks/config-mysql/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      NETWORK_NAME: ((network_name))
+      OTHER_AZS: ((other_azs))
+      SINGLETON_JOBS_AZ: ((singleton_jobs_az))
+      PRODUCT_NAME: p-mysql
+      CF_MYSQL_BROKER_ALLOW_TABLE_LOCKS: ((mysql_broker_allow_table_locks))
+      CF_MYSQL_BROKER_BIND_HOSTNAME: ((mysql_broker_bind_hostname))
+      CF_MYSQL_BROKER_QUOTA_ENFORCER_PAUSE: ((mysql_broker_quota_enforcer_pause))
+      MYSQL_ALLOW_LOCAL_INFILE: ((mysql_allow_local_infile))
+      MYSQL_ALLOW_REMOTE_ADMIN_ACCESS: ((mysql_allow_remote_admin_access))
+      MYSQL_BINLOG_EXPIRE_DAYS: ((mysql_binlog_expire_days))
+      MYSQL_CLI_HISTORY: ((mysql_cli_history))
+      MYSQL_CLUSTER_NAME: ((mysql_cluster_name))
+      MYSQL_CLUSTER_PROBE_TIMEOUT: ((mysql_cluster_probe_timeout))
+      MYSQL_INNODB_LARGE_PREFIX_ENABLED: ((mysql_innodb_large_prefix_enabled))
+      MYSQL_INNODB_STRICT_MODE: ((mysql_innodb_strict_mode))
+      MYSQL_MAX_CONNECTIONS: ((mysql_max_connections))
+      MYSQL_METRICS_POLLING_FREQUENCY: ((mysql_metrics_polling_frequency))
+      MYSQL_MYSQL_START_TIMEOUT: ((mysql_mysql_start_timeout))
+      MYSQL_ROADMIN_PASSWORD: ((mysql_roadmin_password))
+      MYSQL_SKIP_NAME_RESOLVE: ((mysql_skip_name_resolve))
+      MYSQL_TABLE_DEFINITION_CACHE: ((mysql_table_definition_cache))
+      MYSQL_TABLE_OPEN_CACHE: ((mysql_table_open_cache))
+      MYSQL_TMP_TABLE_SIZE: ((mysql_tmp_table_size))
+      BACKUP_OPTIONS: ((mysql_backup_options))
+      BACKUP_OPTIONS_ENABLE_BACKUP_ALL_MASTERS: ((mysql_backup_options_enable_backup_all_masters))
+      BACKUP_OPTIONS_ENABLE_CRON_SCHEDULE: ((mysql_backup_options_enable_cron_schedule))
+      BACKUPS: ((mysql_backups))
+      BACKUPS_AZURE_BASE_URL: ((mysql_backups_azure_base_url))
+      BACKUPS_AZURE_CONTAINER: ((mysql_backups_azure_container))
+      BACKUPS_AZURE_CONTAINER_PATH: ((mysql_backups_azure_container_path))
+      BACKUPS_AZURE_STORAGE_ACCESS_KEY: ((mysql_backups_azure_storage_access_key))
+      BACKUPS_AZURE_STORAGE_ACCOUNT: ((mysql_backups_azure_storage_account))
+      BACKUPS_ENABLE_ACCESS_KEY_ID: ((mysql_backups_enable_access_key_id))
+      BACKUPS_ENABLE_BUCKET_NAME: ((mysql_backups_enable_bucket_name))
+      BACKUPS_ENABLE_BUCKET_PATH: ((mysql_backups_enable_bucket_path))
+      BACKUPS_ENABLE_ENDPOINT_URL: ((mysql_backups_enable_endpoint_url))
+      BACKUPS_ENABLE_REGION: ((mysql_backups_enable_region))
+      BACKUPS_ENABLE_SECRET_ACCESS_KEY: ((mysql_backups_enable_secret_access_key))
+      BACKUPS_GCS_BUCKET_NAME: ((mysql_backups_gcs_bucket_name))
+      BACKUPS_GCS_PROJECT_ID: ((mysql_backups_gcs_project_id))
+      BACKUPS_GCS_SERVICE_ACCOUNT_JSON: ((mysql_backups_gcs_service_account_json))
+      BACKUPS_SCP_DESTINATION: ((mysql_backups_scp_destination))
+      BACKUPS_SCP_PORT: ((mysql_backups_scp_port))
+      BACKUPS_SCP_SCP_KEY: ((mysql_backups_scp_scp_key))
+      BACKUPS_SCP_SERVER: ((mysql_backups_scp_server))
+      BACKUPS_SCP_USER: ((mysql_backups_scp_user))
+      BUFFER_POOL_SIZE: ((mysql_buffer_pool_size))
+      BUFFER_POOL_SIZE_BYTES_BUFFER_POOL_SIZE_BYTES: ((mysql_buffer_pool_size_bytes_buffer_pool_size_bytes))
+      BUFFER_POOL_SIZE_PERCENT_BUFFER_POOL_SIZE_PERCENT: ((mysql_buffer_pool_size_percent_buffer_pool_size_percent))
+      INNODB_FLUSH_LOG_AT_TRX_COMMIT: ((mysql_innodb_flush_log_at_trx_commit))
+      OPTIONAL_PROTECTIONS: ((mysql_optional_protections))
+      OPTIONAL_PROTECTIONS_ENABLE_CANARY_POLL_FREQUENCY: ((mysql_optional_protections_enable_canary_poll_frequency))
+      OPTIONAL_PROTECTIONS_ENABLE_CANARY_WRITE_READ_DELAY: ((mysql_optional_protections_enable_canary_write_read_delay))
+      OPTIONAL_PROTECTIONS_ENABLE_NOTIFY_ONLY: ((mysql_optional_protections_enable_notify_only))
+      OPTIONAL_PROTECTIONS_ENABLE_PREVENT_AUTO_REJOIN: ((mysql_optional_protections_enable_prevent_auto_rejoin))
+      OPTIONAL_PROTECTIONS_ENABLE_RECIPIENT_EMAIL: ((mysql_optional_protections_enable_recipient_email))
+      OPTIONAL_PROTECTIONS_ENABLE_REPLICATION_CANARY: ((mysql_optional_protections_enable_replication_canary))
+      PLAN_COLLECTION: ((mysql_plan_collection))
+      SERVER_ACTIVITY_LOGGING: ((mysql_server_activity_logging))
+      SERVER_ACTIVITY_LOGGING_ENABLE_AUDIT_LOGGING_EVENTS: ((mysql_server_activity_logging_enable_audit_logging_events))
+      SERVER_ACTIVITY_LOGGING_ENABLE_SERVER_AUDIT_EXCLUDED_USERS_CSV: ((mysql_server_activity_logging_enable_server_audit_excluded_users_csv))
+      SYSLOG: ((mysql_syslog))
+      SYSLOG_ENABLED_ADDRESS: ((mysql_syslog_enabled_address))
+      SYSLOG_ENABLED_PORT: ((mysql_syslog_enabled_port))
+      SYSLOG_ENABLED_PROTOCOL: ((mysql_syslog_enabled_protocol))
+      PROXY_SHUTDOWN_DELAY: ((mysql_proxy_shutdown_delay))
+      PROXY_STARTUP_DELAY: ((mysql_proxy_startup_delay))
+      PROXY_STATIC_IPS: ((mysql_proxy_static_ips))
+      MYSQL_INSTANCES: ((mysql_instances))
+      MYSQL_INSTANCE_TYPE: ((mysql_instance_type))
+      MYSQL_PERSISTENT_DISK_MB: ((mysql_persistent_disk_mb))
+      BACKUP_PREPARE_INSTANCES: ((mysql_backup_prepare_instances))
+      BACKUP_PREPARE_INSTANCE_TYPE: ((mysql_backup_prepare_instance_type))
+      BACKUP_PREPARE_PERSISTENT_DISK_MB: ((mysql_backup_prepare_persistent_disk_mb))
+      PROXY_INSTANCES: ((mysql_proxy_instances))
+      PROXY_INSTANCE_TYPE: ((mysql_proxy_instance_type))
+      MONITORING_INSTANCES: ((mysql_monitoring_instances))
+      MONITORING_INSTANCE_TYPE: ((mysql_monitoring_instance_type))
+      CF_MYSQL_BROKER_INSTANCES: ((mysql_broker_instances))
+      CF_MYSQL_BROKER_INSTANCE_TYPE: ((mysql_broker_instance_type))
+
+- name: disable-mysql-errands
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-mysql
+      params:
+        globs: []
+      passed: [config-mysql]
+      trigger: true
+
+  - task: disable-errands
+    file: pipelines-repo/tasks/config-errands/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_NAME: p-mysql
+      ERRANDS_TO_DISABLE: ((mysql_errands_to_disable))
+      ERRANDS_TO_RUN_ON_CHANGE: ((mysql_errands_to_run_on_change))
+
+- name: upload-rabbitmq
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-rabbitmq
+      params:
+        globs:
+        - "*.pivotal"
+      trigger: true
+    - get: pivnet-cli
+      params:
+        globs:
+        - "*linux-amd64*"
+
+  - task: upload
+    file: pipelines-repo/tasks/upload-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+
+  - task: upload-stemcell
+    file: pipelines-repo/tasks/stemcell-uploader/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+      IAAS_TYPE: ((iaas_type))
+
+- name: stage-rabbitmq
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-rabbitmq
+      params:
+        globs:
+        - "*.pivotal"
+      passed: [upload-rabbitmq]
+      trigger: true
+
+  - task: stage
+    file: pipelines-repo/tasks/stage-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_IDENTIFIER: p-rabbitmq
+
+- name: config-rabbitmq
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-rabbitmq
+      params:
+        globs: []
+      passed: [stage-rabbitmq]
+      trigger: true
+  - task: config-tile
+    file: pipelines-repo/tasks/config-p-rabbitmq/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      NETWORK_NAME: ((network_name))
+      SERVICE_NETWORK_NAME: ((service_network_name))
+      SINGLETON_JOBS_AZ: ((singleton_jobs_az))
+      OTHER_AZS: ((other_azs))
+      TILE_RABBIT_ADMIN_USER: ((rabbitmq_admin_user))
+      TILE_RABBIT_ADMIN_PASSWD: ((rabbitmq_admin_pass))
+      TILE_RABBIT_PROXY_INSTANCES: ((rabbitmq_proxy_instances))
+      TILE_RABBIT_SERVER_INSTANCES: ((rabbitmq_server_instances))
+      TILE_RABBIT_ON_DEMAND_PLAN_1_INSTANCE_QUOTA: ((rabbitmq_plan1_instance_quota))
+      TILE_RABBIT_ON_DEMAND_PLAN_6_INSTANCE_QUOTA: ((rabbitmq_plan6_instance_quota))
+      SYSLOG_SELECTOR: ((syslog_enabled))
+      SYSLOG_ADDRESS: ((syslog_enabled_address))
+      SYSLOG_PORT: ((syslog_enabled_port))
+      SYSLOG_PROTOCOL: ((syslog_enabled_protocol))
+
+- name: disable-rabbitmq-errands
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-rabbitmq
+      params:
+        globs: []
+      passed: [config-rabbitmq]
+      trigger: true
+
+  - task: config-errands
+    file: pipelines-repo/tasks/config-errands/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_NAME: p-rabbitmq
+      ERRANDS_TO_DISABLE: ((rabbitmq_errands_to_disable))
+      ERRANDS_TO_RUN_ON_CHANGE: ((rabbitmq_errands_to_run_on_change))
+
+- name: upload-scs
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      passed: [apply-changes1]
+    - get: pivnet-product
+      resource: pivnet-scs
+      params:
+        globs:
+        - "*.pivotal"
+      trigger: true
+    - get: pivnet-cli
+      params:
+        globs:
+        - "*linux-amd64*"
+
+  - task: upload-scs
+    file: pipelines-repo/tasks/upload-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+
+  - task: upload-stemcell
+    file: pipelines-repo/tasks/stemcell-uploader/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PIVNET_API_TOKEN: ((pivnet_token))
+      IAAS_TYPE: ((iaas_type))
+
+- name: stage-scs
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-scs
+      params:
+        globs:
+        - "*.pivotal"
+      passed: [upload-scs]
+      trigger: true
+
+  - task: stage
+    file: pipelines-repo/tasks/stage-product/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_IDENTIFIER: p-spring-cloud-services
+
+- name: config-scs
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-scs
+      params:
+        globs: []
+      passed: [stage-scs]
+      trigger: true
+  - task: config-tile
+    file: pipelines-repo/tasks/config-p-spring-cloud-services/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      NETWORK_NAME: ((network_name))
+      SERVICE_NETWORK_NAME: ((service_network_name))
+      SINGLETON_JOBS_AZ: ((singleton_jobs_az))
+      OTHER_AZS: ((other_azs))
+      DEPLOY_SERVICE_BROKER_BROKER_MAX_INSTANCES: ((deploy_service_broker_broker_max_instances))
+      DEPLOY_SERVICE_BROKER_BUILDPACK: ((deploy_service_broker_buildpack))
+      DEPLOY_SERVICE_BROKER_DISABLE_CERT_CHECK: ((deploy_service_broker_disable_cert_check))
+      DEPLOY_SERVICE_BROKER_INSTANCES_APP_PUSH_TIMEOUT: ((deploy_service_broker_instances_app_push_timeout))
+      #DEPLOY_SERVICE_BROKER_MESSAGE_BUS_SERVICE:
+      DEPLOY_SERVICE_BROKER_MESSAGE_BUS_SERVICE_PLAN: ((deploy_service_broker_message_bus_service_plan))
+      #DEPLOY_SERVICE_BROKER_PERSISTENCE_STORE_SERVICE:
+      DEPLOY_SERVICE_BROKER_PERSISTENCE_STORE_SERVICE_PLAN: ((deploy_service_broker_persistence_store_service_plan))
+      DEPLOY_SERVICE_BROKER_SECURE_CREDENTIALS: ((deploy_service_broker_secure_credentials))
+      REGISTER_SERVICE_BROKER_ENABLE_GLOBAL_ACCESS: ((register_service_broker_enable_global_access))
+
+- name: disable-scs-errands
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+    - get: pivnet-product
+      resource: pivnet-scs
+      params:
+        globs: []
+      passed: [config-scs]
+      trigger: true
+
+  - task: config-errands
+    file: pipelines-repo/tasks/config-errands/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+      PRODUCT_NAME: p-spring-cloud-services
+      ERRANDS_TO_DISABLE: ((scs_errands_to_disable))
+      ERRANDS_TO_RUN_ON_CHANGE: ((scs_errands_to_run_on_change))
+
+- name: apply-changes1
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      #passed: [disable-mysql-errands, disable-healthwatch-errands, disable-rabbitmq-errands, disable-scs-errands]
+      #trigger: false
+    #- get: pivnet-scs
+    #  params:
+    #    globs: []
+    #  passed: [disable-scs-errands]
+    #  trigger: false
+    - get: pivnet-rabbitmq
+      params:
+        globs: []
+      passed: [disable-rabbitmq-errands]
+      trigger: false
+    - get: pivnet-mysql
+      params:
+        globs: []
+      passed: [disable-mysql-errands]
+      trigger: false
+    - get: pivnet-healthwatch
+      params:
+        globs: []
+      passed: [disable-healthwatch-errands]
+      trigger: false
+
+  - task: apply-changes
+    file: pipelines-repo/tasks/apply-changes/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
+
+- name: apply-changes2
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      #passed: [disable-mysql-errands, disable-healthwatch-errands, disable-rabbitmq-errands, disable-scs-errands]
+      #trigger: false
+    - get: pivnet-scs
+      params:
+        globs: []
+      passed: [disable-scs-errands]
+      trigger: false
+
+
+  - task: apply-changes
+    file: pipelines-repo/tasks/apply-changes/task.yml
+    params:
+      DEBUG: ((debug))
+      OPS_MGR_HOST: ((ops_mgr_host))
+      OPS_MGR_USR: ((ops_mgr_usr))
+      OPS_MGR_PWD: ((ops_mgr_pwd))
