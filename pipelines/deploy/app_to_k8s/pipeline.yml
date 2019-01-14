@@ -1,143 +1,24 @@
 resource_types:
-- name: pivnet
-  type: docker-image
-  source:
-    repository: pivotalcf/pivnet-resource
-    tag: latest-final
+
 
 resources:
-#These are used by yelb, the test application
-- name: yelb-ui
-  type: docker-image
-  source:
-    repository: mreferre/yelb-ui
-    tag: 0.4
-    username: ((dockerhub_username))
-    password: ((dockerhub_password))
-
-- name: yelb-ui-harbor
-  type: docker-image
-  source:
-    repository: ((harbor_hostname))/library/yelb-ui
-    tag: 0.4
-    username: admin
-    password: ((harbor_admin_password))
-    insecure_registries:
-    - ((harbor_hostname))
-
-- name: yelb-appserver
-  type: docker-image
-  source:
-    repository: mreferre/yelb-appserver
-    tag: 0.4
-    username: ((dockerhub_username))
-    password: ((dockerhub_password))
-
-- name: yelb-appserver-harbor
-  type: docker-image
-  source:
-    repository: ((harbor_hostname))/library/yelb-appserver
-    tag: 0.4
-    username: admin
-    password: ((harbor_admin_password))
-    insecure_registries:
-    - ((harbor_hostname))
-
-- name: yelb-db
-  type: docker-image
-  source:
-    repository: mreferre/yelb-db
-    tag: 0.3
-    username: ((dockerhub_username))
-    password: ((dockerhub_password))
-
-- name: yelb-db-harbor
-  type: docker-image
-  source:
-    repository: ((harbor_hostname))/library/yelb-db
-    tag: 0.3
-    username: admin
-    password: ((harbor_admin_password))
-    insecure_registries:
-    - ((harbor_hostname))
-
-- name: redis
-  type: docker-image
-  source:
-    repository: redis
-    tag: 5.0.2
-    username: ((dockerhub_username))
-    password: ((dockerhub_password))
-
-- name: redis-harbor
-  type: docker-image
-  source:
-    repository: ((harbor_hostname))/library/redis
-    tag: 5.0.2
-    username: admin
-    password: ((harbor_admin_password))
-    insecure_registries:
-    - ((harbor_hostname))
-
-
-groups:
-- name: get-images
-  jobs:
-  - copy-yelb-images-to-harbor
-- name: yelb-harbor
-  jobs:
-  - deploy-yelb-harbor
 
 jobs:
-- name: copy-yelb-images-to-harbor
-  plan:
-  - get: yelb-ui
-    trigger: true
-    params:
-      save: true
-      rootfs: false
-  - get: yelb-appserver
-    params:
-      save: true
-      rootfs: false
-  - get: yelb-db
-    params:
-      save: true
-      rootfs: false
-  - get: redis
-    params:
-      save: true
-      rootfs: false
-  - put: yelb-ui-harbor
-    params:
-      load: yelb-ui
-      tag: yelb-ui/tag
-  - put: yelb-appserver-harbor
-    params:
-      load: yelb-appserver
-      tag: yelb-appserver/tag
-  - put: yelb-db-harbor
-    params:
-      load: yelb-db
-      tag: yelb-db/tag
-  - put: redis-harbor
-    params:
-      load: redis
-      tag: redis/tag
 
-- name: deploy-yelb-harbor
+- name: deploy-app
   plan:
   - aggregate:
     - get: pipelines-repo
       trigger: false
-      passed: [copy-yelb-images-to-harbor]
 
-  - task: deploy-pks-test-app
-    file: pipelines-repo/tasks/deploy-pks-test-app/task.yml
+
+  - task: deploy-pks-app
+    file: pipelines-repo/tasks/deploy-pks-app/task.yml
     params:
       UAA_URL: ((uaa_url))
       PKS_CLI_USERNAME: ((pks_cli_username))
       PKS_CLI_PASSWORD: ((pks_cli_password))
-      APP_YAML: ((app_yaml))
+      K8S_NAMESPACE: ((k8s_namespace))
+      APP_YAML_URL: ((app_yaml_url))
       VALUE_TO_REPLACE: ((yaml_value_to_replace))
       REPLACEMENT_VALUE: ((yaml_replacement_value))

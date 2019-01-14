@@ -2,3 +2,11 @@ harbor_hostname: CHANGEME #harbor.pcf.domain.local
 harbor_admin_password: CHANGEME
 dockerhub_username: CHANGEME
 dockerhub_password: CHANGEME
+debug: false
+github_branch: master
+
+app_yaml_url: http://path.to/app.yml
+yaml_value_to_replace: value_to_replace
+yaml_replacement_value: my_new_value
+k8s_namespace: my_namespace
+k8s_clustername: my_k8s_cluster

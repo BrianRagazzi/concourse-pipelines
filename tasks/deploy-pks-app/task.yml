@@ -10,13 +10,12 @@ inputs:
 - name: pipelines-repo
 
 run:
-  path: pipelines-repo/tasks/deploy-pks-test-app/task.sh
+  path: pipelines-repo/tasks/deploy-pks-app/task.sh
 
 params:
-  PCF_PKS_API:
+  UAA_URL:
   PKS_CLI_USERNAME:
   PKS_CLI_PASSWORD:
-  YAML_SOURCE:
+  APP_YAML_URL:
   VALUE_TO_REPLACE:
   REPLACEMENT_VALUE:
-  UAA_URL:
