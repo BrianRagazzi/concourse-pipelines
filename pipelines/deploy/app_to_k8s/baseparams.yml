@@ -1,12 +1,15 @@
-harbor_hostname: CHANGEME #harbor.pcf.domain.local
-harbor_admin_password: CHANGEME
-dockerhub_username: CHANGEME
-dockerhub_password: CHANGEME
 debug: false
+
+github_token: CHANGEME # [R] Your github token
+github_repo: https://github.com/BrianRagazzi/concourse-pipelines # [R] Pipelines github repo
 github_branch: master
+github_username: CHANGEME # [R] Your github username
 
 app_yaml_url: http://path.to/app.yml
 yaml_value_to_replace: value_to_replace
 yaml_replacement_value: my_new_value
 k8s_namespace: my_namespace
 k8s_clustername: my_k8s_cluster
+pks_cli_username: CHANGEME
+pks_cli_password: CHANGEME
+uaa_url: api.CHANGEME

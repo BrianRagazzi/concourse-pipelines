@@ -2,7 +2,13 @@ resource_types:
 
 
 resources:
-
+- name: pipelines-repo
+  type: git
+  source:
+    uri: ((github_repo))
+    branch: ((github_branch))
+    username: ((github_username))
+    password: ((github_token))
 jobs:
 
 - name: deploy-app
@@ -22,3 +28,5 @@ jobs:
       APP_YAML_URL: ((app_yaml_url))
       VALUE_TO_REPLACE: ((yaml_value_to_replace))
       REPLACEMENT_VALUE: ((yaml_replacement_value))
+      K8S_CLUSTERNAME: ((k8s_clustername))
+      K8S_NAMESPACE: ((k8s_namespace))
