@@ -8,6 +8,7 @@ pks login -a "$UAA_URL" -u "$PKS_CLI_USERNAME" -p "$PKS_CLI_PASSWORD" --skip-ssl
 pks cluster ${K8S_CLUSTERNAME}
 pks get-credentials ${K8S_CLUSTERNAME}
 kubectl config use-context ${K8S_CLUSTERNAME}
+echo "current nodes"
 kubectl get nodes -o wide
 
 set +eu
@@ -20,7 +21,7 @@ if [ -z $appns ]; then
 else
   echo "${K8S_NAMESPACE} namespace already exists"
 fi
-
+echo "Getting app yaml"
 wget "${APP_YAML_URL}" -O app.yml
 #YELBYML=`cat yelb-lb-harbor-original.yml`
 # echo ${YELBYML//"$VALUE_TO_REPLACE"/"$REPLACEMENT_VALUE"} > yelb-lb-harbor.yml
