@@ -1,0 +1,4 @@
+harbor_hostname: CHANGEME #harbor.pcf.domain.local
+harbor_admin_password: CHANGEME
+dockerhub_username: CHANGEME
+dockerhub_password: CHANGEME
