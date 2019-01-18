@@ -11,6 +11,7 @@ for opsman in ${possible_opsmans}; do
   network="$(govc vm.info -r=true -json ${opsman} | jq -r '.VirtualMachines[0].Guest.Net[0].Network')"
   currname=$(govc vm.info -vm.ipath=${opsman} --json | jq -r '.VirtualMachines[0].Name')
   echo "Found VM with name $currname on network $network"
+  echo vm.info
   datever=$(date +"%y%m%d%H%M%S")
   newname=$currname-backup-$datever
   if [[ ${network} == ${GOVC_NETWORK} || ${network} == "" ]]; then
