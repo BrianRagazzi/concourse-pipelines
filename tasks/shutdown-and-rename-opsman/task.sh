@@ -8,19 +8,20 @@ echo "Looking for VMs with IP ${OPSMAN_IP} in ${GOVC_RESOURCE_POOL}"
 possible_opsmans=$(govc find "$GOVC_RESOURCE_POOL" -type m -guest.ipAddress ${OPSMAN_IP} -runtime.powerState poweredOn)
 
 for opsman in ${possible_opsmans}; do
-  network="$(govc vm.info -r=true -json ${opsman} | jq -r '.VirtualMachines[0].Guest.Net[0].Network')"
+  #network="$(govc vm.info -r=true -json ${opsman} | jq -r '.VirtualMachines[0].Guest.Net[0].Network')"
   currname=$(govc vm.info -vm.ipath=${opsman} --json | jq -r '.VirtualMachines[0].Name')
-  echo "Found VM with name $currname on network $network"
-  vminfo="$(govc vm.info -vm.ipath=${opsman} --json)"
-  echo $vminfo
+  echo "Found VM named $currname" # on network $network"
+  #vminfo="$(govc vm.info -vm.ipath=${opsman} --json)"
+  #echo $vminfo
   datever=$(date +"%y%m%d%H%M%S")
   newname=$currname-backup-$datever
-  if [[ ${network} == ${GOVC_NETWORK} || ${network} == "" ]]; then
+  #remove check against network name
+  #if [[ ${network} == ${GOVC_NETWORK} || ${network} == "" ]]; then
     echo "Powering off and renaming ${opsman}..."
     set +e
     govc vm.power -vm.ipath=${opsman} -off
     set -e
     # govc vm.destroy -vm.ipath=${opsman}
     govc vm.change -vm.ipath=${opsman} -name=${newname}
-  fi
+  #fi
 done
