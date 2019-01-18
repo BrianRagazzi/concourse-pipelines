@@ -11,8 +11,8 @@ inputs:
   - name: pipelines-repo
 
 params:
-  OPS_MGR_USERNAME:
-  OPS_MGR_PASSWORD:
+  OPS_MGR_USR:
+  OPS_MGR_PWD:
   OPS_MGR_HOST:
 
 run:
