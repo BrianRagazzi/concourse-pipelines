@@ -10,15 +10,15 @@ inputs:
 params:
   OPSMAN_IP:
   GOVC_INSECURE:
-  GOVC_CA_CERT:
   GOVC_URL:
   GOVC_USERNAME:
   GOVC_PASSWORD:
-  GOVC_DATACENTER:
-  GOVC_DATASTORE:
-  GOVC_NETWORK:
   GOVC_RESOURCE_POOL:
   GOVC_HOST:
+  GOVC_DATACENTER:
+  GOVC_DATASTORE:
+  GOVC_CA_CERT:
+  #GOVC_NETWORK:
 
 run:
   path: pipelines-repo/tasks/shutdown-and-rename-opsman/task.sh
