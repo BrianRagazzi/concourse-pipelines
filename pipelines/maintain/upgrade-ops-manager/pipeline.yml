@@ -110,9 +110,12 @@ jobs:
 - name: take-opsmgr-offline
   plan:
   - aggregate:
+    - get: pivnet-opsman-product
+      passed: [export-settings-from-current-opsmgr]
+      params:
+        globs: []      
     - get: pipelines-repo
       trigger: true
-      passed: [export-settings-from-current-opsmgr]
       params:
         globs: []
   - task: shutdown-and-rename-opsman
