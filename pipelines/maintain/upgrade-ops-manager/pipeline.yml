@@ -113,7 +113,7 @@ jobs:
     - get: pivnet-opsman-product
       passed: [export-settings-from-current-opsmgr]
       params:
-        globs: []      
+        globs: []
     - get: pipelines-repo
       trigger: true
       params:
