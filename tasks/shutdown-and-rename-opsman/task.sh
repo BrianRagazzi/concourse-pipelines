@@ -4,7 +4,7 @@ set -eu
 
 # Delete Active OpsMan
 # resource_pool_path=$(govc find . -name ${GOVC_RESOURCE_POOL} | grep -i resource )
-echo "Looking for VMs with IP ${OPSMAN_IP}"
+echo "Looking for VMs with IP ${OPSMAN_IP} in ${GOVC_RESOURCE_POOL}"
 possible_opsmans=$(govc find "$GOVC_RESOURCE_POOL" -type m -guest.ipAddress ${OPSMAN_IP} -runtime.powerState poweredOn)
 
 for opsman in ${possible_opsmans}; do
