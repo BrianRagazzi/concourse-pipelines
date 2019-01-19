@@ -171,9 +171,11 @@ jobs:
   - aggregate:
     - get: pipelines-repo
       trigger: true
+    - get: pivnet-opsman-product
       passed: [deploy-new-opsmgr]
+      params:
+        globs: []
     - get: om-backup-artifact
-      passed: [export-settings-from-current-opsmgr]
       params:
         globs: ["*.zip"]
   - task: import-opsmgr-settings
