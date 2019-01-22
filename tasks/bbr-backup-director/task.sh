@@ -52,7 +52,8 @@ BBR_PRIVATE_KEY=$(jq -r '.credential.value.private_key_pem' bbr_keys.json)
 # BOSH_PRIVATE_KEY=$(jq -r '.credential.value.private_key_pem' bbr_keys.json)
 
 pushd director-backup-artifact
-  ../bbr-releases/releases/bbr director --host "${BOSH_ADDRESS}" \
+  pwd
+  ../bbr-release/releases/bbr director --host "${BOSH_ADDRESS}" \
   --username bbr \
   --private-key-path <(echo "${BBR_PRIVATE_KEY}") \
   backup
