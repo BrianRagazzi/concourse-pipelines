@@ -12,7 +12,7 @@ tar -xvf bbr-release/bbr*.tar
 # BOSH_CLIENT_SECRET=$(jq -r '.jobs[] | select(.name == "bosh") | .properties.uaa.clients.ops_manager.secret' director_manifest.json)
 
 if [ -z $BOSH_ADDRESS ]; then
-  echo "Getting address of BOSH DIrector from Ops Manager"
+  echo "Getting address of BOSH Director from Ops Manager"
   om-linux \
       -t https://$OPS_MGR_HOST \
       -u $OPS_MGR_USR \
