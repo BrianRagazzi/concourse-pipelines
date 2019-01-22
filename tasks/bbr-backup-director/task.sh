@@ -1,6 +1,6 @@
 #!/bin/bash -eu
 
-tar -xvf bbr-release/bbr*.tar
+# tar -xvf bbr-release/bbr*.tar
 # cp releases/bbr binary/
 
 
@@ -56,6 +56,8 @@ pushd director-backup-artifact
   --username bbr \
   --private-key-path <(echo "${BBR_PRIVATE_KEY}") \
   backup
+  ls -al
+  df -h
   datever=$(date +"%y%m%d%H%M%S")
   tar -cvf director-backup-$datever.tar -- *
 popd

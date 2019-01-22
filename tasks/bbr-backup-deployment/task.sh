@@ -1,6 +1,6 @@
 #!/bin/bash -eu
 
-tar -xvf bbr-release/bbr*.tar
+# tar -xvf bbr-release/bbr*.tar
 
 
 om-linux \
