@@ -95,6 +95,9 @@ jobs:
       trigger: true
     - get: bbr-release
       trigger: true
+      params:
+        globs: ["bbr*.tar"]
+        unpack: true
 
   - task: bbr-backup-depl
     file: pipelines-repo/tasks/bbr-backup-deployment/task.yml
@@ -117,6 +120,9 @@ jobs:
       # passed: [regulator]
     - get: bbr-release
       trigger: true
+      params:
+        globs: ["bbr*.tar"]
+        unpack: true
 
   - task: bbr-backup-director
     file: pipelines-repo/tasks/bbr-backup-director/task.yml
