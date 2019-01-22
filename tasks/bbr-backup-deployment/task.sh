@@ -57,7 +57,7 @@ for depl in $DEPLOYMENTS
 do
   echo "Attempting to backup ${depl}"
   #pushd bbr-backup-artifact
-    releases/bbr deployment --target "${BOSH_ADDRESS}" \
+    bbr-releases/releases/bbr deployment --target "${BOSH_ADDRESS}" \
       --username "${BBR_CLIENT}" \
       --password "${BBR_PASS}" \
       --deployment "${depl}" \
