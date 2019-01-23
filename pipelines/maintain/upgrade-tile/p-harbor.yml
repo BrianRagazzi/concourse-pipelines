@@ -1,0 +1,4 @@
+product_name: harbor-container-registry
+product_version: ^1\.7\..*$
+product_identifier: harbor-container-registry
+product_glob: "*.pivotal"  #exclude small-footprint version
