@@ -1,0 +1,4 @@
+schedule_start: "4:00 AM" #"5:00 AM" or 0500 or 5AM
+schedule_stop: "5:00 PM" #"5:00 AM" or 0500 or 5AM
+schedule_location: "America/Chicago" #America/Chicago
+schedule_days: Wednesday  #Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday
