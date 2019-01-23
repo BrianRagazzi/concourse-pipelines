@@ -1,4 +1,4 @@
 product_name: vmware-nsx-t
-product_version: ^2\.2\..*$
+product_version: ^2\.3\..*$
 product_identifier: VMware-NSX-T
 product_glob: "*.pivotal"  #exclude small-footprint version
