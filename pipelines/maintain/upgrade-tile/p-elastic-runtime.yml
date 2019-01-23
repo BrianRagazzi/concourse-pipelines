@@ -1,0 +1,4 @@
+product_name: elastic-runtime
+product_version: ^2\.2\..*$
+product_identifier: cf
+product_glob: "cf-*.pivotal"  #exclude small-footprint version

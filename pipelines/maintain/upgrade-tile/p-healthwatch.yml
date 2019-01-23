@@ -1,0 +1,4 @@
+product_name: p-healthwatch
+product_version: ^1\.4\..*$
+product_identifier: p-healthwatch
+product_glob: "*.pivotal"  #exclude small-footprint version
