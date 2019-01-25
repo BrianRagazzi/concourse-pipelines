@@ -1,0 +1,28 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source: {repository: pcfnorm/rootfs}
+
+params:
+  DEBUG:
+  OPS_MGR_HOST:
+  OPS_MGR_USR:
+  OPS_MGR_PWD:
+  NETWORK_NAME:
+  OTHER_AZS:
+  SINGLETON_JOBS_AZ:
+  BM_SUBSCRIPTION_ID:
+  BM_INSECURE_SSL_SKIP_VERIFY:
+  BM_IDLE_TIMEOUT_SECONDS:
+  BM_METRIC_CACHE_DURATION_SECONDS:
+  BM_UAA_USERNAME:
+  BM_UAA_PASSWORD:
+
+
+inputs:
+  - name: pipelines-repo
+
+run:
+  path: pipelines-repo/tasks/config-p-blue-medora-nozzle/task.sh

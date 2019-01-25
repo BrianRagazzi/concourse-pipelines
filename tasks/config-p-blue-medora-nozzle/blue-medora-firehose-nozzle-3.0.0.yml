@@ -1,0 +1,321 @@
+---
+description: Blue Medora Firehose Nozzle for PCF
+icon_image: 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
+label: Blue Medora Nozzle for PCF
+metadata_version: '1.8'
+minimum_version_for_upgrade: 0.0.1
+name: blue-medora-firehose-nozzle
+product_version: 3.0.0
+rank: 1
+requires_product_versions:
+- name: cf
+  version: '>= 1.9'
+serial: true
+service_broker: false
+
+
+releases:
+- file: blue-medora-firehose-nozzle-3.0.0.tgz
+  name: blue-medora-firehose-nozzle
+  version: '3.0.0'
+
+stemcell_criteria:
+  os: ubuntu-trusty
+  requires_cpi: false
+  version: '3586'
+
+
+property_blueprints:
+- configurable: true
+  default: system
+  name: org
+  type: string
+- configurable: true
+  default: blue-medora-firehose-nozzle-space
+  name: space
+  type: string
+- configurable: true
+  default: true
+  name: apply_open_security_group
+  type: boolean
+- configurable: true
+  default: false
+  name: allow_paid_service_plans
+  type: boolean
+- configurable: true
+  description: URL of the Traffic Controller
+  label: Traffic Controller URL
+  name: bm_traffic_controller_url
+  optional: false
+  type: string
+- configurable: true
+  default: bluemedora-nozzle
+  description: Nozzle Subscription ID
+  label: Subscription ID
+  name: bm_subscription_id
+  optional: false
+  type: string
+- configurable: true
+  default: true
+  description: Skip SSL verification with UAA and Traffic Controller
+  label: Insecure SSL Skip Verify
+  name: bm_insecure_ssl_skip_verify
+  optional: false
+  type: boolean
+- configurable: true
+  default: 60
+  description: The amount of time the firehose connection can be idle before disconnecting
+  label: Firehose Idle Timeout Seconds
+  name: bm_idle_timeout_seconds
+  optional: false
+  type: integer
+- configurable: true
+  default: 300
+  description: The amount of time the RESTful API will cache metric data.
+  label: Metric Cache Duration
+  name: bm_metric_cache_duration_seconds
+  optional: false
+  type: integer
+- configurable: true
+  description: URL of the UAA server
+  label: URL of UAA Server
+  name: bm_uaa_url
+  optional: false
+  type: string
+- configurable: true
+  description: UAA user with doppler.firehose permissions
+  label: UAA User
+  name: bm_uaa_username
+  optional: false
+  type: string
+- configurable: true
+  description: UAA user password
+  label: UAA Password
+  name: bm_uaa_password
+  optional: false
+  type: secret
+- configurable: true
+  default: false
+  description: Disables authentication with UAA
+  label: Disable Access Control
+  name: bm_disable_access_control
+  optional: false
+  type: boolean
+
+
+form_types: 
+- description: Nozzle Properties
+  label: Nozzle
+  name: nozzle_properties
+  property_inputs:
+  - description: URL of the Traffic Controller
+    label: Traffic Controller URL
+    reference: .properties.bm_traffic_controller_url
+  - description: Nozzle Subscription ID
+    label: Subscription ID
+    reference: .properties.bm_subscription_id
+  - description: Skip SSL verification with UAA and Traffic Controller
+    label: Insecure SSL Skip Verify
+    reference: .properties.bm_insecure_ssl_skip_verify
+  - description: The amount of time the firehose connection can be idle before disconnecting
+    label: Firehose Idle Timeout Seconds
+    reference: .properties.bm_idle_timeout_seconds
+  - description: The amount of time the RESTful API will cache metric data.
+    label: Metric Cache Duration
+    reference: .properties.bm_metric_cache_duration_seconds
+- description: UAA Client Properties
+  label: UAA Client
+  name: uaa_client_properties
+  property_inputs:
+  - description: URL of the UAA server
+    label: URL of UAA Server
+    reference: .properties.bm_uaa_url
+  - description: UAA user with doppler.firehose permissions
+    label: UAA User
+    reference: .properties.bm_uaa_username
+  - description: UAA user password
+    label: UAA Password
+    reference: .properties.bm_uaa_password
+  - description: Disables authentication with UAA
+    label: Disable Access Control
+    reference: .properties.bm_disable_access_control
+
+
+job_types: 
+- dynamic_ip: 1
+  errand: true
+  instance_definition:
+    configurable: false
+    default: 1
+    name: instances
+    type: integer
+  manifest: |
+    allow_paid_service_plans: (( .properties.allow_paid_service_plans.value ))
+    app_domains:
+    - (( ..cf.cloud_controller.apps_domain.value ))
+    apply_open_security_group: (( .properties.apply_open_security_group.value ))
+    bm_disable_access_control: (( .properties.bm_disable_access_control.value ))
+    bm_idle_timeout_seconds: (( .properties.bm_idle_timeout_seconds.value ))
+    bm_insecure_ssl_skip_verify: (( .properties.bm_insecure_ssl_skip_verify.value ))
+    bm_metric_cache_duration_seconds: (( .properties.bm_metric_cache_duration_seconds.value ))
+    bm_subscription_id: (( .properties.bm_subscription_id.value ))
+    bm_traffic_controller_url: (( .properties.bm_traffic_controller_url.value ))
+    bm_uaa_password: (( .properties.bm_uaa_password.value ))
+    bm_uaa_url: (( .properties.bm_uaa_url.value ))
+    bm_uaa_username: (( .properties.bm_uaa_username.value ))
+    cf:
+      admin_password: (( ..cf.uaa.system_services_credentials.password ))
+      admin_user: (( ..cf.uaa.system_services_credentials.identity ))
+    domain: (( ..cf.cloud_controller.system_domain.value ))
+    nozzle:
+      app_manifest:
+        buildpack: go_buildpack
+        env:
+          BM_STDOUT_LOGGING: true
+          BM_WEBSERVER_USE_SSL: false
+          GOPACKAGENAME: github.com/BlueMedoraPublic/bluemedora-firehose-nozzle
+        host: bluemedora-nozzle
+        memory: 512M
+        path: bm-nozzle.zip
+      auto_services: []
+      name: nozzle
+    org: (( .properties.org.value ))
+    security:
+      password: (( .deploy-all.app_credentials.password ))
+      user: (( .deploy-all.app_credentials.identity ))
+    space: (( .properties.space.value ))
+    ssl:
+      skip_cert_verify: (( ..cf.ha_proxy.skip_cert_verify.value ))
+    uaa:
+      admin_client: (( ..cf.uaa.admin_client_credentials.identity ))
+      admin_client_secret: (( ..cf.uaa.admin_client_credentials.password ))
+  max_in_flight: 1
+  name: deploy-all
+  property_blueprints:
+  - default:
+      identity: vcap
+    name: vm_credentials
+    type: salted_credentials
+  - name: app_credentials
+    type: salted_credentials
+  resource_definitions:
+  - configurable: true
+    default: 1024
+    name: ram
+    type: integer
+  - configurable: true
+    default: 4096
+    name: ephemeral_disk
+    type: integer
+  - configurable: false
+    constraints:
+      min: 0
+    default: 0
+    name: persistent_disk
+    type: integer
+  - configurable: true
+    default: 1
+    name: cpu
+    type: integer
+  resource_label: deploy-all
+  single_az_only: true
+  static_ip: 0
+  templates:
+  - name: deploy-all
+    release: blue-medora-firehose-nozzle
+- dynamic_ip: 1
+  errand: true
+  instance_definition:
+    configurable: false
+    default: 1
+    name: instances
+    type: integer
+  manifest: |
+    allow_paid_service_plans: (( .properties.allow_paid_service_plans.value ))
+    app_domains:
+    - (( ..cf.cloud_controller.apps_domain.value ))
+    apply_open_security_group: (( .properties.apply_open_security_group.value ))
+    bm_disable_access_control: (( .properties.bm_disable_access_control.value ))
+    bm_idle_timeout_seconds: (( .properties.bm_idle_timeout_seconds.value ))
+    bm_insecure_ssl_skip_verify: (( .properties.bm_insecure_ssl_skip_verify.value ))
+    bm_metric_cache_duration_seconds: (( .properties.bm_metric_cache_duration_seconds.value ))
+    bm_subscription_id: (( .properties.bm_subscription_id.value ))
+    bm_traffic_controller_url: (( .properties.bm_traffic_controller_url.value ))
+    bm_uaa_password: (( .properties.bm_uaa_password.value ))
+    bm_uaa_url: (( .properties.bm_uaa_url.value ))
+    bm_uaa_username: (( .properties.bm_uaa_username.value ))
+    cf:
+      admin_password: (( ..cf.uaa.system_services_credentials.password ))
+      admin_user: (( ..cf.uaa.system_services_credentials.identity ))
+    domain: (( ..cf.cloud_controller.system_domain.value ))
+    nozzle:
+      app_manifest:
+        buildpack: go_buildpack
+        env:
+          BM_STDOUT_LOGGING: true
+          BM_WEBSERVER_USE_SSL: false
+          GOPACKAGENAME: github.com/BlueMedoraPublic/bluemedora-firehose-nozzle
+        host: bluemedora-nozzle
+        memory: 512M
+        path: bm-nozzle.zip
+      auto_services: []
+      name: nozzle
+    org: (( .properties.org.value ))
+    space: (( .properties.space.value ))
+    ssl:
+      skip_cert_verify: (( ..cf.ha_proxy.skip_cert_verify.value ))
+    uaa:
+      admin_client: (( ..cf.uaa.admin_client_credentials.identity ))
+      admin_client_secret: (( ..cf.uaa.admin_client_credentials.password ))
+  max_in_flight: 1
+  name: delete-all
+  property_blueprints:
+  - default:
+      identity: vcap
+    name: vm_credentials
+    type: salted_credentials
+  - name: app_credentials
+    type: salted_credentials
+  resource_definitions:
+  - configurable: true
+    default: 1024
+    name: ram
+    type: integer
+  - configurable: true
+    default: 4096
+    name: ephemeral_disk
+    type: integer
+  - configurable: false
+    constraints:
+      min: 0
+    default: 0
+    name: persistent_disk
+    type: integer
+  - configurable: true
+    default: 1
+    name: cpu
+    type: integer
+  resource_label: delete-all
+  single_az_only: true
+  static_ip: 0
+  templates:
+  - name: delete-all
+    release: blue-medora-firehose-nozzle
+
+
+
+post_deploy_errands: 
+- name: deploy-all
+
+pre_delete_errands: 
+- name: delete-all
+
+update:
+  canaries: 1
+  canary_watch_time: 10000-100000
+  max_in_flight: 1
+  update_watch_time: 10000-100000
+
+provides_product_versions:
+- name: blue-medora-firehose-nozzle
+  version: '3.0.0'
