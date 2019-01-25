@@ -33,7 +33,7 @@ SYS_DOMAIN=$(
 )
 echo api.$SYS_DOMAIN
 
-cf login -a https://api.$SYS_DOMAIN -u $PAS_ADMIN_USERNAME -p $PAS_ADMIN_PASSWORD --skip-ssl-validation -o system -s system
+cf login -a https://api.$SYS_DOMAIN -u $BM_UAA_USERNAME -p $BM_UAA_PASSWORD --skip-ssl-validation -o system -s system
 
 BM_TRAFFIC_CONTROLLER_URL=$(
   cf curl /v2/info | jq .doppler_logging_endpoint
