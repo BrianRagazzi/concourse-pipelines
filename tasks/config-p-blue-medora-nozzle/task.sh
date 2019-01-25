@@ -35,13 +35,9 @@ echo api.$SYS_DOMAIN
 
 cf login -a https://api.$SYS_DOMAIN -u $BM_UAA_USERNAME -p $BM_UAA_PASSWORD --skip-ssl-validation -o system -s system
 
-BM_TRAFFIC_CONTROLLER_URL=$(
-  cf curl /v2/info | jq .doppler_logging_endpoint
-)
+BM_TRAFFIC_CONTROLLER_URL=$(cf curl /v2/info | jq .doppler_logging_endpoint)
 
-BM_UAA_URL=$(
-  cf curl /v2/info | jq .token_endpoint
-)
+BM_UAA_URL=$(cf curl /v2/info | jq .token_endpoint)
 
 properties_config=$($JQ_CMD -n \
   --arg bm_subscription_id ${BM_SUBSCRIPTION_ID:-"bluemedora-nozzle"} \
@@ -78,6 +74,7 @@ properties_config=$($JQ_CMD -n \
   }
  }
 '
+)
 
 $OM_CMD \
   --target https://$OPS_MGR_HOST \
