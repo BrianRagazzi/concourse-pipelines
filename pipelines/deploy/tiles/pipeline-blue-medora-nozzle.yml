@@ -85,7 +85,7 @@ jobs:
       OPS_MGR_HOST: ((ops_mgr_host))
       OPS_MGR_USR: ((ops_mgr_usr))
       OPS_MGR_PWD: ((ops_mgr_pwd))
-      PRODUCT_IDENTIFIER: blue-medora-nozzle
+      PRODUCT_IDENTIFIER: blue-medora-firehose-nozzle
 
 - name: config-blue-medora-nozzle
   plan:
@@ -106,10 +106,8 @@ jobs:
       OPS_MGR_USR: ((ops_mgr_usr))
       OPS_MGR_PWD: ((ops_mgr_pwd))
       NETWORK_NAME: ((network_name))
-      SERVICE_NETWORK_NAME: ((service_network_name))
       OTHER_AZS: ((other_azs))
       SINGLETON_JOBS_AZ: ((singleton_jobs_az))
-      PRODUCT_NAME: blue-medora-nozzle
       #BM_TRAFFIC_CONTROLLER_URL: ((bm_traffic_controller_url))  #obtain from API
       BM_SUBSCRIPTION_ID: ((bm_subscription_id)) # bluemedora-nozzle
       BM_INSECURE_SSL_SKIP_VERIFY: ((bm_insecure_ssl_skip_verify)) #default true

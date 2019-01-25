@@ -74,5 +74,5 @@ $OM_CMD \
   --password "$OPS_MGR_PWD" \
   --skip-ssl-validation \
   configure-product \
-  --product-name p-blue-medora-nozzle \
+  --product-name blue-medora-firehose-nozzle \
   --product-properties "$properties_config" \
