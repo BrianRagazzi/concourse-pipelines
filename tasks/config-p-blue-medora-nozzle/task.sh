@@ -43,7 +43,8 @@ properties_config=$($JQ_CMD -n \
   --arg bm_subscription_id ${BM_SUBSCRIPTION_ID:-"bluemedora-nozzle"} \
   --arg bm_insecure_ssl_skip_verify ${BM_INSECURE_SSL_SKIP_VERIFY:-"true"} \
   --arg bm_idle_timeout_seconds ${BM_IDLE_TIMEOUT_SECONDS:-"60"} \
-  --arg bm_metric_cache_duration_seconds ${BM_METRIC_CACHE_DURATION_SECONDS:-"300"}
+  --arg bm_metric_cache_duration_seconds ${BM_METRIC_CACHE_DURATION_SECONDS:-"300"} \
+  --arg bm_traffic_controller_url ${BM_TRAFFIC_CONTROLLER_URL} \
   --arg bm_uaa_url ${BM_UAA_URL} \
   --arg bm_uaa_username ${BM_UAA_USERNAME} \
   --arg bm_uaa_password ${BM_UAA_PASSWORD} \
@@ -64,17 +65,45 @@ properties_config=$($JQ_CMD -n \
     "value": $bm_traffic_controller_url
   },
   ".properties.bm_uaa_password": {
-    "value": $bm_uaa_password
+    "value": {
+      "secret": $bm_uaa_password
+    }
   },
   ".properties.bm_uaa_url": {
     "value": $bm_uaa_url
-  }
+  },
   ".properties.bm_uaa_username": {
     "value": $bm_uaa_username
   }
  }
 '
 )
+
+network_config=$($JQ_CMD -n \
+  --arg network_name "$NETWORK_NAME" \
+  --arg other_azs "$OTHER_AZS" \
+  --arg singleton_az "$SINGLETON_JOBS_AZ" \
+  '
+  {
+    "network": {
+      "name": $network_name
+    },
+    "other_availability_zones": ($other_azs | split(",") | map({name: .})),
+    "singleton_availability_zone": {
+      "name": $singleton_az
+    }
+  }
+  '
+)
+
+$OM_CMD \
+  --target https://$OPS_MGR_HOST \
+  --username "$OPS_MGR_USR" \
+  --password "$OPS_MGR_PWD" \
+  --skip-ssl-validation \
+  configure-product \
+  --product-name blue-medora-firehose-nozzle \
+  --product-network "$network_config"
 
 $OM_CMD \
   --target https://$OPS_MGR_HOST \
