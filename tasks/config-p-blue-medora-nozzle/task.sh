@@ -11,6 +11,17 @@ OM_CMD=om-linux
 #chmod +x ./jq/jq-linux64
 JQ_CMD=jq
 
+CF_GUID=$(
+  om-linux \
+    --target https://$OPS_MGR_HOST \
+    --username "$OPS_MGR_USR" \
+    --password "$OPS_MGR_PWD" \
+    --skip-ssl-validation \
+    curl --silent --path "/api/v0/deployed/products" | \
+    jq -r '.[] | .installation_name' | grep cf- | tail -1
+)
+export CF_GUID=$CF_GUID
+
 SYS_DOMAIN=$(
   om-linux \
   --target https://$OPS_MGR_HOST \
