@@ -149,3 +149,4 @@ jobs:
       APP_YAML: ((app_yaml))
       VALUE_TO_REPLACE: ((yaml_value_to_replace))
       REPLACEMENT_VALUE: ((yaml_replacement_value))
+      DEBUG: ((debug))

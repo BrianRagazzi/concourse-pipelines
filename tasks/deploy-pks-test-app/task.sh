@@ -1,5 +1,9 @@
 #!/bin/bash
-set -eu
+if [[ $DEBUG == true ]]; then
+  set -ex
+else
+  set -e
+fi
 
 echo "Login to PKS API [$UAA_URL]"
 pks login -a "$UAA_URL" -u "$PKS_CLI_USERNAME" -p "$PKS_CLI_PASSWORD" --skip-ssl-validation # TBD --ca-cert CERT-PATH
@@ -35,6 +39,7 @@ if [ -z $yelbdeploy ]; then
   #YELBYML=`cat yelb-lb-harbor-original.yml`
   # echo ${YELBYML//"$VALUE_TO_REPLACE"/"$REPLACEMENT_VALUE"} > yelb-lb-harbor.yml
   sed -i -e "s/$VALUE_TO_REPLACE/$REPLACEMENT_VALUE/g" yelb-lb-harbor.yml
+  echo "attempting to apply yml"
   kubectl apply -f yelb-lb-harbor.yml
   kubectl get pods --namespace yelb
   kubectl get services --namespace yelb
