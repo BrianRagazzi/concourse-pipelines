@@ -2,3 +2,8 @@ harbor_hostname: CHANGEME #harbor.pcf.domain.local
 harbor_admin_password: CHANGEME
 dockerhub_username: CHANGEME
 dockerhub_password: CHANGEME
+
+github_repo: https://github.com/BrianRagazzi/concourse-pipelines # [R] Pipelines github repo
+github_token: CHANGEME
+github_branch: master
+github_username: CHANGEME # [R] Your github username

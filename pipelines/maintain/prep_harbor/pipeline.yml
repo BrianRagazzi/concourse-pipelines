@@ -6,6 +6,14 @@ resource_types:
     tag: latest-final
 
 resources:
+- name: pipelines-repo
+  type: git
+  source:
+    uri: ((github_repo))
+    branch: ((github_branch))
+    username: ((github_username))
+    password: ((github_token))
+
 #These are used by yelb, the test application
 - name: yelb-ui
   type: docker-image
@@ -130,7 +138,7 @@ jobs:
   - aggregate:
     - get: pipelines-repo
       trigger: false
-      passed: [copy-yelb-images-to-harbor]
+
 
   - task: deploy-pks-test-app
     file: pipelines-repo/tasks/deploy-pks-test-app/task.yml
