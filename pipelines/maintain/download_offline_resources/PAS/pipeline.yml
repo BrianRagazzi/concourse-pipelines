@@ -10,7 +10,7 @@ resources:
   type: time
   source:
     start: 12:00 AM
-    stop: 2:00 AM
+    stop: 2:00 PM
 
 - name: stemcell-pivnet
   type: pivnet
@@ -35,33 +35,33 @@ resources:
     product_version: {{ert_major_minor_version}}
     sort_by: semver
 
-- name: pcf-metrics-pivnet
-  type: pivnet
-  source:
-    api_token: {{pivnet_token}}
-    product_slug: apm
-    sort_by: semver
+# - name: pcf-metrics-pivnet
+#   type: pivnet
+#   source:
+#     api_token: {{pivnet_token}}
+#     product_slug: apm
+#     sort_by: semver
 
-- name: iso-seg-pivnet
-  type: pivnet
-  source:
-    api_token: {{pivnet_token}}
-    product_slug: p-isolation-segment
-    sort_by: semver
-
-- name: mysql-pivnet
-  type: pivnet
-  source:
-    api_token: {{pivnet_token}}
-    product_slug: p-mysql
-    sort_by: semver
-
-- name: redis-pivnet
-  type: pivnet
-  source:
-    api_token: {{pivnet_token}}
-    product_slug: p-redis
-    sort_by: semver
+# - name: iso-seg-pivnet
+#   type: pivnet
+#   source:
+#     api_token: {{pivnet_token}}
+#     product_slug: p-isolation-segment
+#     sort_by: semver
+#
+# - name: mysql-pivnet
+#   type: pivnet
+#   source:
+#     api_token: {{pivnet_token}}
+#     product_slug: p-mysql
+#     sort_by: semver
+#
+# - name: redis-pivnet
+#   type: pivnet
+#   source:
+#     api_token: {{pivnet_token}}
+#     product_slug: p-redis
+#     sort_by: semver
 
 - name: pcfnorm-rootfs
   type: docker-image
@@ -93,49 +93,49 @@ resources:
     disable_ssl: false
     skip_ssl_verification: true
 
-- name: pcf-metrics-s3
-  type: s3
-  source:
-    access_key_id: {{s3_access_key_id}}
-    secret_access_key: {{s3_secret_access_key}}
-    endpoint: {{s3_endpoint}}
-    bucket: {{s3_bucket}}
-    regexp: "PCF/Tiles/apm-(.*).pivotal"
-    disable_ssl: false
-    skip_ssl_verification: true
-
-- name: iso-seg-s3
-  type: s3
-  source:
-    access_key_id: {{s3_access_key_id}}
-    secret_access_key: {{s3_secret_access_key}}
-    endpoint: {{s3_endpoint}}
-    bucket: {{s3_bucket}}
-    regexp: "PCF/Tiles/p-isolation-segment-(.*).pivotal"
-    disable_ssl: false
-    skip_ssl_verification: true
-
-- name: mysql-s3
-  type: s3
-  source:
-    access_key_id: {{s3_access_key_id}}
-    secret_access_key: {{s3_secret_access_key}}
-    endpoint: {{s3_endpoint}}
-    bucket: {{s3_bucket}}
-    regexp: "PCF/Tiles/p-mysql-(.*).pivotal"
-    disable_ssl: false
-    skip_ssl_verification: true
-
-- name: redis-s3
-  type: s3
-  source:
-    access_key_id: {{s3_access_key_id}}
-    secret_access_key: {{s3_secret_access_key}}
-    endpoint: {{s3_endpoint}}
-    bucket: {{s3_bucket}}
-    regexp: "PCF/Tiles/p-redis-(.*).pivotal"
-    disable_ssl: false
-    skip_ssl_verification: true
+# - name: pcf-metrics-s3
+#   type: s3
+#   source:
+#     access_key_id: {{s3_access_key_id}}
+#     secret_access_key: {{s3_secret_access_key}}
+#     endpoint: {{s3_endpoint}}
+#     bucket: {{s3_bucket}}
+#     regexp: "PCF/Tiles/apm-(.*).pivotal"
+#     disable_ssl: false
+#     skip_ssl_verification: true
+#
+# - name: iso-seg-s3
+#   type: s3
+#   source:
+#     access_key_id: {{s3_access_key_id}}
+#     secret_access_key: {{s3_secret_access_key}}
+#     endpoint: {{s3_endpoint}}
+#     bucket: {{s3_bucket}}
+#     regexp: "PCF/Tiles/p-isolation-segment-(.*).pivotal"
+#     disable_ssl: false
+#     skip_ssl_verification: true
+#
+# - name: mysql-s3
+#   type: s3
+#   source:
+#     access_key_id: {{s3_access_key_id}}
+#     secret_access_key: {{s3_secret_access_key}}
+#     endpoint: {{s3_endpoint}}
+#     bucket: {{s3_bucket}}
+#     regexp: "PCF/Tiles/p-mysql-(.*).pivotal"
+#     disable_ssl: false
+#     skip_ssl_verification: true
+#
+# - name: redis-s3
+#   type: s3
+#   source:
+#     access_key_id: {{s3_access_key_id}}
+#     secret_access_key: {{s3_secret_access_key}}
+#     endpoint: {{s3_endpoint}}
+#     bucket: {{s3_bucket}}
+#     regexp: "PCF/Tiles/p-redis-(.*).pivotal"
+#     disable_ssl: false
+#     skip_ssl_verification: true
 
 - name: pcfnorm-rootfs-s3
   type: s3
@@ -194,49 +194,49 @@ jobs:
     params:
       file: "elastic-runtime-pivnet/cf-*.pivotal"
 
-- name: pcf-metrics
-  plan:
-  - get: wee-hours
-    trigger: true
-  - get: pcf-metrics-pivnet
-    params:
-      globs: ["*.pivotal"]
-  - put: pcf-metrics-s3
-    params:
-      file: "pcf-metrics-pivnet/apm-*.pivotal"
-
-- name: iso-seg
-  plan:
-  - get: wee-hours
-    trigger: true
-  - get: iso-seg-pivnet
-    params:
-      globs: ["*.pivotal"]
-  - put: iso-seg-s3
-    params:
-      file: "iso-seg-pivnet/p-isolation-segment-*.pivotal"
-
-- name: mysql
-  plan:
-  - get: wee-hours
-    trigger: true
-  - get: mysql-pivnet
-    params:
-      globs: ["*.pivotal"]
-  - put: mysql-s3
-    params:
-      file: "mysql-pivnet/p-mysql-*.pivotal"
-
-- name: redis
-  plan:
-  - get: wee-hours
-    trigger: true
-  - get: redis-pivnet
-    params:
-      globs: ["*.pivotal"]
-  - put: redis-s3
-    params:
-      file: "redis-pivnet/p-redis-*.pivotal"
+# - name: pcf-metrics
+#   plan:
+#   - get: wee-hours
+#     trigger: true
+#   - get: pcf-metrics-pivnet
+#     params:
+#       globs: ["*.pivotal"]
+#   - put: pcf-metrics-s3
+#     params:
+#       file: "pcf-metrics-pivnet/apm-*.pivotal"
+#
+# - name: iso-seg
+#   plan:
+#   - get: wee-hours
+#     trigger: true
+#   - get: iso-seg-pivnet
+#     params:
+#       globs: ["*.pivotal"]
+#   - put: iso-seg-s3
+#     params:
+#       file: "iso-seg-pivnet/p-isolation-segment-*.pivotal"
+#
+# - name: mysql
+#   plan:
+#   - get: wee-hours
+#     trigger: true
+#   - get: mysql-pivnet
+#     params:
+#       globs: ["*.pivotal"]
+#   - put: mysql-s3
+#     params:
+#       file: "mysql-pivnet/p-mysql-*.pivotal"
+#
+# - name: redis
+#   plan:
+#   - get: wee-hours
+#     trigger: true
+#   - get: redis-pivnet
+#     params:
+#       globs: ["*.pivotal"]
+#   - put: redis-s3
+#     params:
+#       file: "redis-pivnet/p-redis-*.pivotal"
 
 - name: czero-cflinuxfs2
   plan:

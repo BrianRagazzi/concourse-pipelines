@@ -146,7 +146,7 @@ jobs:
       UAA_URL: ((uaa_url))
       PKS_CLI_USERNAME: ((pks_cli_username))
       PKS_CLI_PASSWORD: ((pks_cli_password))
-      APP_YAML: ((app_yaml))
+      YAML_SOURCE: ((test_app_yaml))
       VALUE_TO_REPLACE: ((yaml_value_to_replace))
       REPLACEMENT_VALUE: ((yaml_replacement_value))
       DEBUG: ((debug))
