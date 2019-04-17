@@ -48,9 +48,14 @@ iaas_configuration=$(
 az_configuration=$(cat <<-EOF
  [
     {
-      "name": "$AZ_1",
-      "cluster": "$AZ_1_CLUSTER_NAME",
-      "resource_pool": "$AZ_1_RP_NAME"
+      "name": "$PKS_AZ_1",
+      "cluster": "$PKS_AZ_1_CLUSTER_NAME",
+      "resource_pool": "$PKS_AZ_1_RP_NAME"
+    }
+    {
+      "name": "$MGMT_AZ",
+      "cluster": "$MGMT_AZ_CLUSTER_NAME",
+      "resource_pool": "$MGMT_AZ_RP_NAME"
     }
  ]
 EOF
@@ -77,20 +82,6 @@ network_configuration=$(
     {
       "icmp_checks_enabled": $icmp_checks_enabled,
       "networks": [
-        {
-          "name": $infra_network_name,
-          "service_network": false,
-          "subnets": [
-            {
-              "iaas_identifier": $infra_vcenter_network,
-              "cidr": $infra_network_cidr,
-              "reserved_ip_ranges": $infra_reserved_ip_ranges,
-              "dns": $infra_dns,
-              "gateway": $infra_gateway,
-              "availability_zone_names": ($infra_availability_zones | split(","))
-            }
-          ]
-        },
         {
           "name": $mgmt_network_name,
           "service_network": true,
