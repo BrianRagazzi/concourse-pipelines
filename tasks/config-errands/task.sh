@@ -83,7 +83,7 @@ will_disable=$(
       --errand-name $errand \
       --post-deploy-state "when-changed"
     echo done
-#   done < <(echo "$will_run_on_change")
+  done < <(echo "$all_errands")
 # fi
 
 if [ -z "$will_disable" ]; then
