@@ -108,7 +108,6 @@ pks_properties=$(
     --arg vrli_use_ssl "$VRLI_USE_SSL" \
     --arg vrli_skip_cert_verify "$VRLI_SKIP_CERT_VERIFY" \
     --arg vrli_ca_cert "$VRLI_CA_CERT" \
-    --arg vrli_rate_limit_msec "$VRLI_RATE_LIMIT_MSEC" \
     --arg syslog_transport_protocol "$SYSLOG_TRANSPORT_PROTOCOL" \
     --arg pks_major_version "$PKS_MAJOR_VERSION" \
     --arg pks_mid_version "$PKS_MID_VERSION" \
@@ -255,8 +254,8 @@ pks_properties=$(
     ".properties.telemetry_selector": {
       "value": $telemetry_selector
     },
-    ".properties.vm_extensions.public_ip": {
-      "value": $pks_enable_outbound
+    ".properties.vm_extensions": {
+      "value": ["public_ip"]
     },
     ".properties.network_selector.nsx.floating-ip-pool-ids": {
       "value": $nsxt_floating_ip_pool_id
@@ -328,9 +327,6 @@ pks_properties=$(
       },
       ".properties.pks-vrli.enabled.ca_cert": {
         "value": $vrli_ca_cert
-      },
-      ".properties.pks-vrli.enabled.rate_limit_msec": {
-        "value": $vrli_rate_limit_msec
       }
     }
   else

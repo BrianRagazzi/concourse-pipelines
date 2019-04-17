@@ -323,7 +323,6 @@ jobs:
       VRLI_USE_SSL: ((vrli_use_ssl))
       VRLI_SKIP_CERT_VERIFY: ((vrli_skip_cert_verify))
       VRLI_CA_CERT: ((vrli_ca_cert))
-      VRLI_RATE_LIMIT_MSEC: ((vrli_rate_limit_msec))
       PKS_ENABLE_OUTBOUND: ((pks_enable_outbound))
 
   - task: configure-errands
