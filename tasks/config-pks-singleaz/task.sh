@@ -43,8 +43,6 @@ fi
 pks_network=$(
   jq -n \
     --arg az_1_name "$AZ_1_NAME" \
-    --arg az_2_name "$AZ_2_NAME" \
-    --arg az_3_name "$AZ_3_NAME" \
     --arg main_network_name "$MGMT_NETWORK_NAME" \
     --arg services_network_name "$MGMT_NETWORK_NAME" \
   '
@@ -53,7 +51,7 @@ pks_network=$(
       "name": $az_1_name
     },
     "other_availability_zones": [
-      {"name": $az_1_name},{"name": $az_2_name},{"name": $az_3_name}
+      {"name": $az_1_name}
     ],
     "network": {
       "name": $main_network_name
@@ -71,8 +69,6 @@ pks_properties=$(
   jq -n \
     --arg ops "$OPS_MGR_HOST" \
     --arg az_1_name "$AZ_1_NAME" \
-    --arg az_2_name "$AZ_2_NAME" \
-    --arg az_3_name "$AZ_3_NAME" \
     --arg vcenter_host "$VCENTER_HOST" \
     --arg vcenter_usr "$VCENTER_USR" \
     --arg vcenter_pwd "$VCENTER_PWD" \
@@ -176,10 +172,10 @@ pks_properties=$(
       "value": "Medium workloads",
     },
     ".properties.plan2_selector.active.master_az_placement": {
-      "value": [$az_1_name,$az_2_name,$az_3_name]
+      "value": [$az_1_name]
     },
     ".properties.plan2_selector.active.worker_az_placement": {
-      "value": [$az_1_name,$az_2_name,$az_3_name]
+      "value": [$az_1_name]
     },
     ".properties.plan2_selector.active.master_vm_type": {
       "value": "large"

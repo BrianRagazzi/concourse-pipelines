@@ -14,10 +14,8 @@ run:
   path: pipelines-repo/tasks/config-pks/task.sh
 
 params:
-   MGMT_NETWORK_NAME:
+   MAIN_NETWORK_NAME:
    AZ_1_NAME:
-   AZ_2_NAME:
-   AZ_3_NAME:
    VCENTER_HOST:
    VCENTER_USR:
    VCENTER_PWD:

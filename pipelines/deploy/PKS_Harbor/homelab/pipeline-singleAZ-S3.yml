@@ -278,12 +278,10 @@ jobs:
       trigger: false
 
   - task: configure-pks
-    file: pipelines-repo/tasks/config-pks/task.yml
+    file: pipelines-repo/tasks/config-pks-singleaz/task.yml
     params:
       MGMT_NETWORK_NAME: ((mgmt_network_name))
       AZ_1_NAME: ((az_1_name))
-      AZ_2_NAME: ((az_2_name))
-      AZ_3_NAME: ((az_3_name))
       VCENTER_HOST: ((vcenter_host))
       VCENTER_USR: ((vcenter_usr))
       VCENTER_PWD: ((vcenter_pwd))
@@ -311,7 +309,7 @@ jobs:
       NSXT_SUPERUSER_CERTIFICATE: ((nsxt_superuser_certificate))
       NSXT_SUPERUSER_PRIVATE_KEY: ((nsxt_superuser_private_key))
       NSXT_CA_CERT: ((nsx_ca_certificate))
-      TELEMETRY_SELECTOR: "disabled"
+      TELEMETRY_SELECTOR: ((telemetry_selector))
       NSXT_FLOATING_IP_POOL_ID: ((nsxt_floating_ip_pool_id))
       SYSLOG_ADDRESS: ((syslog_address))
       SYSLOG_PORT: ((syslog_port))
