@@ -37,15 +37,12 @@ resources:
     skip_ssl_verification: true
 
 - name: pivnet-cli
-  type: s3
+  type: github-release
   source:
-    access_key_id: {{s3_access_key_id}}
-    secret_access_key: {{s3_secret_access_key}}
-    endpoint: {{s3_endpoint}}
-    bucket: {{s3_bucket}}
-    regexp: "PCF/PKS/pks-linux-amd64-(.*)"
-    disable_ssl: false
-    skip_ssl_verification: true
+    user: pivotal-cf
+    repository: pivnet-cli
+    access_token: ((github_token)) ## Optional: Removing this will cause you to hit the rate limit
+
 
 - name: harbor-s3
   type: s3
