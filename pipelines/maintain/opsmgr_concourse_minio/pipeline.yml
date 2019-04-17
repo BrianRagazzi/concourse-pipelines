@@ -6,17 +6,7 @@ resource_types:
     tag: latest-final
 
 resources:
-- name: stemcell-bosh
-  type: bosh-io-stemcell
-  source:
-    name: bosh-vsphere-esxi-ubuntu-trusty-go_agent
-    version_family: {{stemcell_version_family}}
 
-- name: stemcell-xenial-bosh
-  type: bosh-io-stemcell
-  source:
-    name: bosh-vsphere-esxi-ubuntu-xenial-go_agent
-    version_family: {{xenial_stemcell_version_family}}
 - name: ops-manager-pivnet
   type: pivnet
   source:
@@ -34,7 +24,7 @@ resources:
 - name: concourse-release
   type: bosh-io-release
   source:
-    repository: concourse/concourse
+    repository: concourse/concourse-bosh-release
 
 - name: garden-runc-release
   type: bosh-io-release
@@ -64,27 +54,7 @@ resources:
 
 
 
-- name: stemcell-s3
-  type: s3
-  source:
-    access_key_id: {{s3_access_key_id}}
-    secret_access_key: {{s3_secret_access_key}}
-    endpoint: {{s3_endpoint}}
-    bucket: {{s3_bucket}}
-    disable_ssl: false
-    regexp: BOSH/stemcells/bosh-stemcell-(.*)-vsphere-esxi-ubuntu-trusty-go_agent.tgz
-    skip_ssl_verification: true
 
-- name: stemcell-xenial-s3
-  type: s3
-  source:
-    access_key_id: {{s3_access_key_id}}
-    secret_access_key: {{s3_secret_access_key}}
-    endpoint: {{s3_endpoint}}
-    bucket: {{s3_bucket}}
-    disable_ssl: false
-    regexp: BOSH/stemcells/bosh-stemcell-(.*)-vsphere-esxi-ubuntu-xenial-go_agent.tgz
-    skip_ssl_verification: true
 
 - name: release-s3
   type: s3
@@ -111,31 +81,13 @@ jobs:
 - name: ops-manager
   plan:
   - get: ops-manager-pivnet
+    trigger: true
     params:
       globs: ["*.ova"]
   - put: ops-manager-s3
     params:
       file: "ops-manager-pivnet/pcf-vsphere-*.ova"
 
-- name: stemcell-trusty
-  plan:
-  - get: stemcell-bosh
-    trigger: true
-    params:
-      preserve_filename: true
-  - put: stemcell-s3
-    params:
-      file: stemcell-bosh/*.tgz
-
-- name: stemcell-xenial
-  plan:
-  - get: stemcell-xenial-bosh
-    trigger: true
-    params:
-      preserve_filename: true
-  - put: stemcell-xenial-s3
-    params:
-      file: stemcell-xenial-bosh/*.tgz
 
 - name: concourse
   plan:

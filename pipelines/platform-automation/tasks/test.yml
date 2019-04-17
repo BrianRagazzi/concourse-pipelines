@@ -1,0 +1,28 @@
+# The inputs, outputs, params, filename, and filepath
+# of this task file are part of its semantically versioned API.
+# See our documentation for a detailed discussion of our semver API.
+# See www.semver.org for an explanation of semantic versioning.
+
+# code_snippet test start yaml
+---
+platform: linux
+
+run:
+  path: bash
+  args:
+  - "-c"
+  - |
+    echo "Platform Automation for PCF version:"
+    cat /var/version && echo ""
+
+    printf "\\np-automator version:"
+    p-automator -v
+
+    printf "\\nom version:"
+    om -v
+
+    set -eux
+    p-automator --help
+    om --help
+    { echo "Successfully validated tasks and image!"; } 2> /dev/null
+# code_snippet test end

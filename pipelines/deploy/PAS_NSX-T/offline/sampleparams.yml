@@ -3,7 +3,7 @@
 opsman_major_minor_version: 2\.[0-9\]+\.[0-9]+$
 # ert_major_minor_version: ^2\.0\..*$      # PCF Elastic Runtime minor version to track
 ert_major_minor_version: 2\.[0-9\]+\.[0-9]+$
-nsxt_major_minor_version: ^2\.1\.0.*$   
+nsxt_major_minor_version: ^2\.1\.0.*$
 # scs_major_minor_version: ^1\.5\..*$
 # mysql_major_minor_version: ^1\.10\..*$
 # rabbitmq_major_minor_version: ^1\.11\..*$
@@ -306,8 +306,8 @@ nsx_auth_type: simple                # can be "simple" or "client_cert", simple 
 nsx_client_cert_cert:
 nsx_client_cert_private_key:
 overlay_tz: "tz-overlay"  #name or UUID of existing overlay Transport Zone in NSX-T
-tier0_router: "tier0-activepassive" #name or UUID of existing Tier0 router to connect to 
-container_ip_blocks_name: "ip-block-pks-deployments" #name or UUID of existing IP Block 
+tier0_router: "tier0-activepassive" #name or UUID of existing Tier0 router to connect to
+container_ip_blocks_name: "ip-block-pks-deployments" #name or UUID of existing IP Block
 external_ip_pools_name: "ip-pool-vips" #name of UUID of existing IP Pools or external IPS for NAT
 
  # nsx fields
@@ -406,10 +406,7 @@ ssl_cert: |
  -----BEGIN CERTIFICATE-----
  ...
  -----END CERTIFICATE-----
-ssl_private_key: |
- -----BEGIN PRIVATE KEY-----
- ...
- -----END PRIVATE KEY-----
+ssl_private_key: CHANGEME
 
 
 # Request timeout for gorouter
@@ -438,9 +435,7 @@ saml_ssl_cert: |
  ...
  -----END CERTIFICATE-----
 saml_ssl_private_key: |
- -----BEGIN PRIVATE KEY-----
- ...
- -----END PRIVATE KEY-----
+ CHANGEME
 # Setting appropriate Application Security Groups is critical for a secure
 # deployment. Change the value of the param below to "X" to acknowledge that
 # once the Elastic Runtime deployment completes, you will review and set the
@@ -502,6 +497,6 @@ vm_disk_type: "thin"
 
 # offline resource config
 s3_endpoint: https://minio.lab13.lab.local.domain:9000
-s3_bucket: binaries 
+s3_bucket: binaries
 s3_access_key_id: MYACCESSKEY
 s3_secret_access_key: MYSECRETKEY

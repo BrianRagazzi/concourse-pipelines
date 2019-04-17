@@ -1,0 +1,50 @@
+# The inputs, outputs, params, filename, and filepath
+# of this task file are part of its semantically versioned API.
+# See our documentation for a detailed discussion of our semver API.
+# See www.semver.org for an explanation of semantic versioning.
+
+# code_snippet export-installation start yaml
+---
+platform: linux
+
+inputs:
+- name: env # contains the env file with target OpsMan Information
+
+outputs:
+- name: installation # will contain the exported installation
+
+params:
+  ENV_FILE: env.yml
+  # - Filepath of the env config YAML
+  # - The path is relative to root of the `env` input
+  INSTALLATION_FILE: installation-$timestamp.zip
+  # - Filepath of the installation ZIP file
+  # - The path is relative to root of the `installation` output
+  # - if the filename includes "$timestamp",
+  #   for example "installation-$timestamp.zip",
+  #   the final filename will include the current timestamp.
+  #   - this is necessary if using an "S3 compatible" blobstore
+  #     that doesn't support versioned blobs
+  #   - timestamped filenames will need to be represented
+  #     with a glob-style wildcard in the `upgrade-opsman` task configuration
+  #     (the default will work with the example provided above).
+
+run:
+  path: bash
+  args:
+  - -c
+  - |
+    cat /var/version && echo ""
+    set -eux
+
+    timestamp="$(date '+%Y%m%d.%-H%M.%S+%Z')"
+    export timestamp
+
+    # '$timestamp' must be a literal, because envsubst uses it as a filter
+    # this allows us to avoid accidentally interpolating anything else.
+    # shellcheck disable=SC2016
+    OUTPUT_FILE_NAME="$(echo "$INSTALLATION_FILE" | envsubst '$timestamp')"
+
+    om --env env/"${ENV_FILE}" export-installation \
+       --output-file installation/"$OUTPUT_FILE_NAME"
+# code_snippet export-installation end
