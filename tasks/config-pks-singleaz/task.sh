@@ -251,7 +251,7 @@ pks_properties=$(
     ".properties.telemetry_selector": {
       "value": $telemetry_selector
     },
-    ".properties.vm_extentions.public_ip": {
+    ".properties.vm_extensions.public_ip": {
       "value": $pks_enable_outbound
     },
     ".properties.network_selector.nsx.floating-ip-pool-ids": {
