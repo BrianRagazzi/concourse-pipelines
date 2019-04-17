@@ -314,9 +314,16 @@ jobs:
       SYSLOG_ADDRESS: ((syslog_address))
       SYSLOG_PORT: ((syslog_port))
       SYSLOG_TLS_ENABLED: ((syslog_tls_enabled))
-      SYSLOG_ENABLED: ((syslog_enabled))
+      PKS_SYSLOG_ENABLED: ((syslog_enabled))
       SYSLOG_SSL_CA_CERTIFICATE: ((syslog_ssl_ca_certificate))
       SYSLOG_TRANSPORT_PROTOCOL: ((syslog_transport_protocol))
+      VRLI_ENABLED: ((vrli_enabled))
+      VRLI_HOST: ((vrli_host))
+      VRLI_USE_SSL: ((vrli_use_ssl))
+      VRLI_SKIP_CERT_VERIFY: ((vrli_skip_cert_verify))
+      VRLI_CA_CERT: ((vrli_ca_cert))
+      VRLI_RATE_LIMIT_MSEC: ((vrli_rate_limit_msec))
+      PKS_ENABLE_OUTBOUND: ((pks_enable_outbound))
 
   - task: configure-errands
     file: pipelines-repo/tasks/config-errands/task.yml

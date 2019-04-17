@@ -42,16 +42,16 @@ fi
 
 pks_network=$(
   jq -n \
-    --arg az_1_name "$AZ_1_NAME" \
+    --arg mgmt_az_name "$MGMT_AZ_NAME" \
     --arg main_network_name "$MGMT_NETWORK_NAME" \
     --arg services_network_name "$MGMT_NETWORK_NAME" \
   '
   {
     "singleton_availability_zone": {
-      "name": $az_1_name
+      "name": $mgmt_az_name
     },
     "other_availability_zones": [
-      {"name": $az_1_name}
+      {"name": $mgmt_az_name}
     ],
     "network": {
       "name": $main_network_name
@@ -99,10 +99,17 @@ pks_properties=$(
     --arg syslog_tls_enabled "$SYSLOG_TLS_ENABLED" \
     --arg syslog_port "$SYSLOG_PORT" \
     --arg syslog_ssl_ca_certificate "$SYSLOG_SSL_CA_CERTIFICATE" \
+    --arg vrli_enabled "$VRLI_ENABLED" \
+    --arg vrli_host "$VRLI_HOST" \
+    --arg vrli_use_ssl "$VRLI_USE_SSL" \
+    --arg vrli_skip_cert_verify "$VRLI_SKIP_CERT_VERIFY" \
+    --arg vrli_ca_cert "$VRLI_CA_CERT" \
+    --arg vrli_rate_limit_msec "$VRLI_RATE_LIMIT_MSEC" \
     --arg syslog_transport_protocol "$SYSLOG_TRANSPORT_PROTOCOL" \
     --arg pks_major_version "$PKS_MAJOR_VERSION" \
     --arg pks_mid_version "$PKS_MID_VERSION" \
     --arg pks_minor_version "$PKS_MINOR_VERSION" \
+    --arg pks_enable_outbound" $PKS_ENABLE_OUTBOUND" \
   '
   {
     ".properties.cloud_provider": {
@@ -151,7 +158,7 @@ pks_properties=$(
       "value": "medium"
     },
     ".properties.plan1_selector.active.worker_instances": {
-      "value": 2
+      "value": 1
     },
     ".properties.plan1_selector.active.errand_vm_type": {
       "value": "micro"
@@ -185,6 +192,9 @@ pks_properties=$(
     },
     ".properties.plan2_selector.active.worker_vm_type": {
       "value": "medium"
+    },
+    ".properties.plan2_selector.active.master_instances": {
+      "value": 1
     },
     ".properties.plan2_selector.active.worker_instances": {
       "value": 3
@@ -241,6 +251,9 @@ pks_properties=$(
     ".properties.telemetry_selector": {
       "value": $telemetry_selector
     },
+    ".properties.vm_extentions.public_ip": {
+      "value": $pks_enable_outbound
+    },
     ".properties.network_selector.nsx.floating-ip-pool-ids": {
       "value": $nsxt_floating_ip_pool_id
     },
@@ -265,7 +278,7 @@ pks_properties=$(
   }
 
   +
-  if $syslog_enabled == "true" then
+  if $pks_syslog_enabled == "true" then
     {
       ".properties.syslog_selector": {
         "value": "enabled"
@@ -289,6 +302,36 @@ pks_properties=$(
   else
     {
       ".properties.syslog_migration_selector": {
+        "value": "disabled"
+      }
+    }
+  end
+
+  +
+  if $vrli_enabled == "true" then
+    {
+      ".properties.pks-vrli": {
+        "value": "enabled"
+      },
+      ".properties.pks-vrli.enabled.host": {
+        "value": $vrli_host
+      },
+      ".properties.pks-vrli.enabled.use_ssl": {
+        "value": $vrli_use_ssl
+      },
+      ".properties.pks-vrli.enabled.skip_cert_verify": {
+        "value": $vrli_skip_cert_verify
+      },
+      ".properties.pks-vrli.enabled.ca_cert": {
+        "value": $vrli_ca_cert
+      },
+      ".properties.pks-vrli.enabled.rate_limit_msec": {
+        "value": $vrli_rate_limit_msec
+      }
+    }
+  else
+    {
+      ".properties.pks-vrli": {
         "value": "disabled"
       }
     }
