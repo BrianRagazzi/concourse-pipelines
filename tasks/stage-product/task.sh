@@ -8,7 +8,15 @@ fi
 
 echo "staging $PRODUCT_IDENTIFIER"
 
-VERSION=`cat pivnet-product/metadata.json | jq '.Release.Version' | tr -d '"'`
+
+
+if [ ! -f "pivnet-product/metadata.json" ]; then
+  echo "Getting version from version file"
+  VERSION=`cat pivnet-product/version`  
+else
+  echo "Getting version from PivNet Metadata"
+  VERSION=`cat pivnet-product/metadata.json | jq '.Release.Version' | tr -d '"'`
+fi
 
 RELEASE_NAME=`om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep $PRODUCT_IDENTIFIER | grep $VERSION`
 
