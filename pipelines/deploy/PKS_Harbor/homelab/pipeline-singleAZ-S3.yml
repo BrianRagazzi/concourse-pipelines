@@ -249,7 +249,6 @@ jobs:
       OPS_MGR_HOST: ((ops_mgr_host))
       OPS_MGR_USR: ((ops_mgr_usr))
       OPS_MGR_PWD: ((ops_mgr_pwd))
-      PIVNET_API_TOKEN: ((pivnet_token))
 
   - task: stage-pks
     file: pipelines-repo/tasks/stage-product/task.yml
