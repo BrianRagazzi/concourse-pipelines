@@ -11,12 +11,12 @@ PKS_MID_VERSION=`echo $PKS_VERSION | cut -d "." -f2 | cut -d "-" -f1`
 PKS_MINOR_VERSION=`echo $PKS_VERSION | cut -d "." -f3 | cut -d "-" -f1`
 #expect PKS_VERSION to be 1.0.0, 1.0.1, 1.0.2, 1.0.3... 1.10.1
 
-if [ -z $VCENTER_USR_WORKER ]; then
-  VCENTER_USR_WORKER=$VCENTER_USR
+if [ -z $VCENTER_USR_MASTER ]; then
+  VCENTER_USR_MASTER=$VCENTER_USR
 fi
 
-if [ -z $VCENTER_PWD_WORKER ]; then
-  VCENTER_PWD_WORKER=$VCENTER_PWD
+if [ -z $VCENTER_PWD_MASTER ]; then
+  VCENTER_PWD_MASTER=$VCENTER_PWD
 fi
 
 if [ -z $SSL_CERT ]; then
@@ -72,8 +72,8 @@ pks_properties=$(
     --arg vcenter_host "$VCENTER_HOST" \
     --arg vcenter_usr "$VCENTER_USR" \
     --arg vcenter_pwd "$VCENTER_PWD" \
-    --arg vcenter_usr_worker "$VCENTER_USR_WORKER" \
-    --arg vcenter_pwd_worker "$VCENTER_PWD_WORKER" \
+    --arg vcenter_usr_worker "$VCENTER_USR_MASTER" \
+    --arg vcenter_pwd_worker "$VCENTER_PWD_MASTER" \
     --arg vcenter_data_center "$VCENTER_DATA_CENTER" \
     --arg om_data_store "$OM_DATA_STORE" \
     --arg bosh_vm_folder "$BOSH_VM_FOLDER" \
