@@ -66,13 +66,13 @@ network_configuration=$(
     --arg infra_dns "$INFRA_NW_DNS" \
     --arg infra_gateway "$INFRA_NW_GATEWAY" \
     --arg infra_availability_zones "$INFRA_NW_AZS" \
-    --arg main_network_name "$MAIN_NETWORK_NAME" \
-    --arg main_vcenter_network "$MAIN_VCENTER_NETWORK" \
-    --arg main_network_cidr "$MAIN_NW_CIDR" \
-    --arg main_reserved_ip_ranges "$MAIN_EXCLUDED_RANGE" \
-    --arg main_dns "$MAIN_NW_DNS" \
-    --arg main_gateway "$MAIN_NW_GATEWAY" \
-    --arg main_availability_zones "$MAIN_NW_AZS" \
+    --arg mgmt_network_name "$MGMT_NETWORK_NAME" \
+    --arg mgmt_vcenter_network "$MGMT_VCENTER_NETWORK" \
+    --arg mgmt_network_cidr "$MGMT_NW_CIDR" \
+    --arg mgmt_reserved_ip_ranges "$MGMT_EXCLUDED_RANGE" \
+    --arg mgmt_dns "$MGMT_NW_DNS" \
+    --arg mgmt_gateway "$MGMT_NW_GATEWAY" \
+    --arg mgmt_availability_zones "$MGMT_NW_AZS" \
     '
     {
       "icmp_checks_enabled": $icmp_checks_enabled,
@@ -92,16 +92,16 @@ network_configuration=$(
           ]
         },
         {
-          "name": $main_network_name,
+          "name": $mgmt_network_name,
           "service_network": true,
           "subnets": [
             {
-              "iaas_identifier": $main_vcenter_network,
-              "cidr": $main_network_cidr,
-              "reserved_ip_ranges": $main_reserved_ip_ranges,
-              "dns": $main_dns,
-              "gateway": $main_gateway,
-              "availability_zone_names": ($main_availability_zones | split(","))
+              "iaas_identifier": $mgmt_vcenter_network,
+              "cidr": $mgmt_network_cidr,
+              "reserved_ip_ranges": $mgmt_reserved_ip_ranges,
+              "dns": $mgmt_dns,
+              "gateway": $mgmt_gateway,
+              "availability_zone_names": ($mgmt_availability_zones | split(","))
             }
           ]
         }
