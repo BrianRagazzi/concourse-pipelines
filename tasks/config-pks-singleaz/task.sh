@@ -1,6 +1,10 @@
 #!/bin/bash
 
-set -eu
+if [[ $DEBUG == true ]]; then
+  set -ex
+else
+  set -e
+fi
 
 #properties changed from 1.0.2 to 1.0.3, have to chec the version staged and assign appropriate properties
 
