@@ -64,13 +64,7 @@ EOF
 network_configuration=$(
   jq -n \
     --argjson icmp_checks_enabled $ICMP_CHECKS_ENABLED \
-    --arg infra_network_name "$INFRA_NETWORK_NAME" \
-    --arg infra_vcenter_network "$INFRA_VCENTER_NETWORK" \
-    --arg infra_network_cidr "$INFRA_NW_CIDR" \
-    --arg infra_reserved_ip_ranges "$INFRA_EXCLUDED_RANGE" \
-    --arg infra_dns "$INFRA_NW_DNS" \
-    --arg infra_gateway "$INFRA_NW_GATEWAY" \
-    --arg infra_availability_zones "$INFRA_NW_AZS" \
+    --arg mgmt_network_name "$MGMT_NETWORK_NAME" \
     --arg mgmt_network_name "$MGMT_NETWORK_NAME" \
     --arg mgmt_vcenter_network "$MGMT_VCENTER_NETWORK" \
     --arg mgmt_network_cidr "$MGMT_NW_CIDR" \
@@ -162,12 +156,12 @@ syslog_configuration=$(
 
 network_assignment=$(
 jq -n \
-  --arg infra_availability_zones "$INFRA_NW_AZS" \
-  --arg network "$INFRA_NETWORK_NAME" \
+  --arg mgmt_availability_zones "$MGMT_NW_AZS" \
+  --arg network "$MGMT_NETWORK_NAME" \
   '
   {
   "singleton_availability_zone": {
-    "name": ($infra_availability_zones | split(",") | .[0])
+    "name": ($mgmt_availability_zones | split(",") | .[0])
   },
   "network": {
     "name": $network
