@@ -28,6 +28,11 @@ if [ -z $SC_VERSION ]; then
         curl --silent --path "/api/v0/stemcell_assignments" | \
         jq -r '.products[] | select(.deployed_stemcell_version == null) | .required_stemcell_version'
     )
+    SC_OS=$(
+      om-linux --target https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
+        curl --silent --path "/api/v0/stemcell_assignments" | \
+        jq -r '.products[] | select(.deployed_stemcell_version == null) | .required_stemcell_os'
+    )
   else
     echo "Checking for $PRODUCT_IDENTIFIER stemcell"
     SC_VERSION=$(
@@ -36,10 +41,27 @@ if [ -z $SC_VERSION ]; then
         jq --arg prod_id "$PRODUCT_IDENTIFIER" \
         -r '.products[] | select(.identifier == $prod_id) | .required_stemcell_version'
     )
+    SC_OS=$(
+      om-linux --target https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
+        curl --silent --path "/api/v0/stemcell_assignments" | \
+        jq -r '.products[] | select(.deployed_stemcell_version == null) | .required_stemcell_os'
+    )
   fi
 fi
-#note this will not work with Xenial stemcells
-STEMCELL_NAME=bosh-stemcell-$SC_VERSION-$IAAS_TYPE-esxi-ubuntu-trusty-go_agent.tgz
+
+if [ -z $SC_OS ]; then
+  SC_OS="ubuntu-trusty"
+fi
+
+if [ -z $SC_SLUG ]; then
+  if [ $SC_OS ="ubuntu-xenial"]; then
+    SC_SLUG="stemcells-ubuntu-xenial"
+  else
+    SC_SLUG="stemcells"
+  fi
+fi
+
+STEMCELL_NAME=bosh-stemcell-$SC_VERSION-$IAAS_TYPE-esxi-$SC_OS-go_agent.tgz
 
 DIAGNOSTIC_REPORT=$($CMD -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p /api/v0/diagnostic_report)
 
