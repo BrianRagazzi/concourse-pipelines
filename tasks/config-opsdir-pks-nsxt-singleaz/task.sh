@@ -51,7 +51,7 @@ az_configuration=$(cat <<-EOF
       "name": "$PKS_AZ_1",
       "cluster": "$PKS_AZ_1_CLUSTER_NAME",
       "resource_pool": "$PKS_AZ_1_RP_NAME"
-    }
+    },
     {
       "name": "$MGMT_AZ",
       "cluster": "$MGMT_AZ_CLUSTER_NAME",
