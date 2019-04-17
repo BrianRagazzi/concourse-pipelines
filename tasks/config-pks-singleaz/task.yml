@@ -11,7 +11,7 @@ inputs:
   - name: pipelines-repo
 
 run:
-  path: pipelines-repo/tasks/config-pks/task.sh
+  path: pipelines-repo/tasks/config-pks-singleaz/task.sh
 
 params:
    MAIN_NETWORK_NAME:
