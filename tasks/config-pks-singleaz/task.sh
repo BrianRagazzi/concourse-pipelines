@@ -94,7 +94,7 @@ pks_properties=$(
     --arg nsxt_superuser_private_key "$NSXT_SUPERUSER_PRIVATE_KEY" \
     --arg nsxt_ca_cert "$NSXT_CA_CERT" \
     --arg telemetry_selector "$TELEMETRY_SELECTOR" \
-    --arg syslog_enabled ${SYSLOG_ENABLED:-"false"} \
+    --arg syslog_enabled ${PKS_SYSLOG_ENABLED:-"false"} \
     --arg syslog_address "$SYSLOG_ADDRESS" \
     --arg syslog_tls_enabled "$SYSLOG_TLS_ENABLED" \
     --arg syslog_port "$SYSLOG_PORT" \
@@ -109,7 +109,7 @@ pks_properties=$(
     --arg pks_major_version "$PKS_MAJOR_VERSION" \
     --arg pks_mid_version "$PKS_MID_VERSION" \
     --arg pks_minor_version "$PKS_MINOR_VERSION" \
-    --arg pks_enable_outbound" $PKS_ENABLE_OUTBOUND" \
+    --arg pks_enable_outbound "$PKS_ENABLE_OUTBOUND" \
   '
   {
     ".properties.cloud_provider": {
@@ -278,7 +278,7 @@ pks_properties=$(
   }
 
   +
-  if $pks_syslog_enabled == "true" then
+  if $syslog_enabled == "true" then
     {
       ".properties.syslog_selector": {
         "value": "enabled"

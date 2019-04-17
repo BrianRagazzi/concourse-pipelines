@@ -281,6 +281,7 @@ jobs:
     file: pipelines-repo/tasks/config-pks-singleaz/task.yml
     params:
       MGMT_NETWORK_NAME: ((mgmt_network_name))
+      MGMT_AZ_NAME: ((mgmt_az_name))
       AZ_1_NAME: ((az_1_name))
       VCENTER_HOST: ((vcenter_host))
       VCENTER_USR: ((vcenter_usr))
