@@ -43,7 +43,6 @@ resources:
     repository: pivnet-cli
     access_token: ((github_token)) ## Optional: Removing this will cause you to hit the rate limit
 
-
 - name: harbor-s3
   type: s3
   source:
@@ -402,9 +401,9 @@ jobs:
       OPS_MGR_HOST: ((ops_mgr_host))
       OPS_MGR_USR: ((ops_mgr_usr))
       OPS_MGR_PWD: ((ops_mgr_pwd))
-      NETWORK_NAME: ((network_name))
-      OTHER_AZS: ((other_azs))
-      SINGLETON_JOBS_AZ: ((singleton_jobs_az))
+      NETWORK_NAME: ((mgmt_network_name))
+      OTHER_AZS: ((mgmt_az_name))
+      SINGLETON_JOBS_AZ: ((mgmt_az_name))
       PRODUCT_NAME: harbor-container-registry
       AUTH_MODE: ((harbor_auth_mode))
       HARBOR_HOSTNAME: ((harbor_hostname))
@@ -430,7 +429,7 @@ jobs:
       HARBOR_S3_REGISTRY_STORAGE_ROOT_DIRECTORY: ((harbor_s3_registry_storage_root_directory))
       HARBOR_CERT_PEM: ((harbor_cert_pem))
       HARBOR_PRIVATE_KEY_PEM: ((harbor_private_key_pem))
-      HARBOR_SERVER_CERT_CA_PEM: ((harbor_server_cert_ca_pem))
+      HARBOR_SERVER_CERT_CA_PEM: ((harbor_cert_ca_pem))
 
   - task: config-harbor-errands
     file: pipelines-repo/tasks/config-errands/task.yml
