@@ -85,7 +85,7 @@ jobs:
     - get: pivnet-opsman-product
       resource: pcf-ops-manager
       params: {globs: ["*.ova"]}
-      trigger: false
+      trigger: true
 
   - task: deploy
     file: pipelines-repo/tasks/import-opsman/task.yml
@@ -121,7 +121,7 @@ jobs:
     - get: pcf-ops-manager
       params: {globs: []}
       passed: [deploy-opsman]
-      trigger: false
+      trigger: true
 
   - task: config-opsman-auth
     file: pipelines-repo/tasks/config-opsman/task.yml
@@ -213,7 +213,7 @@ jobs:
     - get: pcf-ops-manager
       params: {globs: []}
       passed: [configure-director]
-      trigger: false
+      trigger: true
 
   - task: apply-changes
     file: pipelines-repo/tasks/apply-changes/task.yml
@@ -232,7 +232,7 @@ jobs:
     - get: pcf-ops-manager
       params: {globs: []}
       passed: [deploy-director]
-      trigger: false
+      trigger: true
     - get: pivnet-cli
       params:
         globs:
@@ -274,7 +274,7 @@ jobs:
       resource: pivotal-container-service
       params: {globs: []}
       passed: [upload-pks]
-      trigger: false
+      trigger: true
 
   - task: configure-pks
     file: pipelines-repo/tasks/config-pks-singleaz/task.yml
@@ -347,7 +347,7 @@ jobs:
   - aggregate:
     - get: pipelines-repo
       passed: [apply-changes-pks]
-      trigger: false
+      trigger: true
     - get: pivnet-product
       resource: harbor-s3
       params: {globs: ["*.pivotal"]}
@@ -383,7 +383,7 @@ jobs:
       resource: harbor-s3
       passed: [upload-harbor]
       params: {globs: ["*.pivotal"]}
-      trigger: false
+      trigger: true
 
   - task: stage-tile
     file: pipelines-repo/tasks/stage-product/task.yml
@@ -448,7 +448,7 @@ jobs:
     - get: pipelines-repo
     - get: pivnet-product
       passed: [configure-pks]
-      trigger: false
+      trigger: true
       resource: pivotal-container-service
       params: {globs: ["*.pivotal"]}
 
