@@ -89,7 +89,7 @@ function check_installed_srt_version {
   export SRT_PRODUCT_VERSION=$(om-linux \
                             -t https://$OPS_MGR_HOST \
                             -u $OPS_MGR_USR \
-                            -p $OPS_MGR_PWD \ 
+                            -p $OPS_MGR_PWD \
                             -k curl -p "/api/v0/staged/products" \
                             -x GET  2>/dev/null \
                             | jq '.[] | select(.installation_name | contains("srt-")) | .product_version' \
