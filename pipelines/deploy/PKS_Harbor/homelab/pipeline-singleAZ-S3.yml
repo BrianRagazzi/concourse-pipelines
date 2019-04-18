@@ -429,7 +429,7 @@ jobs:
       HARBOR_S3_REGISTRY_STORAGE_ROOT_DIRECTORY: ((harbor_s3_registry_storage_root_directory))
       HARBOR_CERT_PEM: ((harbor_cert_pem))
       HARBOR_PRIVATE_KEY_PEM: ((harbor_private_key_pem))
-      HARBOR_SERVER_CERT_CA_PEM: ((harbor_cert_ca_pem))
+      HARBOR_SERVER_CERT_CA_PEM: ((harbor_server_cert_ca_pem))
 
   - task: config-harbor-errands
     file: pipelines-repo/tasks/config-errands/task.yml
