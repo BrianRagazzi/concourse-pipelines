@@ -89,12 +89,10 @@ resources:
 
 
 groups:
-- name: get-images
+- name: get-images-yelb
   jobs:
   - copy-yelb-images-to-harbor
-- name: yelb-harbor
-  jobs:
-  - deploy-yelb-harbor
+
 
 jobs:
 - name: copy-yelb-images-to-harbor
@@ -132,21 +130,3 @@ jobs:
     params:
       load: redis
       tag: redis/tag
-
-- name: deploy-yelb-harbor
-  plan:
-  - aggregate:
-    - get: pipelines-repo
-      trigger: false
-
-
-  - task: deploy-pks-test-app
-    file: pipelines-repo/tasks/deploy-pks-test-app/task.yml
-    params:
-      UAA_URL: ((uaa_url))
-      PKS_CLI_USERNAME: ((pks_cli_username))
-      PKS_CLI_PASSWORD: ((pks_cli_password))
-      YAML_SOURCE: ((test_app_yaml))
-      VALUE_TO_REPLACE: ((yaml_value_to_replace))
-      REPLACEMENT_VALUE: ((yaml_replacement_value))
-      DEBUG: ((debug))
