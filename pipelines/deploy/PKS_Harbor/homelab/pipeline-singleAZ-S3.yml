@@ -71,7 +71,7 @@ groups:
   jobs:
   - add-pks-user
   - create-k8s-testcluster
-  - deploy-pks-test-app
+  - deploy-pks-app
 - name: cleanup
   jobs:
   - wipe-env
@@ -514,7 +514,7 @@ jobs:
       NSX_MANAGER_IP: ((nsx_address))
       PKS_KEEP_FAILED_CLUSTER_ALIVE: ((pks_keep_failed_cluster_alive))
 
-- name: deploy-pks-test-app
+- name: deploy-pks-app
   plan:
   - aggregate:
     - get: pipelines-repo
@@ -522,12 +522,13 @@ jobs:
       passed: [create-k8s-testcluster]
 
   - task: deploy-pks-test-app
-    file: pipelines-repo/tasks/deploy-pks-test-app/task.yml
+    file: pipelines-repo/tasks/deploy-pks-app/task.yml
     params:
       UAA_URL: ((uaa_url))
       PKS_CLI_USERNAME: ((pks_cli_username))
       PKS_CLI_PASSWORD: ((pks_cli_password))
       YAML_SOURCE: ((test_app_yaml))
+      NAMESPACE: ((test_app_namespace))
       VALUE_TO_REPLACE: ((test_app_yaml_value_to_replace))
       REPLACEMENT_VALUE: ((test_app_yaml_replacement_value))
 
