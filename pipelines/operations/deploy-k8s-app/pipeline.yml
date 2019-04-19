@@ -1,0 +1,27 @@
+resources:
+- name: pipelines-repo
+  type: git
+  source:
+    uri: ((github_repo))
+    branch: ((github_branch))
+    username: ((github_username))
+    password: ((github_token))
+
+jobs:
+- name: deploy-pks-test-app
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      trigger: false
+
+  - task: deploy-pks-test-app
+    file: pipelines-repo/tasks/deploy-pks-test-app/task.yml
+    params:
+      UAA_URL: ((uaa_url))
+      PKS_CLI_USERNAME: ((pks_cli_username))
+      PKS_CLI_PASSWORD: ((pks_cli_password))
+      YAML_SOURCE: ((test_app_yaml))
+      NAMESPACE: ((test_app_namespace))
+      EXT_IP_SELECTOR: ((test_app_ext_ip_selector))
+      VALUE_TO_REPLACE: ((test_app_yaml_value_to_replace))
+      REPLACEMENT_VALUE: ((test_app_yaml_replacement_value))
