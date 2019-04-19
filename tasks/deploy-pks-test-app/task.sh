@@ -44,8 +44,8 @@ kubectl apply -f app.yml
 kubectl get pods --namespace $NAMESPACE
 kubectl get services --namespace $NAMESPACE
 # EXT_IP=$(kubectl get services --namespace $NAMESPACE -o json | jq -r '.items[] | select(.spec.selector.app=="yelb-ui") | .status.loadBalancer.ingress[0].ip')
-EXT_IP=$(kubectl get services --namespace $NAMESPACE -o json | jq -r $EXT_IP_SELECTOR)
-echo "Connect a browser to http://${EXT_IP}"
+#EXT_IP=$(kubectl get services --namespace $NAMESPACE -o json | jq -r $EXT_IP_SELECTOR)
+#echo "Connect a browser to http://${EXT_IP}"
 # else
 #   echo "yelb deployment already exists in ${clustername}"
 # fi

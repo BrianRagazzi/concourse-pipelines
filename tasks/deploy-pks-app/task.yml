@@ -13,11 +13,12 @@ run:
   path: pipelines-repo/tasks/deploy-pks-app/task.sh
 
 params:
-  UAA_URL:
+  PCF_PKS_API:
   PKS_CLI_USERNAME:
   PKS_CLI_PASSWORD:
-  APP_YAML_URL:
+  YAML_SOURCE:
   VALUE_TO_REPLACE:
   REPLACEMENT_VALUE:
-  K8S_NAMESPACE:
-  K8S_CLUSTERNAME:    
+  NAMESPACE:
+  UAA_URL:
+  DEBUG:

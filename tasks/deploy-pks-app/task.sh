@@ -1,33 +1,51 @@
 #!/bin/bash
-set -eu
+if [[ $DEBUG == true ]]; then
+  set -ex
+else
+  set -e
+fi
 
 echo "Login to PKS API [$UAA_URL]"
 pks login -a "$UAA_URL" -u "$PKS_CLI_USERNAME" -p "$PKS_CLI_PASSWORD" --skip-ssl-validation # TBD --ca-cert CERT-PATH
 
+#081718-BPR - Addes sort-by because the results are not always in a logical order.
+clustername=$(pks clusters --json |   jq -r -c 'sort_by(.name)[-1] | select(.name | contains("cl")) | .name')
 
-pks cluster ${K8S_CLUSTERNAME}
-pks get-credentials ${K8S_CLUSTERNAME}
-kubectl config use-context ${K8S_CLUSTERNAME}
-echo "current nodes"
+
+pks cluster ${clustername}
+pks get-credentials ${clustername}
+kubectl config use-context ${clustername}
 kubectl get nodes -o wide
 
 set +eu
-appns=$(kubectl get namespace | grep ${K8S_NAMESPACE})
+ns=$(kubectl get namespace | grep $NAMESPACE)
 set -eu
 
-if [ -z $appns ]; then
-  echo "Creating ${K8S_NAMESPACE} namespace"
-  kubectl create namespace ${K8S_NAMESPACE}
+if [ -z $ns ]; then
+  echo "Creating $NAMESPACE Namepace"
+  kubectl create namespace $NAMESPACE
 else
-  echo "${K8S_NAMESPACE} namespace already exists"
+  echo "$NAMESPACE namespace already exists"
 fi
-echo "Getting app yaml"
-wget "${APP_YAML_URL}" -O app.yml
+
+# set +eu
+# # turn off errors because it will throw one if the deployment does not exist
+# testdeploy=$(kubectl get deploy --namespace $NAMESPACE | grep yelb-ui)
+# # echo $yelbdeploy
+# set -eu
+#
+# if [ -z $yelbdeploy ]; then
+wget "${YAML_SOURCE}" -O app.yml
 #YELBYML=`cat yelb-lb-harbor-original.yml`
 # echo ${YELBYML//"$VALUE_TO_REPLACE"/"$REPLACEMENT_VALUE"} > yelb-lb-harbor.yml
 sed -i -e "s/$VALUE_TO_REPLACE/$REPLACEMENT_VALUE/g" app.yml
+echo "attempting to apply yml"
 kubectl apply -f app.yml
-kubectl get pods --namespace ${K8S_NAMESPACE}
-kubectl get services --namespace ${K8S_NAMESPACE} -o json
-# EXT_IP=$(kubectl get services --namespace yelb -o json | jq -r '.items[] | select(.spec.selector.app=="yelb-ui") | .status.loadBalancer.ingress[0].ip')
-# echo "Connect a browser to http://${EXT_IP} to load yelb"
+kubectl get pods --namespace $NAMESPACE
+kubectl get services --namespace $NAMESPACE
+# EXT_IP=$(kubectl get services --namespace $NAMESPACE -o json | jq -r '.items[] | select(.spec.selector.app=="yelb-ui") | .status.loadBalancer.ingress[0].ip')
+#EXT_IP=$(kubectl get services --namespace $NAMESPACE -o json | jq -r $EXT_IP_SELECTOR)
+#echo "Connect a browser to http://${EXT_IP}"
+# else
+#   echo "yelb deployment already exists in ${clustername}"
+# fi
