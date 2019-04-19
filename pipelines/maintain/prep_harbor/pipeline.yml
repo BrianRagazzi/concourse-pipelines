@@ -6,13 +6,6 @@ resource_types:
     tag: latest-final
 
 resources:
-- name: pipelines-repo
-  type: git
-  source:
-    uri: ((github_repo))
-    branch: ((github_branch))
-    username: ((github_username))
-    password: ((github_token))
 
 #These are used by yelb, the test application
 - name: yelb-ui
