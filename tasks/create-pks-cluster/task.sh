@@ -23,7 +23,7 @@ NUM=$(pks clusters --json | jq '. | length')
 echo "$NUM PKS Clusters already Exist"
 NUM=$((NUM + 1))
 
-PKS_CLUSTER_NAME=cl$NUM
+#PKS_CLUSTER_NAME=cl$NUM
 EXT_HOSTNAME=$(echo $UAA_URL | sed -E 's/api|uaa/'$PKS_CLUSTER_NAME'/g')
 
 #echo "Creating PKS cluster [$PKS_CLUSTER_NAME], master node NAT IP [$PKS_NAT_IP], plan [$PKS_SERVICE_PLAN_NAME], number of workers [$PKS_CLUSTER_NUMBER_OF_WORKERS]"

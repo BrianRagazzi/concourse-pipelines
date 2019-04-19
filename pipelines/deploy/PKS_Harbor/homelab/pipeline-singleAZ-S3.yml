@@ -512,6 +512,7 @@ jobs:
       NSX_MANAGER_USERNAME: ((nsx_username))
       NSX_MANAGER_PASSWORD: ((nsx_password))
       NSX_MANAGER_IP: ((nsx_address))
+      PKS_CLUSTER_NAME: ((pks_cluster_name))
       PKS_KEEP_FAILED_CLUSTER_ALIVE: ((pks_keep_failed_cluster_alive))
 
 - name: deploy-pks-app
@@ -521,12 +522,13 @@ jobs:
       trigger: false
       passed: [create-k8s-testcluster]
 
-  - task: deploy-pks-test-app
+  - task: deploy-pks-app
     file: pipelines-repo/tasks/deploy-pks-app/task.yml
     params:
       UAA_URL: ((uaa_url))
       PKS_CLI_USERNAME: ((pks_cli_username))
       PKS_CLI_PASSWORD: ((pks_cli_password))
+      PKS_CLUSTER_NAME: ((pks_cluster_name
       YAML_SOURCE: ((test_app_yaml))
       NAMESPACE: ((test_app_namespace))
       VALUE_TO_REPLACE: ((test_app_yaml_value_to_replace))
