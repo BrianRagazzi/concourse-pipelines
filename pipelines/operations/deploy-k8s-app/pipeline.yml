@@ -20,6 +20,7 @@ jobs:
       UAA_URL: ((uaa_url))
       PKS_CLI_USERNAME: ((pks_cli_username))
       PKS_CLI_PASSWORD: ((pks_cli_password))
+      PKS_CLUSTER_NAME: ((pks_cluster_name))
       YAML_SOURCE: ((test_app_yaml))
       NAMESPACE: ((test_app_namespace))
       VALUE_TO_REPLACE: ((test_app_yaml_value_to_replace))
@@ -37,5 +38,6 @@ jobs:
       UAA_URL: ((uaa_url))
       PKS_CLI_USERNAME: ((pks_cli_username))
       PKS_CLI_PASSWORD: ((pks_cli_password))
+      PKS_CLUSTER_NAME: ((pks_cluster_name
       YAML_SOURCE: ((test_app_yaml))
       NAMESPACE: ((test_app_namespace))

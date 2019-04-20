@@ -10,7 +10,7 @@ inputs:
 - name: pipelines-repo
 
 run:
-  path: pipelines-repo/tasks/deploy-pks-app/task.sh
+  path: pipelines-repo/tasks/delete-pks-app/task.sh
 
 params:
   PCF_PKS_API:
