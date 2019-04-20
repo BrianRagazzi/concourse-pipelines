@@ -40,7 +40,8 @@ wget "${YAML_SOURCE}" -O app.yml
 # echo ${YELBYML//"$VALUE_TO_REPLACE"/"$REPLACEMENT_VALUE"} > yelb-lb-harbor.yml
 sed -i -e "s/$VALUE_TO_REPLACE/$REPLACEMENT_VALUE/g" app.yml
 echo "attempting to apply yml"
-kubectl apply -f app.yml
+kubectl apply -f app.yml -n $NAMESPACE
+sleep 10s # wait a sec for the loadbalancer to finisb
 kubectl get pods --namespace $NAMESPACE
 kubectl get services --namespace $NAMESPACE
 # EXT_IP=$(kubectl get services --namespace $NAMESPACE -o json | jq -r '.items[] | select(.spec.selector.app=="yelb-ui") | .status.loadBalancer.ingress[0].ip')
