@@ -41,7 +41,8 @@ wget "${YAML_SOURCE}" -O app.yml
 #sed -i -e "s/$VALUE_TO_REPLACE/$REPLACEMENT_VALUE/g" app.yml
 #echo "attempting to apply yml"
 kubectl delete -f app.yml -n $NAMESPACE
-sleep 5s
+echo "waiting 10s for services to stop and pods to terminate"
+sleep 10s # wait a sec for the loadbalancer to finisb
 kubectl get pods --namespace $NAMESPACE
 kubectl get services --namespace $NAMESPACE
 # EXT_IP=$(kubectl get services --namespace $NAMESPACE -o json | jq -r '.items[] | select(.spec.selector.app=="yelb-ui") | .status.loadBalancer.ingress[0].ip')
