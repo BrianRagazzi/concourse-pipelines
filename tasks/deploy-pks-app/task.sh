@@ -41,6 +41,7 @@ wget "${YAML_SOURCE}" -O app.yml
 sed -i -e "s/$VALUE_TO_REPLACE/$REPLACEMENT_VALUE/g" app.yml
 echo "attempting to apply yml"
 kubectl apply -f app.yml -n $NAMESPACE
+echo "waiting 10s for services to start"
 sleep 10s # wait a sec for the loadbalancer to finisb
 kubectl get pods --namespace $NAMESPACE
 kubectl get services --namespace $NAMESPACE
