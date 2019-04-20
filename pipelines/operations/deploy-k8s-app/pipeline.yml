@@ -33,7 +33,7 @@ jobs:
       trigger: false
 
   - task: delete-pks-app
-    file: pipelines-repo/tasks/delwtw-pks-app/task.yml
+    file: pipelines-repo/tasks/delete-pks-app/task.yml
     params:
       UAA_URL: ((uaa_url))
       PKS_CLI_USERNAME: ((pks_cli_username))
