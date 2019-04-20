@@ -22,6 +22,5 @@ jobs:
       PKS_CLI_PASSWORD: ((pks_cli_password))
       YAML_SOURCE: ((test_app_yaml))
       NAMESPACE: ((test_app_namespace))
-      EXT_IP_SELECTOR: ((test_app_ext_ip_selector))
       VALUE_TO_REPLACE: ((test_app_yaml_value_to_replace))
       REPLACEMENT_VALUE: ((test_app_yaml_replacement_value))
