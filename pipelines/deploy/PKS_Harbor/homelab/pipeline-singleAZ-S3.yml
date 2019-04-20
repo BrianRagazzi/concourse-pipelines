@@ -76,6 +76,7 @@ groups:
   jobs:
   - wipe-env
   - delete-all-clusters
+  - delete-pks-app
 
 jobs:
 - name: deploy-opsman
@@ -520,7 +521,6 @@ jobs:
   - aggregate:
     - get: pipelines-repo
       trigger: false
-      passed: [create-k8s-testcluster]
 
   - task: deploy-pks-app
     file: pipelines-repo/tasks/deploy-pks-app/task.yml
@@ -528,11 +528,28 @@ jobs:
       UAA_URL: ((uaa_url))
       PKS_CLI_USERNAME: ((pks_cli_username))
       PKS_CLI_PASSWORD: ((pks_cli_password))
-      PKS_CLUSTER_NAME: ((pks_cluster_name
+      PKS_CLUSTER_NAME: ((pks_cluster_name))
       YAML_SOURCE: ((test_app_yaml))
       NAMESPACE: ((test_app_namespace))
       VALUE_TO_REPLACE: ((test_app_yaml_value_to_replace))
       REPLACEMENT_VALUE: ((test_app_yaml_replacement_value))
+
+- name: delete-pks-app
+  plan:
+  - aggregate:
+    - get: pipelines-repo
+      trigger: false
+
+  - task: delete-pks-app
+    file: pipelines-repo/tasks/delete-pks-app/task.yml
+    params:
+      UAA_URL: ((uaa_url))
+      PKS_CLI_USERNAME: ((pks_cli_username))
+      PKS_CLI_PASSWORD: ((pks_cli_password))
+      PKS_CLUSTER_NAME: ((pks_cluster_name))
+      YAML_SOURCE: ((test_app_yaml))
+      NAMESPACE: ((test_app_namespace))
+
 
 - name: delete-all-clusters
   plan:
