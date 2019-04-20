@@ -468,7 +468,7 @@ jobs:
     - get: harbor-s3
       passed: [configure-harbor]
       params: {globs: ["*.pivotal"]}
-      trigger: false
+      trigger: true
 
   - task: apply-changes
     file: pipelines-repo/tasks/apply-changes/task.yml
@@ -481,7 +481,7 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      trigger: false
+      trigger: true
       # passed: [apply-changes]
 
   - task: configure-pks-cli-user
