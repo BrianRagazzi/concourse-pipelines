@@ -1,6 +1,10 @@
 #!/bin/bash
 
-set -eu
+if [[ $DEBUG == true ]]; then
+  set -ex
+else
+  set -e
+fi
 
 #properties changed from 1.0.2 to 1.0.3, have to chec the version staged and assign appropriate properties
 
@@ -42,6 +46,7 @@ fi
 
 pks_network=$(
   jq -n \
+    --arg mgmt_az_name "$MGMT_AZ_NAME" \
     --arg az_1_name "$AZ_1_NAME" \
     --arg az_2_name "$AZ_2_NAME" \
     --arg az_3_name "$AZ_3_NAME" \
@@ -50,7 +55,7 @@ pks_network=$(
   '
   {
     "singleton_availability_zone": {
-      "name": $az_1_name
+      "name": $mgmt_1_name
     },
     "other_availability_zones": [
       {"name": $az_1_name},{"name": $az_2_name},{"name": $az_3_name}
@@ -87,7 +92,6 @@ pks_properties=$(
     --arg nsx_address "$NSX_ADDRESS" \
     --arg nsx_username "$NSX_USERNAME" \
     --arg nsx_password "$NSX_PASSWORD" \
-    --arg az_1_name "$AZ_1_NAME" \
     --arg nsxt_t0_routerid "$NSXT_T0_ROUTERID" \
     --arg nxst_ip_block_id "$NSXT_IP_BLOCK_ID" \
     --arg nsxt_nodes_ip_block_id "$NSXT_NODES_IP_BLOCK_ID" \
@@ -104,6 +108,11 @@ pks_properties=$(
     --arg syslog_port "$SYSLOG_PORT" \
     --arg syslog_ssl_ca_certificate "$SYSLOG_SSL_CA_CERTIFICATE" \
     --arg syslog_transport_protocol "$SYSLOG_TRANSPORT_PROTOCOL" \
+    --arg vrli_enabled "$VRLI_ENABLED" \
+    --arg vrli_host "$VRLI_HOST" \
+    --arg vrli_use_ssl "$VRLI_USE_SSL" \
+    --arg vrli_skip_cert_verify "$VRLI_SKIP_CERT_VERIFY" \
+    --arg vrli_ca_cert "$VRLI_CA_CERT" \
     --arg pks_major_version "$PKS_MAJOR_VERSION" \
     --arg pks_mid_version "$PKS_MID_VERSION" \
     --arg pks_minor_version "$PKS_MINOR_VERSION" \
@@ -143,7 +152,7 @@ pks_properties=$(
       "value": [$az_1_name]
     },
     ".properties.plan1_selector.active.worker_az_placement": {
-      "value": [$az_1_name]
+      "value": [$az_1_name,$az_2_name,$az_3_name]
     },
     ".properties.plan1_selector.active.master_vm_type": {
       "value": "medium"
@@ -154,8 +163,11 @@ pks_properties=$(
     ".properties.plan1_selector.active.worker_vm_type": {
       "value": "medium"
     },
+    ".properties.plan1_selector.active.master_instances": {
+      "value": 1
+    },
     ".properties.plan1_selector.active.worker_instances": {
-      "value": 2
+      "value": 1
     },
     ".properties.plan1_selector.active.errand_vm_type": {
       "value": "micro"
@@ -189,6 +201,9 @@ pks_properties=$(
     },
     ".properties.plan2_selector.active.worker_vm_type": {
       "value": "medium"
+    },
+    ".properties.plan2_selector.active.master_instances": {
+      "value": 2
     },
     ".properties.plan2_selector.active.worker_instances": {
       "value": 3
@@ -245,6 +260,9 @@ pks_properties=$(
     ".properties.telemetry_selector": {
       "value": $telemetry_selector
     },
+    ".properties.vm_extensions": {
+      "value": ["public_ip"]
+    },
     ".properties.network_selector.nsx.floating-ip-pool-ids": {
       "value": $nsxt_floating_ip_pool_id
     },
@@ -297,7 +315,32 @@ pks_properties=$(
       }
     }
   end
-
+  +
+  if $vrli_enabled == "true" then
+    {
+      ".properties.pks-vrli": {
+        "value": "enabled"
+      },
+      ".properties.pks-vrli.enabled.host": {
+        "value": $vrli_host
+      },
+      ".properties.pks-vrli.enabled.use_ssl": {
+        "value": $vrli_use_ssl
+      },
+      ".properties.pks-vrli.enabled.skip_cert_verify": {
+        "value": $vrli_skip_cert_verify
+      },
+      ".properties.pks-vrli.enabled.ca_cert": {
+        "value": $vrli_ca_cert
+      }
+    }
+  else
+    {
+      ".properties.pks-vrli": {
+        "value": "disabled"
+      }
+    }
+  end
   '
 )
 
