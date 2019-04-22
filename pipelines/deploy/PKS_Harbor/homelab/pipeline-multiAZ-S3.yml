@@ -206,7 +206,7 @@ jobs:
       AZ_2_CLUSTER_NAME: ((az_2_cluster_name))
       AZ_2_RP_NAME: ((az_2_rp_name))
       AZ_2_HOST_GROUP: ((az_2_host_group))
-      AZ_3: ((az_1_name))
+      AZ_3: ((az_3_name))
       AZ_3_CLUSTER_NAME: ((az_3_cluster_name))
       AZ_3_RP_NAME: ((az_3_rp_name))
       AZ_3_HOST_GROUP: ((az_3_host_group))
