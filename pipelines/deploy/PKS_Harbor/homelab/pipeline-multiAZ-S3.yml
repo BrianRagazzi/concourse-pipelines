@@ -288,7 +288,7 @@ jobs:
       trigger: true
 
   - task: configure-pks
-    file: pipelines-repo/tasks/config-pks-multiaz/task.yml
+    file: pipelines-repo/tasks/config-pks/task.yml
     params:
       MGMT_NETWORK_NAME: ((mgmt_network_name))
       MGMT_AZ_NAME: ((mgmt_az_name))
