@@ -533,6 +533,7 @@ jobs:
   - aggregate:
     - get: pipelines-repo
       trigger: false
+      passed: [create-k8s-testcluster]
 
   - task: deploy-pks-app
     file: pipelines-repo/tasks/deploy-pks-app/task.yml
