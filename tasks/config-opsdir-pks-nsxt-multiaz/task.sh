@@ -62,7 +62,7 @@ az_configuration=$(cat <<-EOF
       "cluster": "$AZ_3_CLUSTER_NAME",
       "resource_pool": "$AZ_3_RP_NAME",
       "host_group": "$AZ_3_HOST_GROUP"
-    }
+    },
     {
       "name": "$MGMT_AZ",
       "cluster": "$MGMT_AZ_CLUSTER_NAME",
