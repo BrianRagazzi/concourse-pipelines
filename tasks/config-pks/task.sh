@@ -55,7 +55,7 @@ pks_network=$(
   '
   {
     "singleton_availability_zone": {
-      "name": $mgmt_1_name
+      "name": $mgmt_az_name
     },
     "other_availability_zones": [
       {"name": $az_1_name},{"name": $az_2_name},{"name": $az_3_name}
