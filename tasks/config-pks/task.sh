@@ -203,7 +203,7 @@ pks_properties=$(
       "value": "medium"
     },
     ".properties.plan2_selector.active.master_instances": {
-      "value": 2
+      "value": 3
     },
     ".properties.plan2_selector.active.worker_instances": {
       "value": 3
