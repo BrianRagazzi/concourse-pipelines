@@ -48,17 +48,20 @@ az_configuration=$(cat <<-EOF
     {
       "name": "$AZ_1",
       "cluster": "$AZ_1_CLUSTER_NAME",
-      "resource_pool": "$AZ_1_RP_NAME"
+      "resource_pool": "$AZ_1_RP_NAME",
+      "host_group": "$AZ_1_HOST_GROUP"
     },
     {
       "name": "$AZ_2",
       "cluster": "$AZ_2_CLUSTER_NAME",
-      "resource_pool": "$AZ_2_RP_NAME"
+      "resource_pool": "$AZ_2_RP_NAME",
+      "host_group": "$AZ_2_HOST_GROUP"
     },
     {
       "name": "$AZ_3",
       "cluster": "$AZ_3_CLUSTER_NAME",
-      "resource_pool": "$AZ_3_RP_NAME"
+      "resource_pool": "$AZ_3_RP_NAME",
+      "host_group": "$AZ_3_HOST_GROUP"
     }
  ]
 EOF
@@ -67,28 +70,28 @@ EOF
 network_configuration=$(
   jq -n \
     --argjson icmp_checks_enabled $ICMP_CHECKS_ENABLED \
-    --arg main_network_name "$MAIN_NETWORK_NAME" \
-    --arg main_vcenter_network "$MAIN_VCENTER_NETWORK" \
-    --arg main_network_cidr "$MAIN_NW_CIDR" \
-    --arg main_reserved_ip_ranges "$MAIN_EXCLUDED_RANGE" \
-    --arg main_dns "$MAIN_NW_DNS" \
-    --arg main_gateway "$MAIN_NW_GATEWAY" \
-    --arg main_availability_zones "$MAIN_NW_AZS" \
+    --arg mgmt_network_name "$MGMT_NETWORK_NAME" \
+    --arg mgmt_vcenter_network "$MGMT_VCENTER_NETWORK" \
+    --arg mgmt_network_cidr "$MGMT_NW_CIDR" \
+    --arg mgmt_reserved_ip_ranges "$MGMT_EXCLUDED_RANGE" \
+    --arg mgmt_dns "$MGMT_NW_DNS" \
+    --arg mgmt_gateway "$MGMT_NW_GATEWAY" \
+    --arg mgmt_availability_zones "$MGMT_NW_AZS" \
     '
     {
       "icmp_checks_enabled": $icmp_checks_enabled,
       "networks": [
         {
-          "name": $main_network_name,
+          "name": $mgmt_network_name,
           "service_network": true,
           "subnets": [
             {
-              "iaas_identifier": $main_vcenter_network,
-              "cidr": $main_network_cidr,
-              "reserved_ip_ranges": $main_reserved_ip_ranges,
-              "dns": $main_dns,
-              "gateway": $main_gateway,
-              "availability_zone_names": ($main_availability_zones | split(","))
+              "iaas_identifier": $mgmt_vcenter_network,
+              "cidr": $mgmt_network_cidr,
+              "reserved_ip_ranges": $mgmt_reserved_ip_ranges,
+              "dns": $mgmt_dns,
+              "gateway": $mgmt_gateway,
+              "availability_zone_names": ($mgmt_availability_zones | split(","))
             }
           ]
         }
@@ -158,12 +161,12 @@ syslog_configuration=$(
 
 network_assignment=$(
 jq -n \
-  --arg main_availability_zones "$MAIN_NW_AZS" \
-  --arg network "$MAIN_NETWORK_NAME" \
+  --arg mgmt_availability_zones "$MGMT_NW_AZS" \
+  --arg network "$MGMT_NETWORK_NAME" \
   '
   {
   "singleton_availability_zone": {
-    "name": ($main_availability_zones | split(",") | .[0])
+    "name": ($mgmt_availability_zones | split(",") | .[0])
   },
   "network": {
     "name": $network
