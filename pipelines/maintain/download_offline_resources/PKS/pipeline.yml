@@ -136,7 +136,7 @@ jobs:
       globs: ["*.ova"]
   - put: ops-manager-s3
     params:
-      file: "ops-manager-pivnet/ops-manager-vsphere-(.*).ova"
+      file: "ops-manager-pivnet/ops-manager-vsphere-*.ova"
 
 - name: stemcell-trusty
   plan:
