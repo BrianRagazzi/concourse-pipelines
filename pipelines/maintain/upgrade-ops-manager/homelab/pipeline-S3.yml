@@ -82,7 +82,7 @@ jobs:
   - task: export-om-installation
     file: pipelines-repo/tasks/export-om-installation/task.yml
     params:
-      SKIP_SSL_VALIDATION: ((skip-ssl-validation))
+      SKIP_SSL_VALIDATION: ((skip_ssl_validation))
       OPS_MGR_HOST: ((ops_mgr_host))
       OPS_MGR_USR: ((ops_mgr_usr))
       OPS_MGR_PWD: ((ops_mgr_pwd))
