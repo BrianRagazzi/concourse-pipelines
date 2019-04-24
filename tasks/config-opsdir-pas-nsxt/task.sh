@@ -48,17 +48,26 @@ az_configuration=$(cat <<-EOF
     {
       "name": "$AZ_1",
       "cluster": "$AZ_1_CLUSTER_NAME",
-      "resource_pool": "$AZ_1_RP_NAME"
+      "resource_pool": "$AZ_1_RP_NAME",
+      "host_group": "$AZ_1_HOST_GROUP"
     },
     {
       "name": "$AZ_2",
       "cluster": "$AZ_2_CLUSTER_NAME",
-      "resource_pool": "$AZ_2_RP_NAME"
+      "resource_pool": "$AZ_2_RP_NAME",
+      "host_group": "$AZ_2_HOST_GROUP"
     },
     {
       "name": "$AZ_3",
       "cluster": "$AZ_3_CLUSTER_NAME",
-      "resource_pool": "$AZ_3_RP_NAME"
+      "resource_pool": "$AZ_3_RP_NAME",
+      "host_group": "$AZ_3_HOST_GROUP"
+    },
+    {
+      "name": "$MGMT_AZ",
+      "cluster": "$MGMT_AZ_CLUSTER_NAME",
+      "resource_pool": "$MGMT_AZ_RP_NAME",
+      "host_group": "$MGMT_AZ_HOST_GROUP"
     }
  ]
 EOF
