@@ -104,7 +104,8 @@ jobs:
     - get: pipelines-repo
       trigger: true
       passed: [take-opsmgr-offline]
-    - get: pcf-ops-manager
+    - get: pivnet-opsman-product
+      resource: pcf-ops-manager
       passed: [export-settings-from-current-opsmgr]
       params:
         globs: ["*.ova"]
