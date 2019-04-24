@@ -37,11 +37,12 @@ resources:
     product_version: {{ert_major_minor_version}}
     sort_by: semver
 
-- name: pcf-metrics-pivnet
+- name: pcf-healthwatch-pivnet
   type: pivnet
   source:
     api_token: {{pivnet_token}}
-    product_slug: apm
+    product_slug: p-healthwatch
+    product_version: {{healthwatch_major_minor_version}}
     sort_by: semver
 
 # - name: iso-seg-pivnet
@@ -102,14 +103,14 @@ resources:
     product_slug: vmware-nsx-t
     sort_by: semver
 
-- name: pcf-metrics-s3
+- name: pcf-healthwatch-s3
   type: s3
   source:
     access_key_id: {{s3_access_key_id}}
     secret_access_key: {{s3_secret_access_key}}
     endpoint: {{s3_endpoint}}
     bucket: {{s3_bucket}}
-    regexp: "PCF/Tiles/apm-(.*).pivotal"
+    regexp: "PCF/Tiles/p-healthwatch-(.*).pivotal"
     disable_ssl: false
     skip_ssl_verification: true
 #
@@ -220,11 +221,11 @@ jobs:
     params:
       file: "nsxt-pivnet/VMware-NSX-T-*.pivotal"
 
-- name: pcf-metrics
+- name: pcf-healthwatch
   plan:
-  - get: pcf-metrics-pivnet
+  - get: pcf-healthwatch-pivnet
     params:
       globs: ["*.pivotal"]
-  - put: pcf-metrics-s3
+  - put: pcf-healthwatch-s3
     params:
-      file: "pcf-metrics-pivnet/apm-*.pivotal"
+      file: "pcf-healthwatch-pivnet/p-healthwatch-*.pivotal"
