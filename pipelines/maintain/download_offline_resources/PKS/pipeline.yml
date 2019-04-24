@@ -35,12 +35,6 @@ resources:
     product_slug: pivotal-container-service
     sort_by: semver
 
-- name: nsxt-pivnet
-  type: pivnet
-  source:
-    api_token: {{pivnet_token}}
-    product_slug: vmware-nsx-t
-    sort_by: semver
 
 - name: harbor-pivnet
   type: pivnet
@@ -116,16 +110,6 @@ resources:
     skip_ssl_verification: true
 
 
-- name: nsxt-s3
-  type: s3
-  source:
-    access_key_id: {{s3_access_key_id}}
-    secret_access_key: {{s3_secret_access_key}}
-    endpoint: {{s3_endpoint}}
-    bucket: {{s3_bucket}}
-    regexp: "PCF/Tiles/VMware-NSX-T-(.*).pivotal"
-    disable_ssl: false
-    skip_ssl_verification: true
 
 jobs:
 - name: ops-manager
@@ -181,13 +165,3 @@ jobs:
   - put: harbor-s3
     params:
       file: "harbor-pivnet/harbor-container-registry-*.pivotal"
-
-- name: nsxt
-  plan:
-  - get: nsxt-pivnet
-    trigger: true
-    params:
-      globs: ["*.pivotal"]
-  - put: nsxt-s3
-    params:
-      file: "nsxt-pivnet/VMware-NSX-T-*.pivotal"
