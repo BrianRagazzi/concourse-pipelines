@@ -288,6 +288,7 @@ jobs:
       OPS_MGR_PWD: ((ops_mgr_pwd))
       PIVNET_API_TOKEN: ((pivnet_token))
       IAAS_TYPE: ((iaas_type))
+      PRODUCT_IDENTIFIER: "cf"
 
 - name: configure-ert
   plan:
