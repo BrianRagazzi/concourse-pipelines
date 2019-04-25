@@ -138,4 +138,4 @@ inputs:
   - name: pipelines-repo
 
 run:
-  path: pipelines-repo/tasks/config-ert-2.4/task.sh
+  path: pipelines-repo/tasks/config-ert-2.5/task.sh
