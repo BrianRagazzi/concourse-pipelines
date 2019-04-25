@@ -20,22 +20,26 @@ resources:
     branch: ((github_branch))
 
 - name: pivotal-container-service
-  type: pivnet
+  type: s3
   source:
-    api_token: ((pivnet_token))
-    product_slug: pivotal-container-service
-    product_version: ((pks_major_minor_version))
-    sort_by: semver
-    copy_metadata: true
-    fingerprint_components:
-    - product-files
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "PCF/PKS/pivotal-container-service-(.*).pivotal"
+    disable_ssl: false
+    skip_ssl_verification: true
 
-- name: pivnet-harbor
-  type: pivnet
+- name: harbor-s3
+  type: s3
   source:
-    api_token: ((pivnet_token))
-    product_slug: harbor-container-registry
-    product_version: ((harbor_major_minor_version))
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "PCF/Tiles/harbor-container-registry-(.*).pivotal"
+    disable_ssl: false
+    skip_ssl_verification: true
 
 
 jobs:
@@ -43,7 +47,7 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      trigger: true
+      trigger: false
     - get: pivnet-product
       resource: pivotal-container-service
       params: {globs: ["*.pivotal"]}
@@ -75,7 +79,7 @@ jobs:
       resource: pivotal-container-service
       params: {globs: []}
       passed: [upload-pks]
-      trigger: true
+      trigger: false
 
 
   - task: upload-stemcell
@@ -98,7 +102,7 @@ jobs:
       resource: pivotal-container-service
       params: {globs: []}
       passed: [upload-stemcell-pks]
-      trigger: true
+      trigger: false
 
 
   - task: stage-tile
@@ -115,9 +119,9 @@ jobs:
   - aggregate:
     - get: pipelines-repo
     - get: pivnet-product
-      resource: pivnet-harbor
+      resource: harbor-s3
       params: {globs: ["*.pivotal"]}
-      trigger: true
+      trigger: false
     - get: pivnet-cli
       params:
         globs:
@@ -143,10 +147,10 @@ jobs:
     - get: pipelines-repo
       passed: [upload-harbor]
     - get: pivnet-product
-      resource: pivnet-harbor
+      resource: harbor-s3
       params: {globs: []}
       passed: [upload-harbor]
-      trigger: true
+      trigger: false
 
 
   - task: upload-stemcell
@@ -165,12 +169,12 @@ jobs:
   - aggregate:
     - get: pipelines-repo
       passed: [upload-stemcell-harbor]
-      trigger: true
+      trigger: false
     - get: pivnet-product
-      resource: pivnet-harbor
+      resource: harbor-s3
       params: {globs: []}
       passed: [upload-stemcell-harbor]
-      trigger: true
+      trigger: false
 
 
   - task: stage-tile
