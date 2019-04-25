@@ -54,7 +54,7 @@ if [ -z $SC_OS ]; then
 fi
 
 if [ -z $SC_SLUG ]; then
-  if [ $SC_OS ="ubuntu-xenial" ]; then
+  if [ $SC_OS == "ubuntu-xenial" ]; then
     SC_SLUG="stemcells-ubuntu-xenial"
   else
     SC_SLUG="stemcells"
