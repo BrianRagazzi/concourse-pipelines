@@ -77,9 +77,8 @@ jobs:
     - get: pivnet-product
       resource: pivotal-container-service
       params: {globs: ["*.pivotal"]}
-      passed: [upload-pks]    
-    - get: pipelines-repo
       passed: [upload-pks]
+    - get: pipelines-repo
 
 
   - task: upload-stemcell
