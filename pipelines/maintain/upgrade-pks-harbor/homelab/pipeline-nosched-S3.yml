@@ -73,13 +73,13 @@ jobs:
         globs:
         - "*linux-amd64*"
       passed: [upload-pks]
-    - get: pipelines-repo
-      passed: [upload-pks]
+      trigger: false
     - get: pivnet-product
       resource: pivotal-container-service
-      params: {globs: []}
+      params: {globs: ["*.pivotal"]}
+      passed: [upload-pks]    
+    - get: pipelines-repo
       passed: [upload-pks]
-      trigger: false
 
 
   - task: upload-stemcell
@@ -98,11 +98,8 @@ jobs:
   - aggregate:
     - get: pipelines-repo
       passed: [upload-stemcell-pks]
-    - get: pivnet-product
-      resource: pivotal-container-service
-      params: {globs: []}
-      passed: [upload-stemcell-pks]
       trigger: false
+
 
 
   - task: stage-tile
@@ -143,14 +140,11 @@ jobs:
       params:
         globs:
         - "*linux-amd64*"
+      trigger: false
       passed: [upload-harbor]
     - get: pipelines-repo
       passed: [upload-harbor]
-    - get: pivnet-product
-      resource: harbor-s3
-      params: {globs: []}
-      passed: [upload-harbor]
-      trigger: false
+
 
 
   - task: upload-stemcell
@@ -168,11 +162,6 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      passed: [upload-stemcell-harbor]
-      trigger: false
-    - get: pivnet-product
-      resource: harbor-s3
-      params: {globs: []}
       passed: [upload-stemcell-harbor]
       trigger: false
 
