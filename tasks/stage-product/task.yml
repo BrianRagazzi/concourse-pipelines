@@ -15,7 +15,6 @@ params:
 
 inputs:
   - name: pipelines-repo
-  - name: pivnet-product
 
 run:
   path: pipelines-repo/tasks/stage-product/task.sh
