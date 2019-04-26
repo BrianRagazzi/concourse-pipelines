@@ -139,10 +139,13 @@ jobs:
       params:
         globs:
         - "*linux-amd64*"
+      passed: [upload-harbor]
       trigger: false
+    - get: pivnet-product
+      resource: harbor-s3
+      params: {globs: ["*.pivotal"]}
       passed: [upload-harbor]
     - get: pipelines-repo
-      passed: [upload-harbor]
 
 
 
