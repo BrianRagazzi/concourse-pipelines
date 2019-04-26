@@ -44,7 +44,7 @@ if [ -z $SC_VERSION ]; then
     SC_OS=$(
       om-linux --target https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
         curl --silent --path "/api/v0/stemcell_assignments" | \
-        jq -r '.products[] | select(.deployed_stemcell_version == null) | .required_stemcell_os'
+        jq -r '.products[] | select(.identifier == $prod_id) | .required_stemcell_os'
     )
   fi
 fi
