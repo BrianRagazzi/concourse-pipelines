@@ -145,21 +145,21 @@ run:
 
     # Update vm_extensions property for CF JOBS
     om --env env/"${ENV_FILE}" -k \
-      curl -s -p "$OPS_MAN_FQDN/api/v0/staged/products/$CF_GUID/jobs/$ROUTER_JOB_GUID/resource\_config" \
+      curl -s -p "$OPS_MAN_FQDN/api/v0/staged/products/$CF_GUID/jobs/$ROUTER_JOB_GUID/resource_config" \
       -x PUT \
       -H "Content-Type: application/json" \
       -d "$ROUTER_JOB_CONFIG"
     echo "Updated vm_extensions property for $ROUTER_JOB_GUID"
 
     om --env env/"${ENV_FILE}" -k \
-      curl -s -p "$OPS_MAN_FQDN/api/v0/staged/products/$CF_GUID/jobs/$TCP_ROUTER_JOB_GUID/resource\_config" \
+      curl -s -p "$OPS_MAN_FQDN/api/v0/staged/products/$CF_GUID/jobs/$TCP_ROUTER_JOB_GUID/resource_config" \
       -x PUT \
       -H "Content-Type: application/json" \
       -d "$TCP_ROUTER_JOB_CONFIG"
     echo "Updated vm_extensions property for $TCP_ROUTER_JOB_GUID"
 
     om --env env/"${ENV_FILE}" -k \
-      curl -s -p "$OPS_MAN_FQDN/api/v0/staged/products/$CF_GUID/jobs/$DIEGO_BRAIN_JOB_GUID/resource\_config" \
+      curl -s -p "$OPS_MAN_FQDN/api/v0/staged/products/$CF_GUID/jobs/$DIEGO_BRAIN_JOB_GUID/resource_config" \
       -x PUT \
       -H "Content-Type: application/json" \
       -d "$DIEGO_BRAIN_JOB_CONFIG"
