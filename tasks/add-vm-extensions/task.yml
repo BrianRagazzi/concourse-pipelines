@@ -20,6 +20,7 @@ run:
   args:
   - "-c"
   - |
+    apt-get install jq
     web_json=$(cat <<-EOF
     {
         "name": "pas_web_vm_extension",
