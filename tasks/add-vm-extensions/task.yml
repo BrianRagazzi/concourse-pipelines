@@ -20,7 +20,6 @@ run:
   args:
   - "-c"
   - |
-    set -euo pipefail
     apt-get install jq -y
     web_json=$(cat <<-EOF
     {
@@ -111,7 +110,7 @@ run:
     ROUTER_JOB_GUID=$(
     om --env env/"${ENV_FILE}" -k \
       curl -s -p "$OPS_MAN_FQDN/api/v0/staged/products/$CF_GUID/jobs" |
-      jq | jq -r '.jobs[] | .guid' | grep ^router
+      jq -r '.jobs[] | .guid' | grep ^router
     )
 
     ROUTER_JOB_CONFIG=$(
@@ -123,7 +122,7 @@ run:
     TCP_ROUTER_JOB_GUID=$(
     om --env env/"${ENV_FILE}" -k \
       curl -s -p "$OPS_MAN_FQDN/api/v0/staged/products/$CF_GUID/jobs" |
-      jq | jq -r '.jobs[] | .guid' | grep ^tcp
+      jq -r '.jobs[] | .guid' | grep ^tcp
     )
 
     TCP_ROUTER_JOB_CONFIG=$(
@@ -135,7 +134,7 @@ run:
     DIEGO_BRAIN_JOB_GUID=$(
     om --env env/"${ENV_FILE}" -k \
       curl -s -p "$OPS_MAN_FQDN/api/v0/staged/products/$CF_GUID/jobs" |
-      jq | jq -r '.jobs[] | .guid' | grep ^diego\_brain
+      jq -r '.jobs[] | .guid' | grep ^diego\_brain
     )
 
     DIEGO_BRAIN_JOB_CONFIG=$(
