@@ -204,6 +204,15 @@ jobs:
     params:
       file: "ops-manager-pivnet/pcf-vsphere-*.ova"
 
+- name: small-footprint-pas
+  plan:
+  - get: elastic-runtime-pivnet
+    params:
+      globs: ["srt-*.pivotal"]
+  - put: pivotal-app-services-s3
+    params:
+      file: "elastic-runtime-pivnet/srt-*.pivotal"
+
 - name: elastic-runtime
   plan:
   - get: elastic-runtime-pivnet
