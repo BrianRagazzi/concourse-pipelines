@@ -17,10 +17,10 @@ resources:
 - name: pcf-ops-manager
   type: s3
   source:
-    access_key_id: {{s3_access_key_id}}
-    secret_access_key: {{s3_secret_access_key}}
-    endpoint: {{s3_endpoint}}
-    bucket: {{s3_bucket}}
+    access_key_id: ((s3_access_key_id))
+    secret_access_key: ((s3_secret_access_key))
+    endpoint: ((s3_endpoint))
+    bucket: ((s3_bucket))
     regexp: "PCF/ops-manager/ops-manager-vsphere-(.*).ova"
     disable_ssl: false
     skip_ssl_verification: true
@@ -28,10 +28,10 @@ resources:
 - name: pivotal-container-service
   type: s3
   source:
-    access_key_id: {{s3_access_key_id}}
-    secret_access_key: {{s3_secret_access_key}}
-    endpoint: {{s3_endpoint}}
-    bucket: {{s3_bucket}}
+    access_key_id: ((s3_access_key_id))
+    secret_access_key: ((s3_secret_access_key))
+    endpoint: ((s3_endpoint))
+    bucket: ((s3_bucket))
     regexp: "PCF/PKS/pivotal-container-service-(.*).pivotal"
     disable_ssl: false
     skip_ssl_verification: true
@@ -46,10 +46,10 @@ resources:
 - name: harbor-s3
   type: s3
   source:
-    access_key_id: {{s3_access_key_id}}
-    secret_access_key: {{s3_secret_access_key}}
-    endpoint: {{s3_endpoint}}
-    bucket: {{s3_bucket}}
+    access_key_id: ((s3_access_key_id))
+    secret_access_key: ((s3_secret_access_key))
+    endpoint: ((s3_endpoint))
+    bucket: ((s3_bucket))
     regexp: "PCF/Tiles/harbor-container-registry-(.*).pivotal"
     disable_ssl: false
     skip_ssl_verification: true
