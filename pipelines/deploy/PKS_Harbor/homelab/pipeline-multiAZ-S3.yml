@@ -224,7 +224,7 @@ jobs:
     - get: pcf-ops-manager
       params: {globs: []}
       passed: [configure-director]
-      trigger: false
+      trigger: true
 
   - task: apply-changes
     file: pipelines-repo/tasks/apply-changes/task.yml
@@ -360,7 +360,7 @@ jobs:
   - aggregate:
     - get: pipelines-repo
       passed: [apply-changes-pks]
-      trigger: false
+      trigger: true
     - get: pivnet-product
       resource: harbor-s3
       params: {globs: ["*.pivotal"]}
@@ -461,7 +461,7 @@ jobs:
     - get: pipelines-repo
     - get: pivnet-product
       passed: [configure-pks]
-      trigger: false
+      trigger: true
       resource: pivotal-container-service
       params: {globs: ["*.pivotal"]}
 
@@ -480,7 +480,7 @@ jobs:
     - get: harbor-s3
       passed: [configure-harbor]
       params: {globs: ["*.pivotal"]}
-      trigger: false
+      trigger: true
 
   - task: apply-changes
     file: pipelines-repo/tasks/apply-changes/task.yml
@@ -493,7 +493,7 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      trigger: false
+      trigger: true
       # passed: [apply-changes]
 
   - task: configure-pks-cli-user
