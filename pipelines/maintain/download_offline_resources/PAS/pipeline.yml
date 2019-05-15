@@ -104,6 +104,16 @@ resources:
     disable_ssl: false
     skip_ssl_verification: true
 
+- name: small-footprint-s3
+  type: s3
+  source:
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+    endpoint: {{s3_endpoint}}
+    bucket: {{s3_bucket}}
+    regexp: "PCF/PAS/srt-(.*).pivotal"
+    disable_ssl: false
+    skip_ssl_verification: true
 
 - name: pcf-healthwatch-s3
   type: s3
@@ -209,7 +219,7 @@ jobs:
   - get: elastic-runtime-pivnet
     params:
       globs: ["srt-*.pivotal"]
-  - put: pivotal-app-services-s3
+  - put: small-footprint-s3
     params:
       file: "elastic-runtime-pivnet/srt-*.pivotal"
 
