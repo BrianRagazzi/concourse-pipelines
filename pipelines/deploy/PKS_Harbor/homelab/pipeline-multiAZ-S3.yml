@@ -65,8 +65,7 @@ groups:
   - configure-pks
   - upload-harbor
   - configure-harbor
-  - apply-changes-pks
-  - apply-changes-harbor
+  - apply-changes
 - name: post-deploy
   jobs:
   - add-pks-user
@@ -359,7 +358,7 @@ jobs:
   plan:
   - aggregate:
     - get: pipelines-repo
-      passed: [apply-changes-pks]
+      passed: [deploy-director]
       trigger: true
     - get: pivnet-product
       resource: harbor-s3
@@ -455,15 +454,15 @@ jobs:
       ERRANDS_TO_DISABLE: ((harbor_errands_to_disable))
       ERRANDS_TO_RUN_ON_CHANGE: ((harbor_errands_to_run_on_change))
 
-- name: apply-changes-pks
+- name: apply-changes
   plan:
   - aggregate:
     - get: pipelines-repo
-    - get: pivnet-product
-      passed: [configure-pks]
+      passed: [configure-pks,configure-harbor]
       trigger: true
-      resource: pivotal-container-service
-      params: {globs: ["*.pivotal"]}
+    # - get: pivnet-product
+    #   resource: pivotal-container-service
+    #   params: {globs: ["*.pivotal"]}
 
 
   - task: apply-changes
@@ -473,21 +472,21 @@ jobs:
       OPS_MGR_USR: ((ops_mgr_usr))
       OPS_MGR_PWD: ((ops_mgr_pwd))
 
-- name: apply-changes-harbor
-  plan:
-  - aggregate:
-    - get: pipelines-repo
-    - get: harbor-s3
-      passed: [configure-harbor]
-      params: {globs: ["*.pivotal"]}
-      trigger: true
-
-  - task: apply-changes
-    file: pipelines-repo/tasks/apply-changes/task.yml
-    params:
-      OPS_MGR_HOST: ((ops_mgr_host))
-      OPS_MGR_USR: ((ops_mgr_usr))
-      OPS_MGR_PWD: ((ops_mgr_pwd))
+# - name: apply-changes-harbor
+#   plan:
+#   - aggregate:
+#     - get: pipelines-repo
+#     - get: harbor-s3
+#       passed: [configure-harbor]
+#       params: {globs: ["*.pivotal"]}
+#       trigger: true
+#
+#   - task: apply-changes
+#     file: pipelines-repo/tasks/apply-changes/task.yml
+#     params:
+#       OPS_MGR_HOST: ((ops_mgr_host))
+#       OPS_MGR_USR: ((ops_mgr_usr))
+#       OPS_MGR_PWD: ((ops_mgr_pwd))
 
 - name: add-pks-user
   plan:
