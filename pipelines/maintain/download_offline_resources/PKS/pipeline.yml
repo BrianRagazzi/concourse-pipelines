@@ -33,6 +33,7 @@ resources:
   source:
     api_token: {{pivnet_token}}
     product_slug: pivotal-container-service
+    product_version: {{pks_major_minor_version}}
     sort_by: semver
 
 
@@ -41,6 +42,7 @@ resources:
   source:
     api_token: {{pivnet_token}}
     product_slug: harbor-container-registry
+    product_version: {{harbor_major_minor_version}}
     sort_by: semver
 
 - name: ops-manager-s3

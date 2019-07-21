@@ -7,18 +7,27 @@ resource_types:
 
 resources:
 
-- name: stemcell-trusty-pivnet
-  type: pivnet
-  source:
-    api_token: {{pivnet_token}}
-    product_slug: stemcells
-    sort_by: semver
+# - name: stemcell-trusty-pivnet
+#   type: pivnet
+#   source:
+#     api_token: {{pivnet_token}}
+#     product_slug: stemcells
+#     sort_by: semver
 
-- name: stemcell-xenial-pivnet
+- name: stemcell-pivnet-pas
   type: pivnet
   source:
     api_token: {{pivnet_token}}
     product_slug: stemcells-ubuntu-xenial
+    product_version: {{pas_stemcell_major_minor_version}}
+    sort_by: semver
+
+- name: stemcell-pivnet-hw
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: stemcells-ubuntu-xenial
+    product_version: {{healthwatch_stemcell_major_minor_version}}
     sort_by: semver
 
 - name: ops-manager-pivnet
@@ -185,25 +194,35 @@ resources:
 
 
 jobs:
-- name: stemcell-trusty
-  plan:
-  - get: stemcell-trusty-pivnet
-    trigger: true
-    params:
-      globs: ["*vsphere-esxi-ubuntu-trusty-go_agent*"]
-  - put: stemcell-s3
-    params:
-      file: "stemcell-trusty-pivnet/*.tgz"
+# - name: stemcell-trusty
+#   plan:
+#   - get: stemcell-trusty-pivnet
+#     trigger: true
+#     params:
+#       globs: ["*vsphere-esxi-ubuntu-trusty-go_agent*"]
+#   - put: stemcell-s3
+#     params:
+#       file: "stemcell-trusty-pivnet/*.tgz"
 
-- name: stemcell-xenial
+- name: stemcell-xenial-pas
   plan:
-  - get: stemcell-xenial-pivnet
+  - get: stemcell-pivnet-pas
     trigger: true
     params:
       globs: ["*vsphere-esxi-ubuntu-xenial-go_agent*"]
   - put: stemcell-s3
     params:
-      file: "stemcell-xenial-pivnet/*.tgz"
+      file: "stemcell-pivnet-pas/*.tgz"
+
+- name: stemcell-xenial-healthwatch
+  plan:
+  - get: stemcell-pivnet-hw
+    trigger: true
+    params:
+      globs: ["*vsphere-esxi-ubuntu-xenial-go_agent*"]
+  - put: stemcell-s3
+    params:
+      file: "stemcell-pivnet-hw/*.tgz"
 
 - name: ops-manager
   plan:
@@ -214,7 +233,9 @@ jobs:
     params:
       file: "ops-manager-pivnet/pcf-vsphere-*.ova"
 
+
 - name: small-footprint-pas
+  build_logs_to_retain: 2
   plan:
   - get: elastic-runtime-pivnet
     params:
@@ -224,6 +245,7 @@ jobs:
       file: "elastic-runtime-pivnet/srt-*.pivotal"
 
 - name: elastic-runtime
+  build_logs_to_retain: 2
   plan:
   - get: elastic-runtime-pivnet
     params:

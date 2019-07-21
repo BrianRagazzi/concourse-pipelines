@@ -449,7 +449,7 @@ jobs:
       file: pcfnorm-rootfs-tarball/pcfnorm-rootfs-*.tgz
 
 - name: pks
-  build_logs_to_retain: 7
+  build_logs_to_retain: 2
   plan:
   - get: pks-pivnet
   - get: wee-hours

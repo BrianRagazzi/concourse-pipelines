@@ -1,0 +1,14 @@
+{
+ "request_method":"GET",
+ "response_status_codes":[200],
+ "request_version":"HTTP_VERSION_1_1",
+ "request_url":"/",
+ "monitor_port":"8080",
+ "fall_count":1,
+ "interval":1,
+ "rise_count":1,
+ "timeout":1,
+ "resource_type":"LbHttpMonitor",
+ "display_name":"pas-web-monitor",
+ "description":"pas-web-monitor"
+}
