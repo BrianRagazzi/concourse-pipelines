@@ -6,9 +6,16 @@ RUN curl -s "https://get.sdkman.io" | bash
 # this SHELL command is needed to allow using source
 SHELL ["/bin/bash", "-c"]    
 
-RUN source "/root/.sdkman/bin/sdkman-init.sh"
-RUN sdk install java 21.0.7-oracle && sdk use java 21.0.7-oracle
-RUN sdk install maven 3.9.9 && sdk use maven 3.9.9 -y
+RUN source "/root/.sdkman/bin/sdkman-init.sh" \
+    && sdk install java 21.0.7-oracle \
+    && sdk use java 21.0.7-oracle -y \
+    && sdk install maven 3.9.9 \
+    && sdk use maven 3.9.9 -y \
+    && rm -rf $HOME/.sdkman/archives/* \
+    && rm -rf $HOME/.sdkman/tmp/*
+
+# Ensure sdk, mvn, and java are in the PATH for all shells
+ENV PATH="/root/.sdkman/candidates/maven/current/bin:/root/.sdkman/candidates/java/current/bin:/root/.sdkman/bin:${PATH}"
 
 # Add the Cloud Foundry GPG key
 RUN curl -fsSL https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | gpg --dearmor -o /usr/share/keyrings/cloudfoundry-keyring.gpg
