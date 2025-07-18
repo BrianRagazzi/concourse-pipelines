@@ -28,3 +28,14 @@ RUN cf8 version
 ADD https://github.com/pivotal-cf/om/releases/download/7.16.0/om-linux-amd64-7.16.0.tar.gz /
 RUN tar -xvf  ./om-linux-amd64-7.16.0.tar.gz -C /usr/local/bin/ && rm ./om-linux-amd64-7.16.0.tar.gz
 # -o /usr/local/bin/om && chmod +x /usr/local/bin/om
+
+ENV NODE_VERSION=20
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+ENV NVM_DIR=/root/.nvm
+RUN bash -c "source $NVM_DIR/nvm.sh && nvm install $NODE_VERSION"
+
+# set ENTRYPOINT for reloading nvm-environment
+ENTRYPOINT ["bash", "-c", "source $NVM_DIR/nvm.sh && exec \"$@\"", "--"]
+
+# set cmd to bash
+CMD ["/bin/bash"]
