@@ -25,7 +25,8 @@ set -e
 if [ -z "${existing_buildpack}" ]; then
   COUNT=$(cf buildpacks | grep --regexp=".zip" --count)
   NEW_POSITION=$(expr $COUNT + 1)
-  cf create-buildpack $BUILDPACK_NAME buildpack/*.zip $NEW_POSITION --enable
+  # Newer versions do not use the --enable flag, so we don't use it here
+  cf create-buildpack $BUILDPACK_NAME buildpack/*.zip $NEW_POSITION #--enable
 else
   index=$(echo $existing_buildpack | cut -d' ' -f2)
   cf update-buildpack $BUILDPACK_NAME -p buildpack/*.zip -i $index --enable
