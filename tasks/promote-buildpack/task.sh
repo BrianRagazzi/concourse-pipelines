@@ -35,4 +35,5 @@ if [ -n "$old_buildpack" ]; then
   cf update-buildpack $SOURCE_BUILDPACK_NAME -i $index
 fi
 
-cf rename-buildpack $SOURCE_BUILDPACK_NAME $TARGET_BUILDPACK_NAME
+#cf rename-buildpack $SOURCE_BUILDPACK_NAME $TARGET_BUILDPACK_NAME
+cf update-buildpack $SOURCE_BUILDPACK_NAME --rename $TARGET_BUILDPACK_NAME --enable
