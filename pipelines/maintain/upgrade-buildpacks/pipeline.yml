@@ -79,7 +79,7 @@ resources:
     api_token: {{pivnet_token}}
     product_slug: nodejs-buildpack
     sort_by: semver
-    product_version: 1\.8\* #NodeJS*
+    #product_version: 1\.8\* #NodeJS*
 
 - name: php-buildpack
   type: pivnet
