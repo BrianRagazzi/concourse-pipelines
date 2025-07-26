@@ -169,6 +169,9 @@ jobs:
     resource: binary-buildpack
     trigger: true
     passed: [regulator]
+    params:
+      globs: ["binary_buildpack-cached-cflinux4-v*.zip"]
+      unpack: false
 
   - task: stage
     image: custom-task-image
@@ -203,6 +206,9 @@ jobs:
     resource: dotnet-core-buildpack
     passed: [regulator]
     trigger: true
+    params:
+      globs: ["dotnet-core_buildpack_cached-cflinux4-v*.zip"]
+      unpack: false
 
   - task: stage
     image: custom-task-image
@@ -237,6 +243,9 @@ jobs:
     resource: go-buildpack
     passed: [regulator]
     trigger: true
+    params:
+      globs: ["go_buildpack-cached-cflinuxfs4-v*.zip"]
+      unpack: false
 
   - task: stage
     image: custom-task-image
@@ -272,8 +281,8 @@ jobs:
     resource: java-buildpack
     trigger: true
     params:
-      globs:
-      - "*offline*"
+      globs: ["java-buildpack-offline-v*.zip"]
+      unpack: false
 
   - task: stage
     image: custom-task-image
@@ -308,6 +317,8 @@ jobs:
     passed: [regulator]
     resource: nodejs-buildpack
     trigger: true
+    params:
+      globs: ["nodejs_buildpack-cached-cflinuxfs4-c*.zip"]
 
   - task: stage
     image: custom-task-image
@@ -342,6 +353,9 @@ jobs:
     passed: [regulator]
     resource: php-buildpack
     trigger: true
+    params:
+      globs: ["php_buildpack-cached-cflinuxfs4-v*.zip"]
+      unpack: false
 
   - task: stage
     image: custom-task-image
@@ -376,6 +390,9 @@ jobs:
     passed: [regulator]
     resource: python-buildpack
     trigger: true
+    params:
+      globs: ["python_buildpack-cached-cflinuxfs4-v*.zip"]
+      unpack: false
 
   - task: stage
     image: custom-task-image
@@ -410,6 +427,9 @@ jobs:
     passed: [regulator]
     resource: ruby-buildpack
     trigger: true
+    params:
+      globs: ["ruby_buildpack_cached-cflinuxfs4-v*.zip"]
+      unpack: false
 
   - task: stage
     image: custom-task-image
@@ -444,6 +464,9 @@ jobs:
     passed: [regulator]
     resource: staticfile-buildpack
     trigger: true
+    params:
+      globs: ["staticfile_buildpack-cached-cflinuxfs4-v*.zip"]
+      unpack: false
 
   - task: stage
     image: custom-task-image
