@@ -164,7 +164,6 @@ jobs:
   plan:
   - get: pipelines-repo
   - get: custom-task-image
-  - get: custom-task-image
   - get: buildpack
     resource: binary-buildpack
     trigger: true
@@ -186,7 +185,6 @@ jobs:
     params: {globs: []}
   - get: pipelines-repo
   - get: custom-task-image
-  - get: custom-task-image
   - task: promote
     image: custom-task-image
     file: pipelines-repo/tasks/promote-buildpack/task.yml
@@ -199,7 +197,6 @@ jobs:
   serial_groups: [cc-api]
   plan:
   - get: pipelines-repo
-  - get: custom-task-image
   - get: custom-task-image
   - get: buildpack
     resource: dotnet-core-buildpack
@@ -300,6 +297,23 @@ jobs:
       <<: *cf_api_params
       SOURCE_BUILDPACK_NAME: java_buildpack_offline_latest
       TARGET_BUILDPACK_NAME: java_buildpack_offline
+
+- name: stage-nodejs-buildpack
+  serial_groups: [cc-api]
+  plan:
+  - get: pipelines-repo
+  - get: custom-task-image
+  - get: buildpack
+    passed: [regulator]
+    resource: nodejs-buildpack
+    trigger: true
+
+  - task: stage
+    image: custom-task-image
+    file: pipelines-repo/tasks/stage-buildpack/task.yml
+    params:
+      <<: *cf_api_params
+      BUILDPACK_NAME: nodejs_buildpack_latest
 
 - name: promote-nodejs-buildpack
   serial_groups: [cc-api]
