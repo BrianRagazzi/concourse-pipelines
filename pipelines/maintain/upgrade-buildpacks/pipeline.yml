@@ -170,7 +170,7 @@ jobs:
     trigger: true
     passed: [regulator]
     params:
-      globs: ["binary_buildpack-cached-cflinux4-v*.zip"]
+      globs: ["binary_buildpack-cached-cflinuxfs4-v*.zip"]
       unpack: false
 
   - task: stage
@@ -207,7 +207,7 @@ jobs:
     passed: [regulator]
     trigger: true
     params:
-      globs: ["dotnet-core_buildpack_cached-cflinux4-v*.zip"]
+      globs: ["dotnet-core_buildpack-cached-cflinuxfs4-v*.zip"]
       unpack: false
 
   - task: stage
@@ -318,7 +318,7 @@ jobs:
     resource: nodejs-buildpack
     trigger: true
     params:
-      globs: ["nodejs_buildpack-cached-cflinuxfs4-c*.zip"]
+      globs: ["nodejs_buildpack-cached-cflinuxfs4-v*.zip"]
 
   - task: stage
     image: custom-task-image
@@ -428,7 +428,7 @@ jobs:
     resource: ruby-buildpack
     trigger: true
     params:
-      globs: ["ruby_buildpack_cached-cflinuxfs4-v*.zip"]
+      globs: ["ruby_buildpack-cached-cflinuxfs4-v*.zip"]
       unpack: false
 
   - task: stage
